@@ -1,0 +1,839 @@
+[
+  {
+    "id": "Q001",
+    "question": "Which team owns the lead-intake-service?",
+    "expected_answer": "The lead-intake-service is owned by team-onboarding. This team is responsible for the initial customer acquisition flow, including lead capture, eligibility checks, and proposal creation.",
+    "official_supporting_sources": [
+      "services/lead-intake-service/service.yaml",
+      "teams/team-onboarding/ownership.yaml"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "lead-intake-service"
+    ],
+    "rationale": "Tests basic factual lookup of service ownership, which is typically stored in structured metadata.",
+    "best_suited_approach": "structured",
+    "justification": "Service ownership is a structured relationship that can be directly queried from metadata files or a service catalog."
+  },
+  {
+    "id": "Q002",
+    "question": "What database does the document-store-service use for storing document metadata?",
+    "expected_answer": "The document-store-service uses MongoDB for storing document metadata. MongoDB was chosen because documents have variable schemas depending on document type (e.g., income proofs vs. vehicle registration), making a document-oriented database a natural fit. The actual file contents are stored in S3.",
+    "official_supporting_sources": [
+      "services/document-store-service/service.yaml",
+      "services/document-store-service/README.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "document-store-service"
+    ],
+    "rationale": "Tests retrieval of infrastructure configuration details for a specific service.",
+    "best_suited_approach": "structured",
+    "justification": "Database configuration is typically declared in structured service manifests or infrastructure-as-code files."
+  },
+  {
+    "id": "Q003",
+    "question": "What is the purpose of the eligibility-service in the onboarding flow?",
+    "expected_answer": "The eligibility-service evaluates whether a prospective customer meets the minimum requirements for a loan product before a full proposal is created. It checks basic criteria such as age, geography, minimum income thresholds, and product availability. This early filtering avoids unnecessary downstream processing for clearly ineligible leads.",
+    "official_supporting_sources": [
+      "services/eligibility-service/README.md",
+      "domains/onboarding/architecture.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "eligibility-service"
+    ],
+    "rationale": "Tests understanding of a service's functional purpose, typically described in documentation.",
+    "best_suited_approach": "unstructured",
+    "justification": "The purpose and rationale of a service is best captured in free-text documentation such as READMEs and architecture decision records."
+  },
+  {
+    "id": "Q004",
+    "question": "Which external partner does CredityFlow integrate with for vehicle registry operations?",
+    "expected_answer": "CredityFlow integrates with DETRAN-API for vehicle registry operations. The detran-integration-service handles communication with this external partner to register liens on vehicles used as collateral for AutoCredit and AutoRefi products.",
+    "official_supporting_sources": [
+      "services/detran-integration-service/service.yaml",
+      "integrations/external-partners.yaml"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "detran-integration-service"
+    ],
+    "rationale": "Tests knowledge of external integration partnerships, a factual detail stored in configuration or documentation.",
+    "best_suited_approach": "structured",
+    "justification": "External partner mappings are typically stored in structured integration manifests or service configuration."
+  },
+  {
+    "id": "Q005",
+    "question": "What API gateway does CredityFlow use to manage external-facing traffic?",
+    "expected_answer": "CredityFlow uses Kong API Gateway to manage external-facing traffic. Kong handles routing, rate limiting, authentication, and request transformation at the edge. Internally, Istio service mesh manages service-to-service communication within the EKS cluster.",
+    "official_supporting_sources": [
+      "platform/api-gateway/README.md",
+      "architecture/infrastructure.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "auth-service"
+    ],
+    "rationale": "Tests knowledge of platform-level infrastructure choices.",
+    "best_suited_approach": "unstructured",
+    "justification": "Infrastructure decisions and their rationale are typically documented in architecture docs and READMEs rather than structured catalogs."
+  },
+  {
+    "id": "Q006",
+    "question": "What caching layer does CredityFlow use and which services typically rely on it?",
+    "expected_answer": "CredityFlow uses Redis as its caching layer. Services that rely on Redis include the eligibility-service (for caching product rules), credit-policy-service (for caching policy configurations), feature-flag-service (for caching flag states from LaunchDarkly), and the customer-portal-bff (for session and user preference caching).",
+    "official_supporting_sources": [
+      "architecture/infrastructure.md",
+      "services/eligibility-service/service.yaml",
+      "services/credit-policy-service/service.yaml"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "eligibility-service",
+      "credit-policy-service",
+      "feature-flag-service",
+      "customer-portal-bff"
+    ],
+    "rationale": "Tests cross-cutting infrastructure knowledge that spans multiple services.",
+    "best_suited_approach": "structured",
+    "justification": "Cache dependencies are declared in service manifests and can be queried across structured metadata."
+  },
+  {
+    "id": "Q007",
+    "question": "Where does CredityFlow store audit logs and why was that technology chosen?",
+    "expected_answer": "CredityFlow stores audit logs in Elasticsearch. This technology was chosen because audit logs require full-text search capabilities, flexible querying across multiple fields, and efficient time-series storage. Elasticsearch enables compliance teams and the audit-service to quickly search and aggregate log entries across all domains for regulatory reporting and incident investigation.",
+    "official_supporting_sources": [
+      "services/audit-service/README.md",
+      "architecture/observability.md"
+    ],
+    "category": "factual",
+    "difficulty": "medium",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "audit-service"
+    ],
+    "rationale": "Tests knowledge of technology choices combined with architectural rationale.",
+    "best_suited_approach": "unstructured",
+    "justification": "The rationale behind technology selection is best found in unstructured architecture documentation and ADRs."
+  },
+  {
+    "id": "Q008",
+    "question": "Which services are involved when a new lead submits an AutoCredit application?",
+    "expected_answer": "When a new lead submits an AutoCredit application, the following services are involved in sequence: lead-intake-service captures the initial application data, eligibility-service checks basic qualification criteria, customer-service creates or retrieves the customer profile, and proposal-service creates the loan proposal. The lead-intake-service publishes a lead_created event that triggers downstream processing by other domains.",
+    "official_supporting_sources": [
+      "domains/onboarding/architecture.md",
+      "services/lead-intake-service/events.yaml",
+      "services/eligibility-service/README.md"
+    ],
+    "category": "relational",
+    "difficulty": "medium",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "lead-intake-service",
+      "eligibility-service",
+      "customer-service",
+      "proposal-service"
+    ],
+    "rationale": "Tests understanding of service interactions within the onboarding domain for a specific product.",
+    "best_suited_approach": "both",
+    "justification": "Requires both structured event/dependency data and unstructured flow documentation to fully answer."
+  },
+  {
+    "id": "Q009",
+    "question": "What is the relationship between the fraud-scoring-service and fraud-decision-service?",
+    "expected_answer": "The fraud-scoring-service computes a numerical fraud risk score based on multiple signals including device fingerprinting, watchlist checks, and bureau data from ClearCheck. The fraud-decision-service consumes this score along with configurable policy rules to make a binary accept/reject/review decision. The separation follows the single-responsibility principle: scoring is a computation concern while decision-making applies business rules that can change independently.",
+    "official_supporting_sources": [
+      "services/fraud-scoring-service/README.md",
+      "services/fraud-decision-service/README.md",
+      "domains/fraud-prevention/architecture.md"
+    ],
+    "category": "relational",
+    "difficulty": "easy",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "fraud-decision-service"
+    ],
+    "rationale": "Tests understanding of how two closely related services divide responsibilities and interact.",
+    "best_suited_approach": "unstructured",
+    "justification": "The rationale behind service decomposition is documented in architecture and design documents rather than structured metadata."
+  },
+  {
+    "id": "Q010",
+    "question": "Which services publish events that the notification-service subscribes to?",
+    "expected_answer": "The notification-service subscribes to events from many services across the lending pipeline, including: proposal-service (proposal_created, proposal_approved), fraud-decision-service (fraud_cleared, fraud_rejected), credit-decision-service (credit_approved, credit_denied), contract-generation-service (contract_ready), digital-signature-service (contract_signed), disbursement-service (disbursement_completed), and dunning-service (payment_overdue). This allows the notification-service to send timely updates to customers at every major stage.",
+    "official_supporting_sources": [
+      "services/notification-service/events.yaml",
+      "services/notification-service/README.md"
+    ],
+    "category": "relational",
+    "difficulty": "hard",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "notification-service",
+      "proposal-service",
+      "fraud-decision-service",
+      "credit-decision-service",
+      "disbursement-service"
+    ],
+    "rationale": "Tests comprehensive knowledge of cross-domain event subscriptions for a widely-connected service.",
+    "best_suited_approach": "structured",
+    "justification": "Event subscriptions are declared in structured event manifests and can be systematically queried."
+  },
+  {
+    "id": "Q011",
+    "question": "How does the appraisal-orchestrator-service coordinate between vehicle and property appraisals?",
+    "expected_answer": "The appraisal-orchestrator-service acts as a router that determines which appraisal path to invoke based on the loan product type. For AutoCredit and AutoRefi products, it delegates to vehicle-appraisal-service which queries FIPE-API for pricing data. For HomeEquity and HomeRefi products, it delegates to property-appraisal-service which coordinates with InspecaoExpress for on-site inspections. Both paths produce an appraisal-report via the appraisal-report-service, normalizing the output regardless of collateral type.",
+    "official_supporting_sources": [
+      "services/appraisal-orchestrator-service/README.md",
+      "domains/appraisal/architecture.md"
+    ],
+    "category": "relational",
+    "difficulty": "medium",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "appraisal-orchestrator-service",
+      "vehicle-appraisal-service",
+      "property-appraisal-service",
+      "appraisal-report-service"
+    ],
+    "rationale": "Tests understanding of orchestration patterns and conditional routing based on product type.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured dependency data to map service interactions and unstructured docs to understand the routing logic."
+  },
+  {
+    "id": "Q012",
+    "question": "Which services in the registry domain depend on external integrations?",
+    "expected_answer": "In the registry domain, the detran-integration-service depends on the external DETRAN-API for vehicle lien registration, and the cartorio-integration-service depends on the external Cartorio-Digital API for property lien registration. The registry-orchestrator-service coordinates these integrations, and registry-tracker-service monitors the status of registry requests which can take days to complete externally.",
+    "official_supporting_sources": [
+      "domains/registry/architecture.md",
+      "services/detran-integration-service/service.yaml",
+      "services/cartorio-integration-service/service.yaml"
+    ],
+    "category": "relational",
+    "difficulty": "easy",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "detran-integration-service",
+      "cartorio-integration-service",
+      "registry-orchestrator-service",
+      "registry-tracker-service"
+    ],
+    "rationale": "Tests the ability to identify external dependencies within a specific domain.",
+    "best_suited_approach": "structured",
+    "justification": "External integration dependencies are declared in structured service metadata and integration manifests."
+  },
+  {
+    "id": "Q013",
+    "question": "What is the data flow between document-upload-service, ocr-worker, and document-classifier-service?",
+    "expected_answer": "When a customer uploads a document, the document-upload-service stores the raw file in S3 and publishes a document_uploaded event. The ocr-worker consumes this event, extracts text content from the document image using OCR, and publishes a document_ocr_completed event. The document-classifier-service then consumes the OCR output and classifies the document type (e.g., income proof, vehicle registration, property deed) based on its content, publishing a document_classified event for downstream processing by document-validation-service.",
+    "official_supporting_sources": [
+      "domains/document-management/architecture.md",
+      "services/document-upload-service/events.yaml",
+      "services/ocr-worker/README.md"
+    ],
+    "category": "relational",
+    "difficulty": "easy",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "document-upload-service",
+      "ocr-worker",
+      "document-classifier-service"
+    ],
+    "rationale": "Tests understanding of an event-driven processing pipeline across multiple services.",
+    "best_suited_approach": "both",
+    "justification": "The event chain is captured in structured event schemas, but the processing logic is described in unstructured documentation."
+  },
+  {
+    "id": "Q014",
+    "question": "How does the Saga pattern apply to the contract-registry-disbursement flow at CredityFlow?",
+    "expected_answer": "CredityFlow implements the Saga pattern to coordinate the contract signing, lien registry, and disbursement steps as a distributed transaction. After the contract is digitally signed via digital-signature-service, the registry-orchestrator-service initiates lien registration with DETRAN-API or Cartorio-Digital. Only after successful registry confirmation does the disbursement-service release funds via bank-transfer-integration with BancoParceiro. If any step fails, compensating transactions are triggered: a failed registry rolls back the contract status, and a failed disbursement triggers re-evaluation. This ensures data consistency without requiring a distributed two-phase commit.",
+    "official_supporting_sources": [
+      "architecture/patterns/saga.md",
+      "domains/contract/architecture.md",
+      "domains/disbursement/architecture.md"
+    ],
+    "category": "relational",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "digital-signature-service",
+      "registry-orchestrator-service",
+      "disbursement-service",
+      "bank-transfer-integration"
+    ],
+    "rationale": "Tests deep architectural understanding of a distributed transaction pattern spanning multiple domains.",
+    "best_suited_approach": "unstructured",
+    "justification": "The Saga pattern rationale, compensating logic, and failure handling are best described in architecture decision records and design documents."
+  },
+  {
+    "id": "Q015",
+    "question": "Why did CredityFlow choose event-driven choreography instead of centralized orchestration for the lending pipeline?",
+    "expected_answer": "CredityFlow chose event-driven choreography for the main lending pipeline to achieve loose coupling between domains, allowing each team to develop and deploy independently. Choreography avoids a single orchestrator becoming a bottleneck or single point of failure across the entire pipeline. Each domain reacts to events and publishes its own events, enabling parallel processing where possible. However, for tightly coupled sub-flows like the contract-registry-disbursement sequence, they use the Saga pattern with local orchestration where strict ordering and compensating transactions are needed.",
+    "official_supporting_sources": [
+      "architecture/decisions/adr-001-event-choreography.md",
+      "architecture/overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "proposal-service",
+      "fraud-decision-service",
+      "credit-decision-service"
+    ],
+    "rationale": "Tests understanding of high-level architectural decisions and their trade-offs.",
+    "best_suited_approach": "unstructured",
+    "justification": "Architectural decisions, trade-offs, and rationale are documented in ADRs and narrative architecture documents."
+  },
+  {
+    "id": "Q016",
+    "question": "Why does CredityFlow separate biometrics-capture-service from liveness-worker and face-match-service?",
+    "expected_answer": "CredityFlow separates these services to follow the single-responsibility principle and enable independent scaling. The biometrics-capture-service handles real-time interaction with the customer's device to capture images, requiring low latency. The liveness-worker performs computationally intensive anti-spoofing analysis asynchronously, allowing it to scale based on processing queue depth. The face-match-service compares the captured face against the document photo, which is a distinct ML workload. This separation also allows each component to be updated independently as biometric technology evolves.",
+    "official_supporting_sources": [
+      "domains/biometrics/architecture.md",
+      "services/biometrics-capture-service/README.md",
+      "services/liveness-worker/README.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "biometrics-capture-service",
+      "liveness-worker",
+      "face-match-service"
+    ],
+    "rationale": "Tests understanding of microservice decomposition rationale for a specific domain.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured service dependency data to map the interactions and unstructured docs to understand the decomposition rationale."
+  },
+  {
+    "id": "Q017",
+    "question": "Why does the credit-analysis domain use the CQRS pattern?",
+    "expected_answer": "The credit-analysis domain uses CQRS to separate the write path (credit scoring computations involving ML models, bureau data aggregation, and income verification) from the read path (querying existing scores for decision-making, reporting, and audit). This separation allows the write side to run complex, resource-intensive computations on dedicated infrastructure while the read side serves fast queries from optimized read models. It also enables the credit-decision-service to query historical scores without impacting ongoing scoring operations, and supports regulatory requirements for audit trails of scoring decisions.",
+    "official_supporting_sources": [
+      "architecture/patterns/cqrs.md",
+      "domains/credit-analysis/architecture.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "credit-scoring-engine",
+      "credit-decision-service",
+      "credit-policy-service"
+    ],
+    "rationale": "Tests understanding of why a specific architectural pattern was chosen for a domain.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured query/command flow data and unstructured architecture documentation explaining the pattern choice."
+  },
+  {
+    "id": "Q018",
+    "question": "Why does CredityFlow use a dedicated notification-template-service instead of embedding templates in the notification-service?",
+    "expected_answer": "CredityFlow separates the notification-template-service to allow business and compliance teams to manage notification content independently of the delivery infrastructure. Templates can be versioned, A/B tested, and updated without redeploying the notification-service. This also supports regulatory requirements where notification wording must be reviewed and approved. The notification-service focuses on delivery channels (email, SMS, push) and retry logic, while the template service handles content rendering, localization, and variable interpolation.",
+    "official_supporting_sources": [
+      "services/notification-template-service/README.md",
+      "domains/notifications/architecture.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "notification-service",
+      "notification-template-service"
+    ],
+    "rationale": "Tests understanding of separation of concerns in service design.",
+    "best_suited_approach": "unstructured",
+    "justification": "Design rationale for service separation is described in documentation rather than structured files."
+  },
+  {
+    "id": "Q019",
+    "question": "How does the feature-flag-service integrate with LaunchDarkly to support gradual rollouts?",
+    "expected_answer": "The feature-flag-service acts as an internal abstraction layer over LaunchDarkly, providing a consistent API for all CredityFlow services to query feature flags. It caches flag states in Redis to reduce external API calls and provide resilience if LaunchDarkly is unavailable. Services query the feature-flag-service to determine whether new features, policy changes, or experimental flows should be enabled for specific customer segments. This enables gradual rollouts of new credit policies, product rules, or UI features with the ability to quickly disable them if issues are detected.",
+    "official_supporting_sources": [
+      "services/feature-flag-service/README.md",
+      "architecture/decisions/adr-feature-flags.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "feature-flag-service"
+    ],
+    "rationale": "Tests understanding of how a platform service integrates with an external tool for operational flexibility.",
+    "best_suited_approach": "unstructured",
+    "justification": "Integration patterns and operational rationale are best described in documentation and ADRs."
+  },
+  {
+    "id": "Q020",
+    "question": "Why does CredityFlow encrypt PII at rest and in transit, and which services are most affected?",
+    "expected_answer": "CredityFlow encrypts PII at rest and in transit to comply with LGPD (Brazil's data protection law) and financial sector regulations. Services most affected include lead-intake-service and customer-service (which store personal identity data), proposal-service (which stores financial information), document-store-service (which stores scanned identity documents), and biometrics-capture-service (which handles biometric data). The encryption adds operational complexity including key rotation management and performance overhead for encryption/decryption operations, but is a non-negotiable regulatory requirement for a lending fintech.",
+    "official_supporting_sources": [
+      "architecture/security/pii-encryption.md",
+      "architecture/decisions/adr-pii-handling.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "customer-service",
+      "lead-intake-service",
+      "proposal-service",
+      "document-store-service",
+      "biometrics-capture-service"
+    ],
+    "rationale": "Tests understanding of security architecture decisions and their regulatory motivation.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured data to identify which services handle PII and unstructured docs for the regulatory rationale."
+  },
+  {
+    "id": "Q021",
+    "question": "Why does the collections domain include both a negotiation-engine-service and a renegotiation-simulation-service?",
+    "expected_answer": "The negotiation-engine-service and renegotiation-simulation-service serve different purposes in the collections workflow. The negotiation-engine-service handles real-time negotiation with delinquent customers, applying business rules to determine acceptable payment terms and discount thresholds. The renegotiation-simulation-service allows customers or agents to explore hypothetical renegotiation scenarios (different terms, rates, or payment schedules) without committing, providing transparency and informed decision-making. Separating simulation from execution prevents accidental modifications to live contracts and allows the simulation logic to be more permissive in what it explores.",
+    "official_supporting_sources": [
+      "domains/collections/architecture.md",
+      "services/negotiation-engine-service/README.md",
+      "services/renegotiation-simulation-service/README.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "negotiation-engine-service",
+      "renegotiation-simulation-service"
+    ],
+    "rationale": "Tests understanding of the distinction between simulation and execution services in a domain.",
+    "best_suited_approach": "unstructured",
+    "justification": "The rationale for separating simulation from execution is captured in design documentation."
+  },
+  {
+    "id": "Q022",
+    "question": "What would happen if the ocr-worker experienced a prolonged outage?",
+    "expected_answer": "A prolonged ocr-worker outage would block the entire document processing pipeline. Uploaded documents would accumulate in the SQS queue as unprocessed items. Without OCR, the document-classifier-service cannot classify documents, and the document-validation-service cannot validate them. This would stall onboarding for new loan applications since required documents (identity, income proof, collateral documentation) could not be verified. The impact would cascade to credit analysis (which needs validated documents), appraisal (which needs collateral documentation), and ultimately delay disbursement. The backoffice-bff might need to provide a manual document entry workaround.",
+    "official_supporting_sources": [
+      "services/ocr-worker/README.md",
+      "domains/document-management/architecture.md",
+      "architecture/failure-modes.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "ocr-worker",
+      "document-classifier-service",
+      "document-validation-service",
+      "document-upload-service"
+    ],
+    "rationale": "Tests understanding of failure cascades in an event-driven pipeline.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured dependency graphs to trace the cascade and unstructured docs to understand the business impact."
+  },
+  {
+    "id": "Q023",
+    "question": "What is the impact of the credit-bureau-integration service being unavailable?",
+    "expected_answer": "If the credit-bureau-integration service (which connects to ServicosBureau) is unavailable, the credit analysis flow is blocked. The credit-scoring-engine cannot compute accurate credit scores without bureau data, and the income-verification-service may lose a key data source for cross-referencing declared income. This would prevent credit-decision-service from making approval decisions, effectively pausing all new loan originations. Existing loans in collections or renegotiation would not be affected since they already have historical credit data. The system might fall back to cached bureau data if available, but fresh applications would need to queue until the integration is restored.",
+    "official_supporting_sources": [
+      "services/credit-bureau-integration/README.md",
+      "domains/credit-analysis/architecture.md",
+      "architecture/failure-modes.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "credit-bureau-integration",
+      "credit-scoring-engine",
+      "income-verification-service",
+      "credit-decision-service"
+    ],
+    "rationale": "Tests understanding of critical external dependency failures and their blast radius.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured dependency analysis and unstructured documentation about fallback behavior and business impact."
+  },
+  {
+    "id": "Q024",
+    "question": "How would a Kong API Gateway failure affect CredityFlow's operations?",
+    "expected_answer": "A Kong API Gateway failure would block all external-facing traffic, making the customer-portal-bff and any public APIs inaccessible. Customers would be unable to submit applications, upload documents, sign contracts, or make payments through the portal. However, internal service-to-service communication via Istio service mesh would continue to function, meaning in-progress loan applications already in the pipeline could continue processing. The backoffice-bff might also be affected if it routes through Kong, impacting internal operations. Recovery would require restoring the gateway or routing traffic through a backup ingress.",
+    "official_supporting_sources": [
+      "platform/api-gateway/README.md",
+      "architecture/infrastructure.md",
+      "architecture/failure-modes.md"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "customer-portal-bff",
+      "backoffice-bff",
+      "auth-service"
+    ],
+    "rationale": "Tests understanding of the blast radius of a platform-level component failure.",
+    "best_suited_approach": "structured",
+    "justification": "Gateway routing configuration and service exposure are defined in structured infrastructure manifests and Kong configuration files."
+  },
+  {
+    "id": "Q025",
+    "question": "What would be the impact of losing the Redis cache cluster?",
+    "expected_answer": "Losing the Redis cache cluster would cause a performance degradation across multiple services but would not cause a complete outage if services implement cache-miss fallbacks. The eligibility-service would need to fetch product rules from the database on every request, increasing latency. The feature-flag-service would need to query LaunchDarkly directly for every flag evaluation, increasing external API costs and latency. The customer-portal-bff would lose session caching, potentially requiring re-authentication. The credit-policy-service would experience slower policy lookups. Overall, the system would remain functional but with significantly higher database and external API load.",
+    "official_supporting_sources": [
+      "architecture/infrastructure.md",
+      "architecture/failure-modes.md"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "eligibility-service",
+      "feature-flag-service",
+      "customer-portal-bff",
+      "credit-policy-service"
+    ],
+    "rationale": "Tests understanding of cache as a non-critical but performance-important infrastructure component.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured data about which services depend on Redis and unstructured docs about fallback behavior."
+  },
+  {
+    "id": "Q026",
+    "question": "What happens if the digital-signature-service integration with DocuSign-BR fails during contract signing?",
+    "expected_answer": "If the digital-signature-service integration with DocuSign-BR fails during contract signing, the contract workflow stalls at the signing step. Since the Saga pattern governs the contract-registry-disbursement flow, the registry-orchestrator-service will not initiate lien registration without a signed contract, and disbursement-service will not release funds. The customer would need to retry the signing process once the integration is restored. The contract-generation-service output remains valid and does not need regeneration. The notification-service would alert the customer about the signing failure, and the case-management-service in backoffice would create a case for manual follow-up if the failure persists.",
+    "official_supporting_sources": [
+      "services/digital-signature-service/README.md",
+      "architecture/patterns/saga.md",
+      "domains/contract/architecture.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "digital-signature-service",
+      "registry-orchestrator-service",
+      "disbursement-service",
+      "contract-generation-service"
+    ],
+    "rationale": "Tests understanding of Saga pattern behavior when a step fails at an external integration point.",
+    "best_suited_approach": "both",
+    "justification": "Requires knowledge of the Saga pattern from architecture docs and structured dependency information."
+  },
+  {
+    "id": "Q027",
+    "question": "How would a bug in the fraud-scoring-service that inflates risk scores affect CredityFlow's business?",
+    "expected_answer": "A bug that inflates risk scores in the fraud-scoring-service would cause the fraud-decision-service to reject or flag for review a higher percentage of legitimate applications, significantly increasing false positive rates. This would reduce loan approval throughput, harm customer experience, and increase backoffice workload as more cases are routed to manual fraud review via the case-management-service. Revenue would be impacted by delayed or lost approvals. The feature-flag-service could be used to quickly disable the faulty scoring model or route to a fallback model. Detection would likely come through Datadog observability alerts showing anomalous rejection rates.",
+    "official_supporting_sources": [
+      "services/fraud-scoring-service/README.md",
+      "domains/fraud-prevention/architecture.md",
+      "architecture/observability.md"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "fraud-decision-service",
+      "case-management-service",
+      "feature-flag-service"
+    ],
+    "rationale": "Tests understanding of business impact from a subtle service bug rather than a complete outage.",
+    "best_suited_approach": "structured",
+    "justification": "Fraud scoring dependencies and downstream consumers can be traced through structured event and dependency metadata."
+  },
+  {
+    "id": "Q028",
+    "question": "What would be the downstream impact if the payment-confirmation-service stops processing bank transfer confirmations?",
+    "expected_answer": "If payment-confirmation-service stops processing confirmations from BancoParceiro, the billing-service would not record incoming payments, causing customer accounts to appear delinquent even when they have paid. This would trigger false dunning-service notifications, potentially escalating to collections-contact-service outreach and even legal-collections-service actions against paying customers. The customer-portal-bff would show incorrect outstanding balances. This is a high-severity issue that could cause regulatory and reputational damage. The audit-service logs would help reconcile payments once the service is restored.",
+    "official_supporting_sources": [
+      "services/payment-confirmation-service/README.md",
+      "domains/disbursement/architecture.md",
+      "domains/collections/architecture.md"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "payment-confirmation-service",
+      "billing-service",
+      "dunning-service",
+      "collections-contact-service"
+    ],
+    "rationale": "Tests understanding of cascading business impact across the collections and billing domains.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured dependency knowledge and unstructured understanding of business processes and their consequences."
+  },
+  {
+    "id": "Q029",
+    "question": "Which services in the platform domain are shared across all product lines?",
+    "expected_answer": "The platform domain services shared across all product lines include: auth-service (authentication and authorization for all users), feature-flag-service (feature toggle management for all services), notification-service and notification-template-service (customer communications for all products), audit-service (compliance logging for all operations), customer-portal-bff (customer-facing interface for all products), and backoffice-bff (internal operations interface for all products). These services are product-agnostic and support AutoCredit, HomeEquity, AutoRefi, HomeRefi, TopUp, and Renegotiation equally.",
+    "official_supporting_sources": [
+      "domains/platform/architecture.md",
+      "services/auth-service/service.yaml",
+      "services/feature-flag-service/service.yaml"
+    ],
+    "category": "discovery",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "auth-service",
+      "feature-flag-service",
+      "notification-service",
+      "audit-service",
+      "customer-portal-bff",
+      "backoffice-bff"
+    ],
+    "rationale": "Tests the ability to identify cross-cutting platform services from the service catalog.",
+    "best_suited_approach": "structured",
+    "justification": "Platform service identification can be done through structured metadata queries on domain and service catalogs."
+  },
+  {
+    "id": "Q030",
+    "question": "Which services interact with external third-party APIs?",
+    "expected_answer": "Services that interact with external third-party APIs include: credit-bureau-integration (ServicosBureau), fraud-bureau-integration (ClearCheck), digital-signature-service (DocuSign-BR), detran-integration-service (DETRAN-API), cartorio-integration-service (Cartorio-Digital), bank-transfer-integration (BancoParceiro), vehicle-appraisal-service (FIPE-API), and property-appraisal-service (InspecaoExpress). These eight integration services encapsulate all external dependencies behind internal service boundaries.",
+    "official_supporting_sources": [
+      "integrations/external-partners.yaml",
+      "architecture/integrations.md"
+    ],
+    "category": "discovery",
+    "difficulty": "medium",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "credit-bureau-integration",
+      "fraud-bureau-integration",
+      "digital-signature-service",
+      "detran-integration-service",
+      "cartorio-integration-service",
+      "bank-transfer-integration",
+      "vehicle-appraisal-service",
+      "property-appraisal-service"
+    ],
+    "rationale": "Tests comprehensive discovery of all external integration points in the architecture.",
+    "best_suited_approach": "structured",
+    "justification": "External integrations are declared in structured service metadata and can be systematically discovered."
+  },
+  {
+    "id": "Q031",
+    "question": "Which services process asynchronous workloads using SQS queues?",
+    "expected_answer": "Services that process asynchronous workloads using SQS queues include: ocr-worker (processes uploaded documents asynchronously), liveness-worker (processes biometric liveness checks asynchronously), fraud-scoring-service (processes fraud checks in the background), credit-scoring-engine (runs ML scoring models asynchronously), notification-service (sends notifications asynchronously), dunning-service (processes payment reminders in batches), and registry-tracker-service (polls for registry status updates). These services use SQS to decouple from their producers and handle variable load through queue-based scaling.",
+    "official_supporting_sources": [
+      "architecture/messaging.md",
+      "services/ocr-worker/service.yaml",
+      "services/liveness-worker/service.yaml"
+    ],
+    "category": "discovery",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "ocr-worker",
+      "liveness-worker",
+      "fraud-scoring-service",
+      "credit-scoring-engine",
+      "notification-service"
+    ],
+    "rationale": "Tests discovery of services using a specific infrastructure pattern across the architecture.",
+    "best_suited_approach": "structured",
+    "justification": "Queue dependencies are declared in structured service configurations and infrastructure manifests."
+  },
+  {
+    "id": "Q032",
+    "question": "Which services are owned by team-credit?",
+    "expected_answer": "Team-credit owns four services in the credit analysis domain: credit-bureau-integration (handles communication with ServicosBureau), income-verification-service (verifies and cross-references customer income data), credit-scoring-engine (runs ML models to compute credit risk scores), credit-policy-service (manages and evaluates credit policy rules), and credit-decision-service (makes final credit approval or denial decisions based on scores and policies).",
+    "official_supporting_sources": [
+      "teams/team-credit/ownership.yaml",
+      "domains/credit-analysis/architecture.md"
+    ],
+    "category": "discovery",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "credit-bureau-integration",
+      "income-verification-service",
+      "credit-scoring-engine",
+      "credit-policy-service",
+      "credit-decision-service"
+    ],
+    "rationale": "Tests basic discovery of team ownership across services.",
+    "best_suited_approach": "structured",
+    "justification": "Team ownership is stored in structured metadata and service catalogs."
+  },
+  {
+    "id": "Q033",
+    "question": "Which services would need to be modified to add a new loan product type (e.g., personal unsecured loans)?",
+    "expected_answer": "Adding a new unsecured loan product would require modifications to: eligibility-service (new eligibility rules), proposal-service (new product type support), credit-policy-service (new credit policies for unsecured lending), credit-scoring-engine (adjusted risk models without collateral), credit-decision-service (updated decision rules), contract-generation-service (new contract templates), billing-service (new payment schedules), and customer-portal-bff (new product flow). The appraisal domain services could be skipped since there is no collateral, and registry services would also not be needed. The feature-flag-service could gate the rollout.",
+    "official_supporting_sources": [
+      "architecture/overview.md",
+      "domains/onboarding/architecture.md",
+      "domains/credit-analysis/architecture.md"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "eligibility-service",
+      "proposal-service",
+      "credit-policy-service",
+      "credit-scoring-engine",
+      "contract-generation-service"
+    ],
+    "rationale": "Tests the ability to reason about which services are product-aware and would need changes for a new product type.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured service metadata to identify product-aware services and unstructured docs to understand product coupling."
+  },
+  {
+    "id": "Q034",
+    "question": "Which services have dependencies on both PostgreSQL and MongoDB?",
+    "expected_answer": "Most services at CredityFlow use either PostgreSQL (for transactional data) or MongoDB (for document-oriented data), but some may use both. The proposal-service likely uses PostgreSQL for structured proposal data and may reference MongoDB-stored documents via the document-store-service. The backoffice-bff may aggregate data from both PostgreSQL-backed services and MongoDB-backed document stores. The audit-service uses Elasticsearch rather than either database. Generally, CredityFlow follows the principle of each service owning its own datastore, minimizing dual-database dependencies.",
+    "official_supporting_sources": [
+      "architecture/infrastructure.md",
+      "architecture/data-architecture.md"
+    ],
+    "category": "discovery",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "proposal-service",
+      "document-store-service",
+      "backoffice-bff"
+    ],
+    "rationale": "Tests the ability to discover cross-cutting infrastructure patterns across services.",
+    "best_suited_approach": "structured",
+    "justification": "Database dependencies are declared in structured service manifests and infrastructure configuration."
+  },
+  {
+    "id": "Q035",
+    "question": "How does CredityFlow handle a customer who wants to refinance their auto loan?",
+    "expected_answer": "For an AutoRefi (auto refinance) application, the flow begins similarly to a new loan: the lead-intake-service captures the refinance request, and the eligibility-service checks if the customer qualifies for refinancing based on their existing loan history and current terms. The customer-service retrieves existing customer data to avoid redundant onboarding. The vehicle-appraisal-service re-evaluates the vehicle's current market value via FIPE-API since the collateral value may have changed. The credit-scoring-engine runs an updated credit assessment, and if approved, the contract-generation-service creates a new contract that supersedes the original. The existing lien is updated through the detran-integration-service.",
+    "official_supporting_sources": [
+      "domains/onboarding/architecture.md",
+      "products/auto-refi/flow.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "medium",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "lead-intake-service",
+      "eligibility-service",
+      "customer-service",
+      "vehicle-appraisal-service",
+      "credit-scoring-engine",
+      "contract-generation-service"
+    ],
+    "rationale": "Tests understanding of a specific product flow that reuses many services but with product-specific logic.",
+    "best_suited_approach": "structured",
+    "justification": "Product flow configurations and service involvement per product type are defined in structured product manifests and service metadata."
+  },
+  {
+    "id": "Q036",
+    "question": "How does CredityFlow ensure compliance with financial regulations across its services?",
+    "expected_answer": "CredityFlow ensures compliance through multiple mechanisms distributed across the architecture. The compliance-check-service validates contracts against regulatory requirements before signing. The audit-service logs all significant operations to Elasticsearch for regulatory reporting and investigation. PII encryption at rest and in transit ensures LGPD compliance. The credit-policy-service enforces lending regulations through configurable policy rules. The document-validation-service ensures required regulatory documents are collected and valid. The notification-service ensures required disclosures are communicated to customers. The feature-flag-service allows quick disabling of features that may have compliance issues.",
+    "official_supporting_sources": [
+      "architecture/security/compliance.md",
+      "services/compliance-check-service/README.md",
+      "services/audit-service/README.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "compliance-check-service",
+      "audit-service",
+      "credit-policy-service",
+      "document-validation-service"
+    ],
+    "rationale": "Tests understanding of a cross-cutting concern that spans many services and domains.",
+    "best_suited_approach": "unstructured",
+    "justification": "Compliance is a cross-cutting concern best understood through narrative documentation about policies and architectural decisions."
+  },
+  {
+    "id": "Q037",
+    "question": "What happens when a customer disputes a collections action on their account?",
+    "expected_answer": "When a customer disputes a collections action, the process likely involves multiple services. The customer-portal-bff or collections-contact-service would receive the dispute. The case-management-service in backoffice would create a dispute case for review. The audit-service would be queried to retrieve the full history of the account's collections actions (dunning-service notifications, collections-contact-service outreach attempts). The billing-service records would be reviewed to verify payment history, and the payment-confirmation-service logs could reveal missed payment confirmations. If the dispute is valid, the negotiation-engine-service might adjust terms, and the legal-collections-service would pause any legal proceedings.",
+    "official_supporting_sources": [
+      "domains/collections/architecture.md",
+      "services/case-management-service/README.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "case-management-service",
+      "collections-contact-service",
+      "audit-service",
+      "billing-service",
+      "legal-collections-service"
+    ],
+    "rationale": "Tests understanding of an edge case that requires coordination across collections and backoffice domains.",
+    "best_suited_approach": "unstructured",
+    "justification": "Dispute handling processes are described in operational documentation and process guides rather than structured metadata."
+  },
+  {
+    "id": "Q038",
+    "question": "How does CredityFlow handle partial document submissions during onboarding?",
+    "expected_answer": "When a customer submits documents partially during onboarding, the document-upload-service accepts each document independently and the document-store-service tracks which required documents have been received versus which are still pending. The document-validation-service validates each document as it arrives. The proposal-service maintains the overall application state and tracks document completeness. The customer-portal-bff displays which documents are still needed, and the notification-service can send reminders for missing documents. The application only progresses to credit analysis once all required documents are validated. The backoffice-bff allows agents to view partially complete applications and follow up with customers.",
+    "official_supporting_sources": [
+      "domains/document-management/architecture.md",
+      "domains/onboarding/architecture.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "easy",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "document-upload-service",
+      "document-store-service",
+      "document-validation-service",
+      "proposal-service",
+      "customer-portal-bff"
+    ],
+    "rationale": "Tests understanding of an operational scenario that involves state management across services.",
+    "best_suited_approach": "unstructured",
+    "justification": "Partial submission handling logic and customer experience flows are described in design documentation."
+  },
+  {
+    "id": "Q039",
+    "question": "What monitoring and observability tools does CredityFlow use and how are alerts configured?",
+    "expected_answer": "CredityFlow uses Datadog as its primary observability platform, covering metrics, traces, and logs across all services running on AWS EKS. Istio service mesh provides automatic distributed tracing for inter-service communication. Elasticsearch stores audit logs for compliance-specific querying. Alerts are likely configured in Datadog for key SLIs such as error rates, latency percentiles, queue depths (SQS), and external integration availability. Critical alerts would cover the Saga flow (contract-registry-disbursement), external API failures (ServicosBureau, ClearCheck, DETRAN-API, BancoParceiro), and fraud scoring anomalies.",
+    "official_supporting_sources": [
+      "architecture/observability.md",
+      "platform/monitoring/README.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "easy",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "audit-service"
+    ],
+    "rationale": "Tests understanding of the observability stack and its application across the architecture.",
+    "best_suited_approach": "unstructured",
+    "justification": "Observability strategy and alert configuration are described in operational documentation."
+  },
+  {
+    "id": "Q040",
+    "question": "How does the renegotiation-eligibility-service determine if a delinquent customer can renegotiate?",
+    "expected_answer": "The renegotiation-eligibility-service evaluates whether a delinquent customer qualifies for renegotiation based on multiple criteria. It checks the customer's payment history via the billing-service, the current outstanding balance, the number of days past due from the dunning-service records, and whether the customer has previously renegotiated (to limit repeated renegotiations). It may also query the credit-bureau-integration for updated credit data and check the collateral's current value via the appraisal domain. Eligible customers are then routed to the renegotiation-simulation-service where they can explore new payment terms before committing through the negotiation-engine-service.",
+    "official_supporting_sources": [
+      "services/renegotiation-eligibility-service/README.md",
+      "domains/collections/architecture.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "renegotiation-eligibility-service",
+      "billing-service",
+      "renegotiation-simulation-service",
+      "negotiation-engine-service"
+    ],
+    "rationale": "Tests understanding of eligibility determination logic in the collections domain.",
+    "best_suited_approach": "both",
+    "justification": "Requires structured data about service dependencies and unstructured documentation about the business rules for eligibility."
+  }
+]

@@ -1,0 +1,143 @@
+service_id: svc-49
+service_name: notification-service
+domain: Notifications
+subdomain: Delivery
+owner_team: team-notifications
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Multi-channel notification delivery service responsible for sending emails,
+  SMS messages, push notifications, and WhatsApp messages to customers.
+  Consumes domain events from across the platform, resolves the appropriate
+  template, renders it, and dispatches through the correct channel provider.
+business_objective: >
+  Keep customers informed at every stage of the credit lifecycle through
+  timely, reliable, multi-channel notifications while maintaining delivery
+  tracking and retry capabilities.
+
+responsibilities:
+  - Consume domain events and determine which notifications to send
+  - Resolve customer contact preferences and channel eligibility
+  - Request template rendering from notification-template-service
+  - Dispatch messages via email (SES), SMS (SNS), push (Firebase), and WhatsApp (Twilio)
+  - Track delivery status and manage retries for failed deliveries
+  - Enforce rate limiting and quiet-hours policies
+
+entities:
+  - name: Notification
+    description: >
+      Represents a single notification intent.  Contains the recipient, channel,
+      template reference, rendered content, and current delivery status
+      (pending, sent, delivered, failed, retrying).
+  - name: DeliveryRecord
+    description: >
+      Tracks each delivery attempt for a notification, including provider
+      response, timestamp, and failure reason if applicable.
+  - name: NotificationChannel
+    description: >
+      Enumeration of supported channels (EMAIL, SMS, PUSH, WHATSAPP) with
+      associated provider configuration and rate-limit settings.
+
+apis:
+  - method: POST
+    path: /api/v1/notifications/send
+    description: >
+      Triggers a notification send.  Accepts recipient, channel, template ID,
+      and template variables.  Can also be invoked internally by event handlers.
+  - method: GET
+    path: /api/v1/notifications/{id}/status
+    description: Returns the current delivery status and attempt history for a notification.
+
+events:
+  publishes:
+    - notification_requested
+    - notification_sent
+  consumes:
+    - lead_created
+    - proposal_started
+    - documents_requested
+    - documents_uploaded
+    - biometrics_requested
+    - biometrics_validated
+    - fraud_decision_made
+    - credit_decision_made
+    - contract_generation_requested
+    - contract_signed
+    - registry_requested
+    - disbursement_requested
+    - disbursement_done
+    - installment_due
+    - overdue_installment
+    - dunning_started
+    - collections_contact_attempted
+    - legal_action_started
+    - renegotiation_requested
+    - renegotiation_simulated
+    - negotiation_offered
+    - case_created
+    - case_resolved
+    - notification_requested
+    - signature_requested
+
+databases:
+  - name: notification_db
+    type: PostgreSQL
+    purpose: >
+      Stores notification records, delivery attempts, channel configuration,
+      and customer notification preferences.  Supports queries for delivery
+      reporting and retry scheduling.
+
+dependencies:
+  - service_name: notification-template-service
+    type: synchronous
+    purpose: Fetch and render notification templates with variable substitution.
+  - service_name: customer-service
+    type: synchronous
+    purpose: Resolve customer contact details and notification preferences.
+
+flows:
+  - name: Event-Driven Notification
+    description: A domain event triggers an automated customer notification.
+    steps:
+      - A domain event (e.g., disbursement_done) arrives on the message bus.
+      - The event handler maps the event to a notification type and template ID.
+      - Customer contact details and channel preferences are fetched from customer-service.
+      - The template is rendered via notification-template-service.
+      - The rendered message is dispatched through the selected channel provider.
+      - A DeliveryRecord is created and a notification_sent event is published.
+  - name: Retry Flow
+    description: Failed deliveries are retried with exponential backoff.
+    steps:
+      - A delivery attempt fails (provider error or timeout).
+      - The DeliveryRecord is updated with the failure reason.
+      - The notification is scheduled for retry with exponential backoff (max 3 retries).
+      - On retry exhaustion the notification is marked as permanently failed and an alert fires.
+
+observability:
+  metrics:
+    - notifications_sent_total (counter, by channel and event type)
+    - notifications_failed_total (counter, by channel and failure reason)
+    - notification_delivery_duration_seconds (histogram, by channel)
+    - notification_retry_count (histogram)
+    - notification_queue_depth (gauge)
+  alerts:
+    - "Delivery failure rate > 5 % on any channel for 5 min"
+    - "Notification queue depth > 10 000 for 10 min (backpressure)"
+    - "SES/SNS/Twilio provider error rate > 2 % for 3 min"
+    - "Retry exhaustion rate > 1 % for 15 min"
+  dashboards:
+    - Notification Delivery (volume, success rate, latency by channel)
+    - Provider Health (SES, SNS, Firebase, Twilio error rates and latency)
+    - Retry & Failure Analysis (retry distribution, permanent failure breakdown)
+
+risks_and_limitations:
+  - Contains PII (customer contact details and notification content).
+  - Provider outages (SES, SNS, Twilio, Firebase) directly impact delivery; circuit breakers and fallback channels are partially implemented.
+  - High event volume during batch billing cycles can cause queue saturation.
+  - WhatsApp channel requires pre-approved message templates; ad-hoc messages are not supported.
+  - Quiet-hours enforcement depends on accurate customer timezone data from customer-service.
+
+related_documents:
+  - "ADR-049: Multi-channel notification architecture"
+  - "OPS-012: Notification retry and dead-letter policy"
+  - "SEC-018: PII in notification payloads"
+  - "COMP-005: Opt-out and consent tracking for notifications"

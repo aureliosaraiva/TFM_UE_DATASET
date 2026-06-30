@@ -1,0 +1,118 @@
+service_id: svc-25
+service_name: property-appraisal-service
+domain: Appraisal
+subdomain: Property Valuation
+owner_team: team-appraisal
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Values real estate properties offered as loan collateral through a combination of
+  automated market comparable analysis and physical inspection results obtained from
+  the InspecaoExpress partner. Produces a defensible property valuation for LTV calculation.
+business_objective: >
+  Deliver reliable property valuations that comply with Central Bank of Brazil appraisal
+  standards, protecting the institution against collateral risk while enabling competitive
+  home-equity loan products.
+
+responsibilities:
+  - Consume appraisal_requested events for PROPERTY collateral type
+  - Perform automated market comparable analysis using internal property data
+  - Schedule and track physical inspections via InspecaoExpress integration
+  - Combine market analysis and inspection results into a final valuation
+  - Persist all valuation data and inspection records
+  - Publish property_appraised events upon completion
+
+entities:
+  - name: PropertyValuation
+    description: >
+      The final appraised value of a property, including market comparable value,
+      inspection-adjusted value, confidence level, and valuation methodology notes.
+  - name: InspectionSchedule
+    description: >
+      Tracks the scheduling and completion of physical property inspections via
+      InspecaoExpress: scheduled date, inspector assignment, and completion status.
+  - name: MarketComparable
+    description: >
+      A comparable property used in the market analysis: address, sale price, sale
+      date, property characteristics, and similarity score to the target property.
+
+apis:
+  - method: POST
+    path: /api/v1/properties/appraise
+    description: >
+      Initiates property appraisal for a proposal. Accepts property details
+      (address, type, area) and begins the valuation process.
+  - method: GET
+    path: /api/v1/properties/{id}/valuation
+    description: >
+      Returns the current valuation status and results for a property appraisal.
+
+events:
+  publishes:
+    - name: property_appraised
+      description: >
+        Emitted when the property valuation is finalised. Payload includes
+        proposal_id, property_id, appraised_value, methodology, and confidence.
+  consumes:
+    - name: appraisal_requested
+      description: >
+        Triggers property appraisal when the collateral type is PROPERTY.
+
+databases:
+  - name: appraisal_db
+    type: PostgreSQL
+    purpose: >
+      Stores PropertyValuations, InspectionSchedules, and MarketComparables.
+      Shared appraisal domain schema.
+
+dependencies:
+  - service_name: InspecaoExpress
+    type: external
+    purpose: >
+      Third-party property inspection partner. Schedules on-site inspections,
+      provides inspection reports with photos and condition assessments.
+  - service_name: appraisal-orchestrator-service
+    type: internal (event)
+    purpose: Source of appraisal_requested events for property collateral.
+
+flows:
+  - name: Property Valuation
+    description: End-to-end property appraisal combining market analysis and inspection.
+    steps:
+      - Receive appraisal_requested event with collateral_type = PROPERTY
+      - Extract property details (address, type, area, construction year)
+      - Query internal market data for comparable recent sales in the area
+      - Compute market comparable valuation using weighted average
+      - Schedule physical inspection via InspecaoExpress API
+      - Await inspection completion callback (webhook)
+      - Incorporate inspection findings into valuation adjustments
+      - Compute final appraised value with confidence level
+      - Persist PropertyValuation in appraisal_db
+      - Publish property_appraised event
+
+observability:
+  metrics:
+    - property_appraisal_total (counter) — appraisals by status
+    - property_appraisal_duration_hours (histogram) — end-to-end time (includes inspection)
+    - inspection_scheduling_duration_seconds (histogram) — time to schedule inspection
+    - inspecao_express_errors_total (counter) — integration errors
+    - market_comparables_found (histogram) — number of comparables per valuation
+  alerts:
+    - inspection_scheduling_failure — fires when scheduling errors exceed 3 % over 1 h
+    - appraisal_completion_delay — fires when average completion time exceeds 72 h
+    - low_comparable_coverage — fires when < 3 comparables found for > 20 % of valuations
+  dashboards:
+    - Property Appraisal Pipeline — volume, status funnel, completion times
+    - Inspection Tracking — scheduling rate, completion rate, partner SLA adherence
+    - Market Analysis Quality — comparable coverage, valuation confidence distribution
+
+risks_and_limitations:
+  - Physical inspections introduce multi-day latency into the appraisal process
+  - InspecaoExpress availability directly impacts appraisal completion times
+  - Market comparable accuracy depends on local transaction volume; rural areas may have few comparables
+  - Property valuations are more subjective than vehicle valuations; higher variance expected
+  - Regulatory requirements mandate physical inspection for home-equity loans above certain thresholds
+
+related_documents:
+  - docs/adr/adr-025-property-valuation-methodology.md
+  - docs/runbooks/property-appraisal-runbook.md
+  - docs/api-contracts/property-appraisal-openapi.yaml

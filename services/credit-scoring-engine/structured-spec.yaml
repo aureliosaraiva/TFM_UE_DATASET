@@ -1,0 +1,123 @@
+service_id: svc-20
+service_name: credit-scoring-engine
+domain: Credit Analysis
+subdomain: Risk Scoring
+owner_team: team-credit
+tech_stack: Python / FastAPI
+summary: >
+  Computes a credit risk score for each loan proposal using an XGBoost ML model.
+  Follows the CQRS pattern: the write side ingests events to build feature vectors,
+  while the read side exposes computed scores via REST.
+business_objective: >
+  Provide a quantitative, model-driven risk assessment that feeds into policy evaluation
+  and credit decisions. Enable continuous model improvement through feature engineering
+  and A/B testing of scoring models.
+
+responsibilities:
+  - Consume bureau, income, and fraud events to assemble feature vectors
+  - Run the XGBoost model to produce a numeric credit score (0-1000)
+  - Store scores and feature vectors in PostgreSQL for auditability
+  - Expose read-only REST endpoint for score retrieval
+  - Support model versioning and shadow scoring for new model candidates
+  - Publish credit_scored events for downstream policy evaluation
+
+entities:
+  - name: CreditScore
+    description: >
+      The computed risk score for a proposal, including the numeric value (0-1000),
+      model version used, computation timestamp, and contributing factor weights.
+  - name: ScoringModel
+    description: >
+      Metadata about a trained ML model: version identifier, training date, feature
+      list, and performance metrics (AUC, Gini) from validation.
+  - name: FeatureVector
+    description: >
+      The set of input features extracted from bureau data, income verification,
+      and fraud signals used as input to the scoring model.
+
+apis:
+  - method: GET
+    path: /api/v1/credit-scores/{proposal_id}
+    description: >
+      Returns the latest CreditScore for a proposal, including score value, model
+      version, and top contributing factors. Read-only endpoint (CQRS read side).
+
+events:
+  publishes:
+    - name: credit_check_started
+      description: >
+        Emitted when the scoring engine begins processing a proposal. Used for
+        pipeline observability and SLA tracking.
+    - name: credit_scored
+      description: >
+        Emitted when scoring completes. Payload includes proposal_id, score value,
+        model version, and risk tier (LOW/MEDIUM/HIGH/VERY_HIGH).
+  consumes:
+    - name: bureau_data_fetched
+      description: Provides bureau score and debt data for feature extraction.
+    - name: income_verified
+      description: Provides verified income amount and confidence for feature extraction.
+    - name: fraud_cleared
+      description: Provides fraud risk indicators for feature extraction.
+
+databases:
+  - name: credit_scores_db
+    type: PostgreSQL
+    purpose: >
+      Stores CreditScores, FeatureVectors, and ScoringModel metadata. Write side
+      appends new records; read side serves queries by proposal_id.
+
+dependencies:
+  - service_name: credit-bureau-integration
+    type: internal (event)
+    purpose: Source of bureau features consumed via bureau_data_fetched events.
+  - service_name: income-verification-service
+    type: internal (event)
+    purpose: Source of income features consumed via income_verified events.
+
+flows:
+  - name: Score Computation (CQRS Write Side)
+    description: Assembles features from events and computes the credit score.
+    steps:
+      - Consume bureau_data_fetched, income_verified, and fraud_cleared events
+      - Merge event payloads into a FeatureVector for the proposal
+      - Check if all required features are present (readiness gate)
+      - Load active ScoringModel weights
+      - Execute XGBoost prediction to produce raw score
+      - Map raw score to 0-1000 scale and assign risk tier
+      - Persist CreditScore and FeatureVector to credit_scores_db
+      - Publish credit_scored event
+  - name: Score Retrieval (CQRS Read Side)
+    description: Serves pre-computed scores via REST.
+    steps:
+      - Receive GET request with proposal_id
+      - Query credit_scores_db for latest score
+      - Return CreditScore with contributing factors
+
+observability:
+  metrics:
+    - credit_score_computed_total (counter) — scores produced, labelled by risk_tier
+    - credit_score_value (histogram) — distribution of computed scores
+    - scoring_latency_seconds (histogram) — time from feature readiness to score output
+    - feature_completeness_ratio (gauge) — percentage of proposals with all features ready
+    - model_prediction_errors_total (counter) — model inference failures
+  alerts:
+    - scoring_error_rate_high — fires when inference errors exceed 1 % over 5 min
+    - scoring_latency_p99_high — fires when p99 exceeds 2 s
+    - score_distribution_drift — fires when mean score shifts > 50 points week-over-week
+  dashboards:
+    - Credit Scoring Overview — volume, score distribution, latency
+    - Model Performance — AUC trends, score drift, feature importance
+    - Pipeline Health — feature completeness, event lag
+
+risks_and_limitations:
+  - Model accuracy degrades if input feature distributions shift (data drift)
+  - CQRS pattern introduces eventual consistency; score may not be immediately available after events
+  - XGBoost model is retrained offline; hot-swapping requires careful version management
+  - Financial data in feature vectors requires encryption and access control
+
+related_documents:
+  - docs/adr/adr-020-cqrs-scoring-pattern.md
+  - docs/adr/adr-020b-xgboost-model-selection.md
+  - docs/runbooks/credit-scoring-runbook.md
+  - docs/ml/model-training-pipeline.md

@@ -1,0 +1,139 @@
+service_id: svc-10
+service_name: biometrics-capture-service
+domain: CredityFlow
+subdomain: Biometrics
+owner_team: team-identity
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Orchestrates the biometric verification flow for loan applicants — selfie capture,
+  liveness detection, and face matching against ID documents. Acts as the entry point
+  and coordinator for the entire biometrics subdomain.
+
+business_objective: >
+  Ensure that the person applying for a secured loan is who they claim to be by
+  coordinating biometric checks (selfie, liveness, face match) in a reliable and
+  auditable pipeline. Reduce identity fraud while keeping the applicant experience
+  as frictionless as possible.
+
+responsibilities:
+  - Initiate biometric sessions when documents are submitted
+  - Receive and persist selfie capture results
+  - Coordinate the liveness and face-match verification pipeline
+  - Track biometric session status through the full lifecycle
+  - Publish events for each verification stage transition
+  - Serve session status to upstream consumers (proposal-service, customer-portal-bff)
+
+entities:
+  - name: BiometricSession
+    description: >
+      Represents the full biometric verification lifecycle for a single applicant.
+      Tracks state from INITIATED through CAPTURED, LIVENESS_CHECKED, FACE_MATCHED,
+      to VALIDATED or FAILED. Linked to a proposal and customer.
+  - name: CaptureResult
+    description: >
+      Holds the outcome of a selfie capture attempt including image reference (S3 key),
+      device metadata, capture quality score, and timestamp.
+
+apis:
+  - method: POST
+    path: /api/v1/biometrics/capture
+    description: >
+      Initiate a biometric capture session. Accepts selfie image data and device
+      metadata. Returns session ID and initial status.
+  - method: GET
+    path: /api/v1/biometrics/{id}/status
+    description: >
+      Query the current status of a biometric session. Returns stage, timestamps,
+      and outcome details when available.
+
+events:
+  publishes:
+    - event_name: biometrics_requested
+      description: >
+        Emitted when a new biometric session is created, typically triggered by
+        document submission. Signals downstream systems to expect a capture.
+    - event_name: biometrics_captured
+      description: >
+        Emitted when a selfie has been successfully captured and persisted.
+        Triggers liveness detection by liveness-worker.
+    - event_name: biometrics_validated
+      description: >
+        Emitted when the full biometric pipeline completes successfully (capture +
+        liveness + face match). Signals that identity verification is done.
+  consumes:
+    - event_name: documents_submitted
+      description: >
+        Triggers creation of a biometric session when an applicant's identity
+        documents have been uploaded and classified.
+    - event_name: face_match_completed
+      description: >
+        Received from face-match-service with the match result. Used to transition
+        the session to its final VALIDATED or FAILED state.
+
+databases:
+  - name: biometrics_db
+    type: PostgreSQL
+    purpose: >
+      Stores biometric sessions, capture results, and audit trail of verification
+      state transitions. Image binaries are NOT stored here — only S3 references.
+
+dependencies:
+  - service_name: document-store-service
+    type: sync-rest
+    purpose: Retrieves document image references for the face-match comparison step.
+  - service_name: customer-service
+    type: sync-rest
+    purpose: Fetches customer identity data to associate with the biometric session.
+
+flows:
+  - name: Biometric Capture Flow
+    description: Full lifecycle from document submission to biometric validation.
+    steps:
+      - Receive documents_submitted event containing proposal and customer IDs
+      - Create a new BiometricSession in INITIATED state
+      - Publish biometrics_requested event
+      - Receive selfie capture via POST /api/v1/biometrics/capture
+      - Persist CaptureResult with image reference and quality metadata
+      - Transition session to CAPTURED state
+      - Publish biometrics_captured event (consumed by liveness-worker)
+      - Await liveness_verified event (from liveness-worker, via face-match-service)
+      - Receive face_match_completed event with match result
+      - Transition session to VALIDATED or FAILED
+      - Publish biometrics_validated event if successful
+  - name: Session Status Query
+    description: Allows upstream services to poll session progress.
+    steps:
+      - Client sends GET /api/v1/biometrics/{id}/status
+      - Service queries biometrics_db for session and capture details
+      - Returns current stage, timestamps, and outcome
+
+observability:
+  metrics:
+    - biometric_sessions_created_total (counter, by trigger_source)
+    - biometric_captures_total (counter, by status)
+    - biometric_session_duration_seconds (histogram, from INITIATED to VALIDATED)
+    - biometric_validation_success_rate (gauge)
+  alerts:
+    - Biometric validation failure rate exceeds 20% over 10 minutes
+    - biometrics_db connection pool saturation above 80%
+    - Session stuck in CAPTURED state for more than 5 minutes (liveness pipeline stall)
+  dashboards:
+    - Biometrics Pipeline Overview (sessions by stage, conversion funnel, latency)
+    - Capture Quality Metrics (quality scores distribution, device breakdown)
+
+risks_and_limitations:
+  - Contains PII (biometric data) — subject to LGPD regulations; requires encryption at rest and strict access controls
+  - Selfie image references point to S3; if S3 objects are deleted or moved, sessions become unrecoverable
+  - Session state machine has no built-in timeout; stale sessions require a separate cleanup job
+  - Liveness and face-match steps are asynchronous; end-to-end latency depends on downstream worker throughput
+  - No retry mechanism for failed face_match_completed events; manual intervention required
+
+related_documents:
+  - Biometrics Domain Architecture Overview
+  - PII and Biometric Data Handling Policy
+  - Biometrics Capture API Contract (OpenAPI)
+  - LGPD Compliance Checklist for Identity Services

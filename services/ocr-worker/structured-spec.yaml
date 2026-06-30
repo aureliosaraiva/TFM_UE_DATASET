@@ -1,0 +1,99 @@
+service_id: svc-04
+service_name: ocr-worker
+domain: Document Management
+subdomain: Document Processing
+owner_team: team-documents
+summary: >
+  Background worker that extracts text from uploaded documents using Tesseract
+  OCR and custom-trained ML models. Stateless processor with no database.
+business_objective: >
+  Automate text extraction from identity documents and financial proofs,
+  reducing manual data entry and accelerating the document verification
+  pipeline for loan proposals.
+responsibilities:
+  - Consume documents_uploaded events and fetch files from S3
+  - Run OCR extraction using Tesseract for printed text
+  - Apply custom ML models for handwritten text and structured fields
+  - Extract key fields (name, CPF, dates, amounts) with confidence scores
+  - Forward extraction results to the classification pipeline
+  - Handle retries for low-confidence extractions
+
+entities:
+  - name: OCRResult
+    description: >
+      Contains the full extracted text, structured field extractions with
+      confidence scores, processing duration, and engine version used.
+  - name: ExtractionField
+    description: >
+      A single extracted data point (e.g., cpf_number, holder_name, expiry_date)
+      with its value, bounding box coordinates, and confidence score (0-1).
+
+apis: []
+
+events:
+  publishes:
+    - event_name: ocr_completed
+      description: >
+        Emitted after successful text extraction. Payload includes document_id,
+        extracted fields, confidence scores, and processing metadata.
+    - event_name: ocr_failed
+      description: >
+        Emitted when extraction fails after all retry attempts. Includes
+        document_id and failure reason.
+  consumes:
+    - event_name: documents_uploaded
+      description: >
+        Triggers OCR processing. Payload contains document_id and S3 key
+        for fetching the file.
+
+databases: []
+
+dependencies:
+  - service_name: document-upload-service
+    type: async
+    purpose: Receives documents_uploaded events; reads files from shared S3 bucket.
+
+flows:
+  - name: OCR Processing
+    description: Extract text from a newly uploaded document.
+    steps:
+      - Receive documents_uploaded event from SQS
+      - Download file from S3 using the provided key
+      - Pre-process image (deskew, contrast enhancement, noise reduction)
+      - Run Tesseract OCR for full-text extraction
+      - Apply custom model for structured field extraction
+      - Calculate confidence scores per field
+      - Publish ocr_completed event with results
+  - name: Failed Extraction
+    description: Handle documents that cannot be processed.
+    steps:
+      - Detect extraction failure or all confidence scores below threshold
+      - Retry up to 3 times with different pre-processing parameters
+      - If all retries fail, publish ocr_failed event
+
+observability:
+  metrics:
+    - ocr_documents_processed_total (counter, by result_status)
+    - ocr_processing_duration_seconds (histogram)
+    - ocr_field_confidence_score (histogram, by field_name)
+    - ocr_retry_total (counter)
+    - sqs_messages_in_flight (gauge)
+  alerts:
+    - OCR failure rate > 10% in rolling 1h window
+    - Processing latency p95 > 30 seconds
+    - SQS queue depth growing for > 15 min (processing backlog)
+    - Worker pod crash loop detected
+  dashboards:
+    - OCR Worker Health (throughput, latency, error rate)
+    - Extraction Quality (confidence score distribution by document type)
+
+risks_and_limitations:
+  - CPU/memory intensive; requires dedicated node pool or resource limits
+  - Tesseract accuracy degrades on low-quality scans and photos
+  - Custom models need periodic retraining as document formats change
+  - No persistent state; if a message is lost, the document must be re-uploaded
+  - Currently single-language (Portuguese) only
+
+related_documents:
+  - README.md
+  - architecture.md

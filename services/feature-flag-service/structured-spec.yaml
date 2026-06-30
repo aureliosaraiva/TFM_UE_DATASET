@@ -1,0 +1,112 @@
+service_id: svc-52
+service_name: feature-flag-service
+domain: Platform
+subdomain: Feature Management
+owner_team: team-platform
+tech_stack: Go / Gin
+summary: >
+  Lightweight feature flag evaluation service that proxies LaunchDarkly with a
+  local Redis cache.  Provides low-latency flag resolution for all CredityFlow
+  services and supports local overrides for testing and progressive rollouts.
+business_objective: >
+  Enable safe, incremental feature rollouts and instant kill-switches across
+  the platform without requiring code deployments, reducing the blast radius
+  of new feature releases.
+
+responsibilities:
+  - Evaluate feature flags for a given context (user, service, environment)
+  - Cache flag definitions locally in Redis for sub-millisecond reads
+  - Proxy flag updates from LaunchDarkly and refresh the local cache
+  - Support local overrides for testing and environment-specific configuration
+  - Expose a simple REST API consumed by all services
+
+entities:
+  - name: FeatureFlag
+    description: >
+      Represents a flag with a unique key, description, default value, and
+      current evaluation state.  Flags can be boolean, string, numeric, or JSON.
+  - name: FlagVariant
+    description: >
+      A possible value for a multi-variate flag (e.g., "control", "variant_a",
+      "variant_b") used in percentage-based rollouts.
+  - name: TargetingRule
+    description: >
+      Defines conditions under which a specific variant is served (e.g., user
+      in beta group, service == "proposal-service", region == "us-east-1").
+
+apis:
+  - method: GET
+    path: /api/v1/flags/{flag_key}
+    description: >
+      Evaluates a single flag for the given context (passed as query parameters
+      or headers) and returns the resolved variant.
+  - method: GET
+    path: /api/v1/flags
+    description: Returns all flag definitions with their current default values.
+  - method: PUT
+    path: /api/v1/flags/{flag_key}/override
+    description: >
+      Sets a local override for a flag, bypassing LaunchDarkly.  Used for
+      testing and emergency kill-switches.
+
+events:
+  publishes: []
+  consumes: []
+
+databases:
+  - name: feature_flags_cache
+    type: Redis
+    purpose: >
+      Caches flag definitions and targeting rules synced from LaunchDarkly.
+      Provides sub-millisecond flag evaluation even when LaunchDarkly is
+      unreachable.
+
+dependencies: []
+
+flows:
+  - name: Flag Evaluation
+    description: A service evaluates a feature flag at runtime.
+    steps:
+      - Service calls GET /api/v1/flags/{flag_key} with context parameters.
+      - feature-flag-service checks Redis for the cached flag definition.
+      - Targeting rules are evaluated against the provided context.
+      - The resolved variant is returned (with cache-control headers for client-side caching).
+  - name: Cache Sync
+    description: Flag definitions are synced from LaunchDarkly to the local cache.
+    steps:
+      - A background goroutine polls LaunchDarkly's streaming API for flag updates.
+      - On change, the updated flag definition is written to Redis.
+      - A cache-invalidation signal is broadcast to all service instances via Redis pub/sub.
+  - name: Local Override
+    description: An engineer sets a temporary local override for testing.
+    steps:
+      - Engineer calls PUT /api/v1/flags/{flag_key}/override with the desired value.
+      - The override is stored in Redis with a TTL and takes precedence over LaunchDarkly.
+      - On TTL expiry (or manual removal) the flag reverts to its LaunchDarkly value.
+
+observability:
+  metrics:
+    - flag_evaluations_total (counter, by flag key)
+    - flag_evaluation_duration_ms (histogram)
+    - flag_cache_hit_rate (gauge)
+    - flag_sync_lag_seconds (gauge)
+    - flag_overrides_active (gauge)
+  alerts:
+    - "Cache hit rate < 95 % for 5 min (possible sync failure)"
+    - "LaunchDarkly sync lag > 60 s"
+    - "Flag evaluation P99 > 10 ms"
+  dashboards:
+    - Feature Flag Service Health (evaluation volume, latency, cache hit rate)
+    - Flag Inventory (active flags, overrides, targeting rule count)
+
+risks_and_limitations:
+  - No PII or financial data; flags contain only feature configuration.
+  - Only Go service in the ecosystem; team must maintain Go expertise or consider migration.
+  - LaunchDarkly outage is mitigated by the Redis cache, but stale flags may persist indefinitely if sync fails silently.
+  - Local overrides have no audit trail beyond Redis TTL; a dedicated override log is planned.
+  - No UI for flag management; all changes go through LaunchDarkly or the override API.
+
+related_documents:
+  - "ADR-052: LaunchDarkly proxy with local cache"
+  - "OPS-015: Feature flag naming conventions"
+  - "RUN-042: Go service build and deployment pipeline"

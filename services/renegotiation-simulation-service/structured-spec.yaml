@@ -1,0 +1,135 @@
+service_id: svc-44
+service_name: renegotiation-simulation-service
+domain: Collections
+subdomain: Renegotiation
+owner_team: team-collections
+lifecycle_status: beta
+
+summary: >
+  Simulates renegotiation scenarios for eligible borrowers, producing new payment
+  terms that, once accepted, are forwarded to contract-generation-service for
+  formalization.
+
+business_objective: >
+  Enable borrowers and operations staff to explore renegotiation options in
+  real time, improving conversion rates and accelerating debt recovery by
+  presenting clear, personalized repayment alternatives.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Generate multiple renegotiation scenarios (e.g., term extension, rate reduction, lump-sum discount)
+  - Calculate projected payment schedules for each scenario
+  - Persist simulation results for audit and analytics
+  - Publish simulation events consumed by contract-generation-service upon acceptance
+  - Provide an idempotent simulation endpoint suitable for customer-facing channels
+
+entities:
+  - name: RenegotiationSimulation
+    description: A simulation session containing one or more scenarios for a specific debt.
+  - name: SimulationScenario
+    description: A single what-if scenario with proposed terms, projected installments, and total cost.
+  - name: NewTerms
+    description: The revised contractual terms produced by a chosen scenario.
+
+apis:
+  - method: POST
+    path: /api/v1/renegotiation/simulate
+    description: Generates renegotiation scenarios for a given debt and borrower.
+    auth: Bearer JWT
+    response_codes: [200, 400, 422]
+  - method: GET
+    path: /api/v1/renegotiation/simulations/{id}
+    description: Retrieves a previously generated simulation by ID.
+    auth: Bearer JWT
+    response_codes: [200, 404]
+
+events:
+  consumes:
+    - name: renegotiation_requested
+      source: renegotiation-eligibility-service
+      description: Triggers pre-computation of common scenarios for the borrower.
+    - name: renegotiation_eligible
+      source: renegotiation-eligibility-service
+      description: Confirms eligibility, enabling simulation results to be acted upon.
+  publishes:
+    - name: renegotiation_simulated
+      description: Emitted when simulation scenarios are generated and ready for review.
+
+databases:
+  - name: renegotiation_db
+    engine: PostgreSQL
+    contains_pii: false
+    contains_financial_data: true
+    tables:
+      - renegotiation_simulations
+      - simulation_scenarios
+      - new_terms
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event consumption and publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-43
+      service_name: renegotiation-eligibility-service
+      interaction: event (renegotiation_requested, renegotiation_eligible)
+    - service_id: svc-contract-gen
+      service_name: contract-generation-service
+      interaction: Downstream consumer of accepted terms
+
+flows:
+  - name: On-Demand Simulation
+    trigger: POST /api/v1/renegotiation/simulate
+    steps:
+      - Validate input (borrower ID, debt reference)
+      - Fetch current debt state (outstanding balance, rate, remaining term)
+      - Generate SimulationScenarios (extension, rate cut, lump-sum)
+      - Calculate projected installment schedules per scenario
+      - Persist RenegotiationSimulation
+      - Publish renegotiation_simulated event
+      - Return scenarios to caller
+  - name: Pre-computation on Eligibility
+    trigger: renegotiation_eligible event
+    steps:
+      - Consume event and extract borrower/debt identifiers
+      - Run simulation with default scenario templates
+      - Cache results for fast retrieval via GET endpoint
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - renegotiation_simulations_created_total
+    - renegotiation_scenarios_per_simulation
+    - renegotiation_simulation_duration_seconds
+    - renegotiation_precomputed_cache_hit_rate
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: SimulationLatencyHigh
+      condition: renegotiation_simulation_duration_seconds_p99 > 5
+      severity: warning
+    - name: PrecomputationBacklog
+      condition: renegotiation_precompute_pending_count > 500
+      severity: warning
+
+risks_and_limitations:
+  - Beta status means API contracts may change; consumers should handle schema evolution gracefully.
+  - Financial projections are estimates; actual terms are finalized by contract-generation-service.
+  - Heavy simulation workloads during campaigns can spike CPU; horizontal scaling and rate limiting are recommended.
+  - Shared renegotiation_db with eligibility service requires careful schema migration coordination.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Renegotiation Policy
+    link: ../docs/renegotiation-policy.md
+  - title: Simulation Engine Design
+    link: ../docs/simulation-engine-design.md

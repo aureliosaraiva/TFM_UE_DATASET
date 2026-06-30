@@ -1,0 +1,117 @@
+service_id: svc-46
+service_name: backoffice-bff
+domain: Backoffice
+subdomain: Internal Operations
+owner_team: team-backoffice
+tech_stack: Node.js / Express
+summary: >
+  Backend-for-Frontend service that powers the internal operations portal used
+  by analysts, reviewers, and managers.  Aggregates review queues, case details,
+  fraud signals, and credit decisions into a single API layer.
+business_objective: >
+  Enable operations staff to efficiently triage and resolve cases by providing
+  a consolidated, role-aware view of all pending work items across domains.
+
+responsibilities:
+  - Aggregate review queues from case-management, fraud-decision, credit-decision, and document-validation services
+  - Enforce RBAC for internal operator roles
+  - Manage backoffice session lifecycle via Redis
+  - Provide action endpoints for case resolution and escalation
+  - Mask or redact PII and financial data based on operator permissions
+
+entities:
+  - name: BackofficeSession
+    description: >
+      Authenticated operator session stored in Redis.  Includes role, permissions,
+      and the set of queues the operator is subscribed to.
+  - name: ReviewQueue
+    description: >
+      Virtual queue that aggregates pending items from multiple downstream
+      services, ordered by SLA deadline and priority.
+  - name: OperatorAction
+    description: >
+      Captures an action taken by an operator (approve, reject, escalate, reassign)
+      along with metadata for audit purposes.
+
+apis:
+  - method: GET
+    path: /api/v1/backoffice/queues
+    description: Returns the list of review queues visible to the authenticated operator.
+  - method: GET
+    path: /api/v1/backoffice/cases
+    description: Paginated list of cases across all queues, filterable by status, type, and assignee.
+  - method: POST
+    path: /api/v1/backoffice/actions
+    description: Submits an operator action (approve, reject, escalate) against a specific case.
+
+events:
+  publishes: []
+  consumes: []
+
+databases:
+  - name: backoffice_session_cache
+    type: Redis
+    purpose: >
+      Stores operator sessions and cached queue snapshots to reduce downstream
+      fan-out on repeated page loads.
+
+dependencies:
+  - service_name: auth-service
+    type: synchronous
+    purpose: JWT validation and RBAC enforcement for internal users.
+  - service_name: case-management-service
+    type: synchronous
+    purpose: Retrieve and update manual review cases.
+  - service_name: proposal-service
+    type: synchronous
+    purpose: Fetch proposal details referenced by cases.
+  - service_name: fraud-decision-service
+    type: synchronous
+    purpose: Retrieve fraud signals and decision details.
+  - service_name: credit-decision-service
+    type: synchronous
+    purpose: Retrieve credit scoring and decision details.
+  - service_name: document-validation-service
+    type: synchronous
+    purpose: Retrieve document validation results and pending reviews.
+
+flows:
+  - name: Queue Load
+    description: Fetches and merges review queues for the operator's role.
+    steps:
+      - Operator authenticates and the BFF resolves their role and queue subscriptions.
+      - BFF fans out requests to case-management, fraud-decision, and credit-decision services.
+      - Results are merged, deduplicated, and sorted by SLA urgency.
+      - The consolidated queue is returned as a paginated response.
+  - name: Case Action Submission
+    description: Records an operator decision and forwards it to the owning service.
+    steps:
+      - Operator submits a POST /api/v1/backoffice/actions with action type and case ID.
+      - BFF validates the operator's permission for the action.
+      - BFF forwards the action to case-management-service.
+      - An OperatorAction audit record is appended to the session log.
+
+observability:
+  metrics:
+    - backoffice_request_duration_seconds (histogram, by endpoint)
+    - backoffice_queue_size (gauge, by queue type)
+    - backoffice_actions_total (counter, by action type)
+    - backoffice_downstream_errors (counter, by dependency)
+  alerts:
+    - "Queue fetch latency P99 > 3 s for 5 min"
+    - "Action submission error rate > 2 % for 3 min"
+    - "Session cache hit ratio < 60 % for 10 min"
+  dashboards:
+    - Backoffice Operations (queue depths, action throughput, SLA breach rate)
+    - Downstream Dependencies (latency and error breakdown per service)
+
+risks_and_limitations:
+  - Contains PII and financial data; field-level masking varies by operator role.
+  - Heavy fan-out pattern; a single slow dependency degrades the entire queue view.
+  - No offline queue caching—operators lose access during downstream outages.
+  - Action idempotency is enforced at the case-management layer, not in the BFF.
+
+related_documents:
+  - "ADR-046: BFF pattern for backoffice portal"
+  - "SEC-015: Role-based PII masking for internal users"
+  - "OPS-008: SLA-based queue ordering algorithm"

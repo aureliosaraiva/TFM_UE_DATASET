@@ -1,0 +1,126 @@
+service_id: svc-51
+service_name: auth-service
+domain: Platform
+subdomain: Identity & Access
+owner_team: team-platform
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Centralized authentication and authorization service providing JWT-based
+  identity for both customers (portal) and internal users (backoffice).
+  Manages user credentials, roles, permissions, and session tokens.
+business_objective: >
+  Provide a single, secure identity layer that all CredityFlow services
+  can rely on for authentication and fine-grained authorization, reducing
+  duplicated security logic and ensuring consistent access control.
+
+responsibilities:
+  - Authenticate customers and internal users via credentials (email/password)
+  - Issue, refresh, and revoke JWT access and refresh tokens
+  - Manage user accounts, roles, and permissions
+  - Validate tokens on behalf of downstream services
+  - Maintain active session state in Redis for fast token validation
+  - Enforce password policies, brute-force protection, and account lockout
+
+entities:
+  - name: User
+    description: >
+      Represents an authenticated identity (customer or operator).  Stores
+      hashed credentials, account status, and profile reference.
+  - name: Role
+    description: >
+      Named collection of permissions (e.g., CUSTOMER, ANALYST, MANAGER, ADMIN)
+      assigned to users.
+  - name: Permission
+    description: >
+      Granular access right (e.g., cases:read, cases:resolve, proposals:approve)
+      associated with one or more roles.
+  - name: Session
+    description: >
+      Active authentication session tracked in Redis.  Contains token metadata,
+      device fingerprint, and expiration for both access and refresh tokens.
+
+apis:
+  - method: POST
+    path: /api/v1/auth/login
+    description: Authenticates a user and returns JWT access and refresh tokens.
+  - method: POST
+    path: /api/v1/auth/refresh
+    description: Issues a new access token using a valid refresh token.
+  - method: GET
+    path: /api/v1/auth/validate
+    description: >
+      Validates a JWT and returns the decoded claims.  Used by other services
+      for lightweight token verification.
+  - method: POST
+    path: /api/v1/auth/logout
+    description: Invalidates the current session and revokes associated tokens.
+
+events:
+  publishes: []
+  consumes: []
+
+databases:
+  - name: auth_db
+    type: PostgreSQL
+    purpose: >
+      Stores user accounts, hashed credentials, roles, permissions, and
+      password history.  Encrypted at rest.
+  - name: auth_session_cache
+    type: Redis
+    purpose: >
+      Stores active sessions and revoked-token blacklist for fast O(1)
+      validation on every authenticated request.
+
+dependencies: []
+
+flows:
+  - name: Login
+    description: User authenticates and receives JWT tokens.
+    steps:
+      - Client sends POST /api/v1/auth/login with email and password.
+      - Service verifies credentials against the hashed password in auth_db.
+      - On success, a Session is created in Redis and JWT tokens are issued.
+      - Access token (short-lived) and refresh token (long-lived) are returned.
+  - name: Token Validation
+    description: A downstream service validates an incoming JWT.
+    steps:
+      - Service extracts the JWT from the Authorization header.
+      - Service calls GET /api/v1/auth/validate (or validates locally using the public key).
+      - auth-service checks the token signature, expiration, and revocation status in Redis.
+      - Decoded claims (user ID, roles, permissions) are returned.
+  - name: Token Refresh
+    description: Client refreshes an expired access token.
+    steps:
+      - Client sends POST /api/v1/auth/refresh with the refresh token.
+      - Service validates the refresh token and checks it has not been revoked.
+      - A new access token is issued; the refresh token may be rotated.
+      - The Session TTL in Redis is extended.
+
+observability:
+  metrics:
+    - auth_login_attempts_total (counter, by result: success/failure)
+    - auth_token_validations_total (counter)
+    - auth_token_refresh_total (counter)
+    - auth_active_sessions (gauge)
+    - auth_login_duration_seconds (histogram)
+  alerts:
+    - "Failed login rate > 20 % for 5 min (possible brute-force)"
+    - "Token validation latency P99 > 50 ms for 5 min"
+    - "Redis session cache unavailable for 30 s"
+    - "Account lockout rate spike > 3x baseline"
+  dashboards:
+    - Auth Service Health (login volume, success rate, validation latency)
+    - Security Monitoring (failed logins, lockouts, suspicious patterns)
+
+risks_and_limitations:
+  - Contains PII (user credentials, email addresses); database and cache must be encrypted at rest and in transit.
+  - Single point of failure for the entire platform; high-availability deployment with at least 3 replicas is mandatory.
+  - Redis session cache loss causes all active sessions to be invalidated, forcing re-login.
+  - JWT secret rotation requires coordinated rollout across all services that validate tokens locally.
+  - No MFA support yet; planned for Q3 2026.
+
+related_documents:
+  - "ADR-051: JWT-based authentication architecture"
+  - "SEC-001: Password hashing and storage policy (bcrypt, cost 12)"
+  - "SEC-002: Token lifecycle and revocation strategy"
+  - "RUN-040: Auth service HA deployment topology"

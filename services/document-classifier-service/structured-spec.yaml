@@ -1,0 +1,103 @@
+service_id: svc-05
+service_name: document-classifier-service
+domain: Document Management
+subdomain: Document Processing
+owner_team: team-documents
+summary: >
+  Classifies documents based on OCR-extracted text into known categories
+  (RG, CNH, comprovante de renda, etc.) using rule-based heuristics and
+  ML models.
+business_objective: >
+  Automate the identification of document types so the validation pipeline
+  can apply the correct business rules without human intervention, reducing
+  processing time and operational costs.
+responsibilities:
+  - Receive OCR results and classify documents into predefined categories
+  - Apply rule-based heuristics for high-confidence classification
+  - Fall back to ML model for ambiguous documents
+  - Persist classification results with confidence scores
+  - Expose internal classification endpoint for manual re-classification
+
+entities:
+  - name: ClassificationResult
+    description: >
+      Stores the predicted document category, confidence score, classification
+      method (rule-based or ML), and the document_id reference.
+  - name: DocumentCategory
+    description: >
+      Enumeration of recognized categories: RG, CNH, CPF_CARD, INCOME_PROOF,
+      ADDRESS_PROOF, VEHICLE_CRV, PROPERTY_DEED, BANK_STATEMENT, OTHER.
+
+apis:
+  - method: POST
+    path: /api/v1/classify
+    description: >
+      Internal endpoint to classify a document given OCR-extracted text.
+      Accepts document_id and extracted_text. Returns predicted category
+      and confidence score.
+
+events:
+  publishes:
+    - event_name: documents_classified
+      description: >
+        Emitted after a document is classified. Contains document_id,
+        predicted category, confidence, and classification method.
+  consumes:
+    - event_name: ocr_completed
+      description: >
+        Receives OCR extraction results to perform classification. Payload
+        includes document_id, extracted text, and field extractions.
+
+databases:
+  - name: document_classification_db
+    type: PostgreSQL
+    purpose: >
+      Stores classification results, model version history, and classification
+      audit trails for retraining and compliance.
+
+dependencies:
+  - service_name: ocr-worker
+    type: async
+    purpose: Receives ocr_completed events as input for classification.
+
+flows:
+  - name: Document Classification
+    description: Classify a document from OCR output.
+    steps:
+      - Receive ocr_completed event
+      - Extract key signals from OCR text (keywords, field patterns, layout)
+      - Attempt rule-based classification using known document patterns
+      - If confidence < 0.85, invoke ML classifier model
+      - Persist ClassificationResult
+      - Publish documents_classified event
+  - name: Manual Re-classification
+    description: Internal operator corrects a misclassified document.
+    steps:
+      - Receive POST /api/v1/classify with override flag
+      - Update ClassificationResult with correct category
+      - Log correction for model retraining dataset
+      - Publish documents_classified event with corrected category
+
+observability:
+  metrics:
+    - classification_total (counter, by category, method)
+    - classification_confidence_score (histogram, by category)
+    - ml_model_inference_duration_seconds (histogram)
+    - manual_reclassification_total (counter)
+  alerts:
+    - Classification to OTHER category exceeds 15% of volume
+    - ML model inference latency p95 > 5 seconds
+    - Dead-letter queue depth > 0 for ocr_completed consumer
+  dashboards:
+    - Classification Distribution (breakdown by category and method)
+    - Model Performance (confidence trends, OTHER rate, reclassification rate)
+
+risks_and_limitations:
+  - ML model accuracy depends on quality and diversity of training data
+  - New document formats require model retraining and rule updates
+  - Rule-based heuristics are brittle to formatting changes by issuing authorities
+  - No support for multi-page document classification (each page classified independently)
+
+related_documents:
+  - README.md
+  - architecture.md

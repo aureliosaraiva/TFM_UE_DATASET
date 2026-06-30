@@ -1,0 +1,124 @@
+service_id: svc-13
+service_name: device-fingerprint-service
+domain: CredityFlow
+subdomain: Fraud Prevention
+owner_team: team-fraud
+tech_stack:
+  language: Node.js
+  framework: Express
+  build_tool: npm
+
+summary: >
+  Collects and analyzes device fingerprints to detect fraud patterns. Builds a profile
+  of the device used during a loan application and checks it against known fraud
+  indicators such as device reuse across multiple identities, emulator usage, and
+  suspicious geolocation patterns.
+
+business_objective: >
+  Add a device-level fraud signal to the overall fraud assessment pipeline. Catch
+  fraud rings that reuse devices or emulators across multiple applications, and
+  flag geolocation anomalies that indicate the applicant is not where they claim to be.
+
+responsibilities:
+  - Collect device fingerprint data (browser, OS, screen, timezone, installed plugins)
+  - Analyze fingerprints for fraud indicators (emulators, VPNs, device farms)
+  - Detect device reuse across different applicant identities
+  - Score device risk level based on combined signals
+  - Cache fingerprints in Redis for fast lookup and deduplication
+  - Publish device risk assessment results for fraud scoring
+
+entities:
+  - name: DeviceFingerprint
+    description: >
+      Composite device identifier built from browser user-agent, screen resolution,
+      timezone, installed fonts/plugins, and canvas hash. Used to uniquely identify
+      a device across sessions.
+  - name: DeviceRiskSignal
+    description: >
+      Individual risk signal detected from device analysis. Types include
+      EMULATOR_DETECTED, VPN_DETECTED, DEVICE_REUSE, GEO_MISMATCH,
+      ROOTED_DEVICE, AUTOMATION_TOOL.
+
+apis:
+  - method: POST
+    path: /api/v1/fingerprint/analyze
+    description: >
+      Submit a device fingerprint for analysis. Accepts raw fingerprint data,
+      computes risk signals, and returns a risk assessment.
+  - method: GET
+    path: /api/v1/fingerprint/{id}
+    description: >
+      Retrieve a previously analyzed fingerprint and its associated risk signals.
+
+events:
+  publishes:
+    - event_name: device_fingerprint_checked
+      description: >
+        Emitted after device analysis completes. Contains fingerprint hash, risk
+        level, and detected signals. Consumed by fraud-scoring-service.
+  consumes:
+    - event_name: biometrics_validated
+      description: >
+        Triggers device fingerprint analysis as part of the fraud pipeline,
+        after biometric identity has been confirmed.
+
+databases:
+  - name: device_fingerprint_cache
+    type: Redis
+    purpose: >
+      Stores device fingerprints, risk signals, and device-to-identity mapping
+      for fast cross-reference lookups. TTL of 90 days for fingerprint records.
+
+dependencies:
+  - service_name: biometrics-capture-service
+    type: event
+    purpose: Receives biometrics_validated events to trigger device analysis.
+
+flows:
+  - name: Device Fingerprint Analysis
+    description: Analyze a device fingerprint for fraud indicators.
+    steps:
+      - Receive biometrics_validated event or POST /api/v1/fingerprint/analyze
+      - Parse raw fingerprint data and compute canonical fingerprint hash
+      - Check Redis for existing fingerprint (device seen before?)
+      - If known device, check cross-identity usage (same device, different CPF)
+      - Run fraud signal detectors (emulator, VPN, rooted device, automation)
+      - Check geolocation against applicant's declared location
+      - Aggregate signals into an overall device risk level (LOW, MEDIUM, HIGH)
+      - Store fingerprint and signals in Redis
+      - Publish device_fingerprint_checked event
+  - name: Fingerprint Lookup
+    description: Retrieve a stored fingerprint and its signals.
+    steps:
+      - Receive GET /api/v1/fingerprint/{id}
+      - Query Redis for fingerprint record
+      - Return fingerprint details and associated risk signals
+
+observability:
+  metrics:
+    - device_fingerprints_analyzed_total (counter)
+    - device_risk_level_total (counter, by level: low/medium/high)
+    - device_signals_detected_total (counter, by signal_type)
+    - device_reuse_detected_total (counter)
+    - fingerprint_analysis_duration_ms (histogram)
+  alerts:
+    - Device reuse rate spikes above 15% over 30 minutes (possible fraud ring)
+    - Emulator detection rate exceeds 10% over 1 hour
+    - Redis connection failure or latency above 100ms
+    - Analysis error rate above 5%
+  dashboards:
+    - Device Fingerprint Overview (volume, risk distribution, signal breakdown)
+    - Fraud Ring Detection (device reuse patterns, cross-identity maps)
+
+risks_and_limitations:
+  - No PII stored — fingerprints are device-level, not personal data
+  - Redis-only storage means data is lost if Redis is flushed; no durable backup
+  - Fingerprint accuracy degrades with browser privacy features (e.g., Brave, Firefox strict mode)
+  - VPN detection relies on IP geolocation databases that may be outdated
+  - Device reuse detection has false positives for shared/public devices (libraries, internet cafes)
+  - 90-day TTL means long-dormant fraud devices may evade detection after the window
+
+related_documents:
+  - Fraud Prevention Domain Architecture
+  - Device Fingerprinting Technical Specification
+  - Fraud Signal Taxonomy

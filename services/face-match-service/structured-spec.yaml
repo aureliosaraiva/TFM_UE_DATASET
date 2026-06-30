@@ -1,0 +1,126 @@
+service_id: svc-12
+service_name: face-match-service
+domain: CredityFlow
+subdomain: Biometrics
+owner_team: team-identity
+tech_stack:
+  language: Python
+  framework: FastAPI
+  build_tool: pip/Poetry
+
+summary: >
+  Compares a live selfie against the photo extracted from the applicant's identity
+  document (RG or CNH). Uses facial embedding comparison to produce a match confidence
+  score and a pass/fail determination.
+
+business_objective: >
+  Confirm that the person who took the selfie is the same person shown on the
+  identity document, completing the biometric identity verification chain. This is
+  the final step before the biometrics subdomain signals that the applicant's
+  identity has been verified.
+
+responsibilities:
+  - Receive liveness-verified selfies and compare them against document photos
+  - Retrieve document images from document-store-service
+  - Compute facial embeddings for both selfie and document photo
+  - Calculate similarity score and apply configurable threshold
+  - Persist match results with confidence scores
+  - Publish face_match_completed event for biometrics-capture-service
+
+entities:
+  - name: FaceMatchResult
+    description: >
+      The outcome of comparing a selfie against a document photo. Contains match
+      status (MATCH, NO_MATCH, INCONCLUSIVE), similarity score (0.0-1.0), embedding
+      model version, and processing metadata.
+  - name: ConfidenceScore
+    description: >
+      Encapsulates the numerical similarity score along with the threshold applied,
+      the margin (how far above or below threshold), and any quality adjustment
+      factors (lighting, angle, resolution).
+
+apis:
+  - method: POST
+    path: /api/v1/face-match
+    description: >
+      Internal endpoint to trigger a face comparison. Accepts session ID and image
+      references. Returns match result with confidence score. Not exposed externally.
+
+events:
+  publishes:
+    - event_name: face_match_completed
+      description: >
+        Emitted after face comparison completes. Contains session ID, match result,
+        and confidence score. Consumed by biometrics-capture-service to finalize
+        the biometric session.
+  consumes:
+    - event_name: liveness_verified
+      description: >
+        Triggers face matching once liveness has been confirmed. Contains session ID
+        and selfie image reference.
+
+databases:
+  - name: biometrics_db
+    type: PostgreSQL
+    purpose: >
+      Stores face match results, confidence scores, and comparison audit logs.
+      Shared database instance with biometrics-capture-service (separate schema).
+
+dependencies:
+  - service_name: liveness-worker
+    type: event
+    purpose: Receives liveness_verified events to trigger face comparison.
+  - service_name: document-store-service
+    type: sync-rest
+    purpose: >
+      Retrieves the document photo (ID card or driver's license) for comparison
+      against the selfie.
+
+flows:
+  - name: Face Match Flow
+    description: Compares selfie to document photo after liveness is confirmed.
+    steps:
+      - Receive liveness_verified event with session ID and selfie reference
+      - Fetch document photo reference from document-store-service
+      - Download both images (selfie and document photo) from S3
+      - Generate facial embeddings for both images
+      - Compute cosine similarity between embeddings
+      - Apply quality adjustment factors (lighting, resolution, angle)
+      - Compare adjusted score against configurable threshold
+      - Persist FaceMatchResult to biometrics_db
+      - Publish face_match_completed event
+  - name: Manual Face Match (Internal API)
+    description: On-demand face match triggered via the internal REST endpoint.
+    steps:
+      - Receive POST /api/v1/face-match with session ID
+      - Execute same comparison pipeline as event-driven flow
+      - Return result synchronously in HTTP response
+
+observability:
+  metrics:
+    - face_match_total (counter, by result: match/no_match/inconclusive)
+    - face_match_confidence_score (histogram)
+    - face_match_duration_seconds (histogram)
+    - face_match_quality_adjustment_applied_total (counter, by factor)
+  alerts:
+    - Face match failure rate exceeds 25% over 15 minutes
+    - Face match p99 latency above 10 seconds
+    - Document photo retrieval failures from document-store-service exceed 5%
+    - Sudden drop in average confidence score (model drift indicator)
+  dashboards:
+    - Face Match Pipeline (match rates, confidence distribution, latency)
+    - Quality Analysis (adjustment factors applied, image quality trends)
+
+risks_and_limitations:
+  - Contains PII — facial embeddings and image references are stored; subject to LGPD
+  - Embedding model accuracy varies with image quality; low-resolution document photos reduce confidence
+  - Threshold is configurable but a single global value; no per-document-type tuning yet
+  - Depends on document-store-service for document photos; if unavailable, face match cannot proceed
+  - No A/B testing framework for comparing embedding models in production
+  - Cosine similarity threshold was tuned on Brazilian ID documents; performance on other document types is untested
+
+related_documents:
+  - Biometrics Domain Architecture Overview
+  - Face Match Model Evaluation Report
+  - Facial Embedding Model Documentation
+  - PII and Biometric Data Handling Policy

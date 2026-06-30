@@ -1,0 +1,123 @@
+service_id: "srv-040"
+service_name: "collections-contact-service"
+domain: "Collections"
+subdomain: "Customer Contact"
+owner_team: "team-collections"
+tech_stack:
+  language: "Kotlin"
+  framework: "Spring Boot"
+  build_tool: "Gradle"
+
+summary: >
+  Manages contact attempts with overdue customers through multiple channels including
+  phone, WhatsApp, and email. Orchestrates the initial phase of the collections process
+  by tracking every contact attempt and its outcome, feeding data back into the collections
+  pipeline to determine next steps.
+
+business_objective: >
+  Maximize contact success rate with delinquent customers while maintaining compliance
+  with contact frequency regulations and preferred channel policies. Enable data-driven
+  optimization of contact strategies based on historical outcomes.
+
+responsibilities:
+  - Execute contact attempts across phone, WhatsApp, and email channels
+  - Track and record all contact attempt outcomes
+  - Enforce contact frequency limits per customer per channel
+  - Respect customer channel preferences and opt-out requests
+  - Provide contact history for collections decision-making
+  - Integrate with dunning service to receive overdue triggers
+  - Publish contact attempt results for downstream processing
+
+entities:
+  - name: "ContactAttempt"
+    description: "Record of a single contact attempt with a customer, including channel, timestamp, operator, and result"
+  - name: "ContactChannel"
+    description: "Enumeration and configuration of available contact channels (PHONE, WHATSAPP, EMAIL) with channel-specific metadata"
+  - name: "ContactOutcome"
+    description: "Result classification of a contact attempt (CONNECTED, NO_ANSWER, BUSY, INVALID_NUMBER, PROMISE_TO_PAY, REFUSED, VOICEMAIL)"
+
+apis:
+  - method: "POST"
+    path: "/api/v1/contacts/attempt"
+    description: "Record a new contact attempt with a customer, specifying channel and outcome"
+  - method: "GET"
+    path: "/api/v1/contacts/{customer_id}/history"
+    description: "Retrieve full contact history for a given customer, with optional date range and channel filters"
+
+events:
+  publishes:
+    - name: "collections_contact_attempted"
+      description: "Emitted after each contact attempt, regardless of outcome. Contains attempt details and result."
+      schema_version: "1.0"
+  consumes:
+    - name: "dunning_started"
+      description: "Triggers initial contact workflow when dunning process begins for a customer"
+      source: "dunning-service"
+    - name: "overdue_installment"
+      description: "Signals that an installment is overdue, may trigger additional contact attempts"
+      source: "billing-service"
+
+databases:
+  - name: "collections_db"
+    type: "PostgreSQL"
+    purpose: "Stores contact attempts, channel configurations, and outcome records"
+    schema: "collections_contact"
+    tables:
+      - "contact_attempts"
+      - "contact_channels"
+      - "contact_outcomes"
+      - "contact_frequency_limits"
+
+dependencies:
+  - service_name: "dunning-service"
+    type: "event"
+    purpose: "Receives dunning triggers to initiate contact workflows"
+  - service_name: "customer-service"
+    type: "REST"
+    purpose: "Retrieves customer contact information (phone, email) for outreach"
+
+flows:
+  - name: "Dunning-Triggered Contact"
+    description: "Initiates contact attempts when dunning process starts"
+    steps:
+      - "Receive dunning_started event"
+      - "Fetch customer contact details from customer-service"
+      - "Check contact frequency limits for the customer"
+      - "Select optimal channel based on customer preference and time of day"
+      - "Execute contact attempt"
+      - "Record outcome"
+      - "Publish collections_contact_attempted event"
+  - name: "Manual Contact Attempt"
+    description: "Operator-initiated contact attempt via REST API"
+    steps:
+      - "Receive POST /api/v1/contacts/attempt"
+      - "Validate contact frequency limits"
+      - "Record the attempt and outcome"
+      - "Publish collections_contact_attempted event"
+
+observability:
+  metrics:
+    - "contact_attempts_total (counter, labels: channel, outcome)"
+    - "contact_success_rate (gauge, labels: channel)"
+    - "contact_attempt_duration_seconds (histogram)"
+    - "frequency_limit_exceeded_total (counter)"
+  alerts:
+    - "ContactSuccessRateBelow30Pct: success rate drops below 30% for any channel over 1h"
+    - "HighFrequencyLimitViolations: more than 50 limit violations in 15 min"
+    - "ChannelUnavailable: any contact channel returns errors for > 5 min"
+  dashboards:
+    - "Collections Contact Overview: attempts by channel, success rates, daily trends"
+    - "Channel Performance: per-channel metrics with time-of-day heatmap"
+
+risks_and_limitations:
+  - "Contact frequency limits are enforced in-app but external channels (WhatsApp, phone) have their own rate limits"
+  - "Customer contact info is fetched from customer-service at attempt time; stale data possible"
+  - "No PII stored directly, but contact attempt records can be correlated to identify customers"
+  - "WhatsApp Business API has 24-hour window restriction for non-template messages"
+  - "Phone contact depends on telephony provider availability"
+
+related_documents:
+  - "README.md"
+  - "architecture.md"
+  - "Collections domain overview"
+  - "Contact frequency compliance policy"

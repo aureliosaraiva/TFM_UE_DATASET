@@ -1,0 +1,160 @@
+service_id: svc-33
+service_name: cartorio-integration-service
+domain: Registry
+subdomain: Property Lien Registration
+owner_team: team-registry
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Integrates with the Cartorio Digital platform to register property liens
+  (hipotecas and alienacoes fiduciarias) on real estate collateral. Handles
+  the asynchronous nature of cartorio processing, which typically takes
+  3-15 business days.
+
+business_objective: >
+  Automate property lien registration with cartorios, reducing manual effort
+  and ensuring liens are recorded on the property matricula to protect the
+  lender's collateral interest in real-estate-backed loans.
+
+responsibilities:
+  - Submit property lien registration requests to Cartorio Digital
+  - Handle asynchronous processing with long-running workflows (3-15 business days)
+  - Poll Cartorio Digital for registration status updates
+  - Parse and store cartorio registration confirmations
+  - Publish completion events for downstream tracking
+
+entities:
+  - name: CartorioRegistration
+    description: Represents a property lien registration request to a cartorio
+    attributes:
+      - id (UUID)
+      - registration_request_id (UUID)
+      - cartorio_code (String)
+      - status (PENDING | SUBMITTED | IN_ANALYSIS | REGISTERED | EXIGENCIA | REJECTED | ERROR)
+      - protocol_number (String, nullable)
+      - submitted_at (Instant, nullable)
+      - completed_at (Instant, nullable)
+      - exigencia_details (String, nullable)
+      - error_details (String, nullable)
+
+  - name: PropertyLien
+    description: The lien details to be registered on the property matricula
+    attributes:
+      - id (UUID)
+      - cartorio_registration_id (UUID)
+      - contract_id (UUID)
+      - lien_type (HIPOTECA | ALIENACAO_FIDUCIARIA)
+      - creditor_cnpj (String)
+      - amount (BigDecimal)
+      - currency (BRL)
+
+  - name: MatriculaInfo
+    description: Property registration details from the cartorio
+    attributes:
+      - id (UUID)
+      - matricula_number (String)
+      - cartorio_code (String)
+      - comarca (String)
+      - state_code (String)
+      - property_description (String)
+
+apis:
+  - method: POST
+    path: /api/v1/cartorio/register
+    description: Submit a property lien registration to a cartorio
+    request_body: CartorioRegistration
+    response: CartorioRegistration (202 Accepted)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/cartorio/status/{id}
+    description: Check the status of a cartorio registration
+    path_params:
+      - id (UUID)
+    response: CartorioRegistration (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: registry_requested
+      topic: credityflow.registry
+      description: Triggers property lien registration when collateral type is PROPERTY
+      source: registry-orchestrator-service
+      filter: header.channel = CARTORIO
+
+  publishes:
+    - event: cartorio_lien_registered
+      topic: credityflow.registry
+      description: Emitted when the cartorio confirms the lien registration on the matricula
+
+databases:
+  - name: registry_db
+    type: PostgreSQL
+    schemas:
+      - cartorio_integration
+    tables:
+      - cartorio_registrations
+      - property_liens
+      - matricula_info
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: registry-orchestrator-service
+      type: event (registry_requested)
+  downstream:
+    - service: registry-tracker-service
+      type: event (cartorio_lien_registered)
+  external:
+    - name: Cartorio-Digital
+      type: REST API
+      description: National cartorio digital platform for property lien registration
+      auth: OAuth2 client credentials
+
+flows:
+  - name: Property Lien Registration
+    steps:
+      - Receive registry_requested event (filtered for PROPERTY)
+      - Extract property and contract data
+      - Resolve target cartorio from matricula_number and comarca
+      - Submit lien registration to Cartorio Digital API
+      - Schedule polling job for status updates (runs every 4 hours)
+      - When status transitions to REGISTERED, publish cartorio_lien_registered event
+      - If EXIGENCIA is raised, notify team for manual resolution
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - cartorio_registrations_total (counter, by status)
+    - cartorio_processing_days (histogram)
+    - cartorio_api_latency_seconds (histogram)
+    - cartorio_exigencias_total (counter)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, registration_id, matricula_number
+  alerts:
+    - name: cartorio_api_unavailable
+      condition: Cartorio Digital API errors > 50% in 15 min
+      severity: critical
+    - name: registration_stale
+      condition: registration IN_ANALYSIS for > 20 business days
+      severity: warning
+    - name: exigencia_unresolved
+      condition: EXIGENCIA status for > 5 business days without action
+      severity: warning
+
+risks_and_limitations:
+  - Cartorio processing is inherently slow (3-15 business days); no way to accelerate
+  - EXIGENCIA (additional requirements) raised by the cartorio require manual intervention
+  - Cartorio Digital platform has scheduled maintenance windows (weekends)
+  - Matricula data quality from upstream affects registration accuracy
+
+related_documents:
+  - title: Cartorio Digital API Documentation
+    link: /docs/integrations/cartorio-digital/
+  - title: CredityFlow Registry Domain Overview
+    link: /docs/domains/registry.md

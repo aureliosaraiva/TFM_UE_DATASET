@@ -1,0 +1,118 @@
+service_id: "srv-027"
+service_name: "contract-generation-service"
+domain: "Contract"
+subdomain: "Contract Generation"
+owner_team: "team-contracts"
+summary: >
+  Generates loan contract documents from pre-defined templates based on approved
+  loan terms. Transforms structured appraisal and proposal data into legally
+  binding contract documents ready for compliance review and signature.
+business_objective: >
+  Automate the creation of loan contracts to reduce manual drafting errors,
+  ensure consistency across all contract types, and accelerate the time from
+  approval to contract execution.
+
+responsibilities:
+  - Render contract documents from parameterized templates
+  - Merge approved loan terms into contract clauses
+  - Support multiple contract types (vehicle-backed, property-backed, unsecured)
+  - Maintain a versioned library of contract templates
+  - Validate that all required fields are populated before generating
+  - Store generated contract drafts for downstream processing
+
+entities:
+  - name: Contract
+    description: >
+      The generated contract document, including metadata such as proposal ID,
+      borrower info, generated timestamp, and current lifecycle status.
+  - name: ContractTemplate
+    description: >
+      A versioned template with placeholder tokens for loan terms, borrower
+      data, and collateral details. Templates are managed by the legal team.
+  - name: LoanTerms
+    description: >
+      Structured representation of the approved loan parameters — principal,
+      interest rate, installment count, grace period, fees, and CET.
+  - name: ContractClause
+    description: >
+      Individual clause within a contract template. Clauses can be conditional
+      (e.g., included only for vehicle-backed loans) or mandatory.
+
+apis:
+  - method: POST
+    path: /api/v1/contracts/generate
+    description: >
+      Triggers contract generation for a given proposal. Accepts proposal ID
+      and optional template override. Returns the generated contract ID.
+  - method: GET
+    path: /api/v1/contracts/{id}
+    description: >
+      Retrieves a generated contract by ID, including its metadata, status,
+      and a link to the rendered PDF.
+
+events:
+  publishes:
+    - name: contract_generation_requested
+      description: Emitted when a contract generation job is enqueued.
+    - name: contract_generated
+      description: Emitted when the contract document has been successfully rendered and persisted.
+  consumes:
+    - name: appraisal_completed
+      description: Triggers automatic contract generation once collateral appraisal is done.
+
+databases:
+  - name: contract_db
+    type: PostgreSQL
+    purpose: >
+      Stores contract metadata, template references, generated document
+      references, and clause configurations.
+
+dependencies:
+  - service_name: appraisal-report-service
+    type: event
+    purpose: Receives appraisal_completed events to trigger contract generation.
+  - service_name: proposal-service
+    type: REST
+    purpose: Fetches approved proposal details and loan terms for template rendering.
+
+flows:
+  - name: Automatic Contract Generation
+    description: End-to-end flow from appraisal completion to contract document ready for compliance.
+    steps:
+      - Receive appraisal_completed event from appraisal-report-service
+      - Fetch proposal and loan terms from proposal-service
+      - Select appropriate contract template based on loan type and collateral
+      - Render contract document by merging terms into template
+      - Persist generated contract and rendered PDF
+      - Publish contract_generated event
+  - name: Manual Contract Generation
+    description: Backoffice-triggered generation for edge cases or re-generation.
+    steps:
+      - Receive POST /api/v1/contracts/generate with proposal ID
+      - Validate proposal status is approved
+      - Select template (use override if provided)
+      - Render and persist contract
+      - Publish contract_generated event
+
+observability:
+  metrics:
+    - contract_generation_duration_seconds (histogram)
+    - contracts_generated_total (counter, labels: template_type, loan_type)
+    - template_render_errors_total (counter)
+  alerts:
+    - "Contract generation failure rate > 2% over 15 min"
+    - "Contract generation p99 latency > 30s"
+    - "Template not found errors > 0 in 5 min"
+  dashboards:
+    - "Contract Generation Overview — volume, latency, error rates"
+    - "Template Usage — which templates are used most, version distribution"
+
+risks_and_limitations:
+  - Contract templates must be updated by the legal team whenever regulations change; stale templates can produce non-compliant contracts.
+  - Large PDF rendering can spike memory usage under high concurrency.
+  - Contains PII (borrower name, CPF, address) and financial data (loan terms, fees) — all fields must be encrypted at rest.
+
+related_documents:
+  - "Contract Template Management Guide (Confluence)"
+  - "CredityFlow Domain Map — Contract subdomain"
+  - "Data Classification Policy — PII handling in contract documents"

@@ -1,0 +1,152 @@
+service_id: svc-02
+service_name: proposal-service
+domain: Onboarding
+subdomain: Proposal Management
+owner_team: team-onboarding
+summary: >
+  Manages the full loan proposal lifecycle from creation through credit analysis,
+  document validation, appraisal, and disbursement for secured lending products.
+business_objective: >
+  Orchestrate the end-to-end loan proposal workflow, ensuring every proposal
+  progresses through the required stages while maintaining an auditable state
+  machine that supports both vehicle-backed and home-backed loan products.
+responsibilities:
+  - Create and manage loan proposals linked to verified customers
+  - Maintain proposal state machine (draft, submitted, analyzing, approved, rejected, disbursed)
+  - Aggregate decisions from fraud, credit, document, and appraisal services
+  - Publish lifecycle events consumed by downstream services
+  - Enforce business rules for loan terms, collateral requirements, and eligibility
+
+entities:
+  - name: Proposal
+    description: >
+      Root aggregate representing a loan application. Contains references to
+      Customer, LoanTerms, CollateralInfo, and current ProposalStatus.
+  - name: ProposalStatus
+    description: >
+      Value object tracking the current state and full state transition history
+      of a proposal, including timestamps and triggering events.
+  - name: LoanTerms
+    description: >
+      Financial parameters of the proposal: requested amount, interest rate,
+      term in months, monthly installment, and total cost (CET).
+  - name: CollateralInfo
+    description: >
+      Details of the asset backing the loan. For vehicles: make, model, year,
+      plate, FIPE code. For homes: address, registry number, appraised value.
+
+apis:
+  - method: POST
+    path: /api/v1/proposals
+    description: >
+      Create a new loan proposal. Requires customer_id, product type,
+      requested amount, and collateral details.
+  - method: GET
+    path: /api/v1/proposals
+    description: List proposals with filters (status, customer_id, date range). Paginated.
+  - method: GET
+    path: /api/v1/proposals/{id}
+    description: Retrieve full proposal details including current status and loan terms.
+  - method: PUT
+    path: /api/v1/proposals/{id}
+    description: Update proposal fields (loan terms, collateral info) while in editable states.
+
+events:
+  publishes:
+    - event_name: proposal_started
+      description: >
+        Emitted when a new proposal is created and persisted. Triggers document
+        requests and eligibility checks.
+    - event_name: proposal_updated
+      description: >
+        Emitted when proposal state changes (e.g., approved, rejected, disbursed).
+        Contains old and new status.
+  consumes:
+    - event_name: documents_validated
+      description: Marks the document collection phase as complete for a proposal.
+    - event_name: fraud_decision_made
+      description: Receives fraud analysis result (clear, suspicious, rejected).
+    - event_name: credit_decision_made
+      description: Receives credit scoring and approval/denial with conditions.
+    - event_name: appraisal_completed
+      description: Receives collateral appraisal value and condition report.
+    - event_name: disbursement_done
+      description: Confirms funds have been transferred, finalizing the proposal.
+
+databases:
+  - name: proposal_db
+    type: PostgreSQL
+    purpose: >
+      Stores proposals, status history, loan terms, and collateral info.
+      Financial fields use NUMERIC types. Contains PII references (customer_id).
+
+dependencies:
+  - service_name: customer-service
+    type: sync
+    purpose: Validates customer existence and retrieves profile data during proposal creation.
+  - service_name: eligibility-service
+    type: sync
+    purpose: Checks whether the customer meets minimum eligibility criteria for the requested product.
+  - service_name: fraud-analysis-service
+    type: async
+    purpose: Receives fraud decisions via fraud_decision_made events.
+  - service_name: credit-engine
+    type: async
+    purpose: Receives credit decisions via credit_decision_made events.
+  - service_name: appraisal-service
+    type: async
+    purpose: Receives appraisal results via appraisal_completed events.
+  - service_name: disbursement-service
+    type: async
+    purpose: Receives disbursement confirmation via disbursement_done events.
+
+flows:
+  - name: Proposal Creation
+    description: Customer initiates a new loan proposal.
+    steps:
+      - Receive POST request with customer_id, product type, amount, collateral
+      - Call customer-service to validate customer exists
+      - Call eligibility-service to verify basic eligibility
+      - Persist Proposal in draft status
+      - Publish proposal_started event
+  - name: Proposal Progression
+    description: Proposal advances through analysis stages as async events arrive.
+    steps:
+      - Receive documents_validated, update status to documents_complete
+      - Receive fraud_decision_made, record result
+      - Receive credit_decision_made, record approval or rejection
+      - Receive appraisal_completed, record collateral value
+      - If all checks pass, transition to approved; publish proposal_updated
+  - name: Disbursement Completion
+    description: Funds disbursed, proposal reaches terminal state.
+    steps:
+      - Receive disbursement_done event
+      - Transition status to disbursed
+      - Publish proposal_updated with final state
+
+observability:
+  metrics:
+    - proposal_created_total (counter, by product_type)
+    - proposal_state_transitions_total (counter, by from_state, to_state)
+    - proposal_creation_duration_seconds (histogram)
+    - proposal_time_to_approval_hours (histogram)
+  alerts:
+    - Proposal stuck in analyzing state for >48 hours
+    - High rejection rate (>60% in rolling 24h window)
+    - Dead-letter queue depth > 0 for any consumed event
+    - customer-service or eligibility-service call failure rate > 5%
+  dashboards:
+    - Proposal Pipeline (funnel from created to disbursed)
+    - Proposal Latency Breakdown (time in each state)
+    - Event Processing Health (lag, DLQ depth, throughput)
+
+risks_and_limitations:
+  - State machine complexity grows with each new product type
+  - Synchronous dependency on customer-service and eligibility-service introduces coupling
+  - Contains both PII (customer references) and financial data (loan terms)
+  - No support for co-borrower proposals yet
+  - Manual intervention required for proposals stuck in intermediate states
+
+related_documents:
+  - README.md
+  - architecture.md

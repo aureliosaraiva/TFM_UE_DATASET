@@ -1,0 +1,132 @@
+service_id: svc-42
+service_name: legal-collections-service
+domain: Collections
+subdomain: Legal Recovery
+owner_team: team-collections
+lifecycle_status: production
+
+summary: >
+  Manages the lifecycle of legal collection proceedings, including debt protests
+  with notary offices and judicial collection filings, for borrowers who have
+  exhausted amicable recovery paths.
+
+business_objective: >
+  Recover severely delinquent debt through formal legal instruments while
+  maintaining full audit trails, regulatory compliance, and coordination with
+  external legal partners.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Initiate debt protest proceedings via notary office integrations
+  - File and track judicial collection actions
+  - Maintain a complete audit log of every legal step for compliance
+  - Coordinate with external legal partners and courts
+  - Expose proceeding status to internal systems and operations teams
+
+entities:
+  - name: LegalProceeding
+    description: Top-level entity representing a legal recovery case tied to a borrower and debt.
+  - name: ProtestRecord
+    description: Details of a notary-office protest, including filing date, notary, and resolution.
+  - name: JudicialAction
+    description: A court-filed collection action with case number, jurisdiction, and hearing dates.
+
+apis:
+  - method: POST
+    path: /api/v1/legal/initiate
+    description: Initiates a new legal proceeding (protest or judicial action) for a delinquent debt.
+    auth: Bearer JWT
+    response_codes: [201, 400, 409]
+  - method: GET
+    path: /api/v1/legal/{proposal_id}/status
+    description: Returns the current status and history of legal proceedings for a proposal.
+    auth: Bearer JWT
+    response_codes: [200, 404]
+
+events:
+  consumes: []
+  publishes:
+    - name: legal_action_started
+      description: Emitted when a legal proceeding is formally initiated.
+
+databases:
+  - name: legal_collections_db
+    engine: PostgreSQL
+    contains_pii: true
+    contains_financial_data: true
+    tables:
+      - legal_proceedings
+      - protest_records
+      - judicial_actions
+      - audit_log
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-contact
+      service_name: collections-contact-service
+      interaction: REST API (fetch borrower contact details for legal notices)
+  external:
+    - name: Notary Office API
+      purpose: File and track debt protests
+    - name: Court Filing System
+      purpose: Submit and monitor judicial collection filings
+
+flows:
+  - name: Protest Initiation
+    trigger: POST /api/v1/legal/initiate (type=PROTEST)
+    steps:
+      - Validate debt is eligible for protest (amount thresholds, prior attempts)
+      - Fetch borrower contact details from collections-contact-service
+      - Submit protest request to Notary Office API
+      - Persist ProtestRecord with PENDING status
+      - Publish legal_action_started event
+  - name: Judicial Filing
+    trigger: POST /api/v1/legal/initiate (type=JUDICIAL)
+    steps:
+      - Verify protest has been attempted or is not required
+      - Assemble filing documents
+      - Submit to Court Filing System
+      - Persist JudicialAction with FILED status
+      - Publish legal_action_started event
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - legal_proceedings_initiated_total
+    - legal_protests_filed_total
+    - legal_judicial_actions_filed_total
+    - legal_proceeding_resolution_duration_days
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: NotaryAPIUnavailable
+      condition: legal_notary_api_errors_total > 5 in 10m
+      severity: critical
+    - name: HighPendingProceedings
+      condition: legal_pending_proceedings_count > 1000
+      severity: warning
+
+risks_and_limitations:
+  - Contains PII and financial data; access must be restricted to authorized personnel and audited.
+  - External legal system APIs have unpredictable latency and availability; circuit breakers are mandatory.
+  - Regulatory requirements vary by jurisdiction; the service must be configured per-region.
+  - Incorrect protest filings can incur financial penalties; input validation must be rigorous.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Legal Recovery Procedures
+    link: ../docs/legal-recovery-procedures.md
+  - title: Data Classification Policy
+    link: ../docs/data-classification.md

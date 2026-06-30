@@ -1,0 +1,112 @@
+service_id: svc-21
+service_name: credit-policy-service
+domain: Credit Analysis
+subdomain: Policy Evaluation
+owner_team: team-credit
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Evaluates configurable credit policy rules against a scored proposal. Rules include
+  maximum loan-to-value (LTV) ratios, debt-to-income limits, minimum credit score
+  thresholds, and product-specific constraints. Policies are versioned and auditable.
+business_objective: >
+  Enforce consistent, transparent lending criteria across all loan products while
+  allowing rapid policy iteration by the risk management team without code deployments.
+
+responsibilities:
+  - Maintain a versioned repository of policy rules in PostgreSQL
+  - Evaluate all applicable rules against a proposal's credit score and financial profile
+  - Return a pass/fail result per rule and an aggregate policy outcome
+  - Publish credit_policy_evaluated events for the decision service
+  - Expose REST endpoints for policy management and evaluation
+  - Support rule simulation (what-if analysis) for the risk team
+
+entities:
+  - name: PolicyRule
+    description: >
+      A single evaluatable rule, e.g., "max LTV for vehicle loans = 70 %". Includes
+      rule expression, applicable product types, effective date range, and priority.
+  - name: PolicyEvaluation
+    description: >
+      The result of evaluating all applicable rules for a proposal. Contains per-rule
+      outcomes, the aggregate decision (PASS/FAIL/CONDITIONAL), and the policy version used.
+  - name: PolicyVersion
+    description: >
+      A snapshot of the full rule set at a point in time, enabling reproducibility
+      and audit of past evaluations.
+
+apis:
+  - method: GET
+    path: /api/v1/policies
+    description: >
+      Lists active policy rules, filterable by product type and effective date.
+      Used by the risk management backoffice.
+  - method: POST
+    path: /api/v1/policies/evaluate
+    description: >
+      Evaluates policy rules against a proposal payload (score, LTV, DTI, product type).
+      Returns per-rule outcomes and aggregate result.
+
+events:
+  publishes:
+    - name: credit_policy_evaluated
+      description: >
+        Emitted after all policy rules have been evaluated for a proposal. Payload
+        includes proposal_id, aggregate outcome, failed rule IDs, and policy version.
+  consumes:
+    - name: credit_scored
+      description: >
+        Triggers policy evaluation once the credit score is available.
+
+databases:
+  - name: credit_policy_db
+    type: PostgreSQL
+    purpose: >
+      Stores PolicyRules, PolicyVersions, and PolicyEvaluations. Supports temporal
+      queries to retrieve the rule set effective at any past date.
+
+dependencies:
+  - service_name: credit-scoring-engine
+    type: internal (event)
+    purpose: Provides credit scores that are inputs to policy rule evaluation.
+
+flows:
+  - name: Automated Policy Evaluation
+    description: Triggered by a new credit score; evaluates all applicable rules.
+    steps:
+      - Receive credit_scored event
+      - Load proposal metadata (product type, LTV, DTI) from event payload
+      - Retrieve active PolicyVersion and applicable rules
+      - Evaluate each rule against the proposal
+      - Aggregate per-rule outcomes into final policy result
+      - Persist PolicyEvaluation in credit_policy_db
+      - Publish credit_policy_evaluated event
+  - name: Policy Simulation
+    description: Risk team runs what-if analysis against proposed rule changes.
+    steps:
+      - Receive POST /api/v1/policies/evaluate with hypothetical parameters
+      - Evaluate rules using draft or modified rule set
+      - Return simulation results without persisting or publishing events
+
+observability:
+  metrics:
+    - policy_evaluation_total (counter) — evaluations by aggregate outcome
+    - policy_evaluation_duration_ms (histogram) — rule evaluation latency
+    - policy_rule_failure_total (counter) — failures by rule_id
+    - active_policy_rules_count (gauge) — number of active rules
+  alerts:
+    - policy_evaluation_error_rate — fires when evaluation errors exceed 2 % over 5 min
+    - policy_all_fail_spike — fires when FAIL rate increases by 20 % within 1 h
+  dashboards:
+    - Policy Evaluation Overview — volume, pass/fail ratio, latency
+    - Rule Effectiveness — per-rule failure rates, trends over time
+
+risks_and_limitations:
+  - Misconfigured rules can approve risky loans or reject good applicants at scale
+  - Rule evaluation order and priority must be carefully managed to avoid conflicts
+  - Policy changes take effect immediately once activated; rollback requires a new version
+  - No built-in A/B testing of policy variants (planned for future)
+
+related_documents:
+  - docs/adr/adr-021-versioned-policy-rules.md
+  - docs/runbooks/credit-policy-runbook.md
+  - docs/api-contracts/credit-policy-openapi.yaml

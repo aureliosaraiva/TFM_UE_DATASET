@@ -1,0 +1,108 @@
+service_id: svc-23
+service_name: appraisal-orchestrator-service
+domain: Appraisal
+subdomain: Appraisal Routing
+owner_team: team-appraisal
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Orchestrates the appraisal workflow by routing approved proposals to the appropriate
+  valuation service (vehicle or property) based on the collateral type declared in the
+  loan proposal. Acts as the single entry point for the appraisal domain.
+business_objective: >
+  Ensure every approved secured loan undergoes the correct appraisal process, enabling
+  accurate collateral valuation regardless of asset type and supporting future expansion
+  to additional collateral categories.
+
+responsibilities:
+  - Listen for credit_approved events and initiate the appraisal workflow
+  - Determine collateral type from proposal metadata
+  - Route to vehicle-appraisal-service or property-appraisal-service accordingly
+  - Track appraisal request status and handle timeout/retry logic
+  - Expose REST endpoints for appraisal creation and status queries
+  - Publish appraisal_requested events to the appropriate downstream service
+
+entities:
+  - name: AppraisalRequest
+    description: >
+      Represents a request for collateral appraisal, linking a proposal to a
+      specific collateral type and tracking the current workflow status.
+  - name: CollateralType
+    description: >
+      Enum of supported collateral categories: VEHICLE and PROPERTY. Determines
+      which downstream appraisal service handles the valuation.
+  - name: AppraisalStatus
+    description: >
+      Lifecycle status of an appraisal request: REQUESTED, IN_PROGRESS, COMPLETED,
+      FAILED, or TIMED_OUT.
+
+apis:
+  - method: POST
+    path: /api/v1/appraisals
+    description: >
+      Creates a new appraisal request for a proposal. Accepts collateral details
+      and routes to the correct downstream service.
+  - method: GET
+    path: /api/v1/appraisals/{id}
+    description: >
+      Returns the current status and metadata for an appraisal request.
+
+events:
+  publishes:
+    - name: appraisal_requested
+      description: >
+        Emitted after routing logic determines the target service. Payload includes
+        proposal_id, collateral_type, and collateral details. Consumed by vehicle
+        or property appraisal services.
+  consumes:
+    - name: credit_approved
+      description: >
+        Triggers the appraisal workflow for an approved loan proposal.
+
+databases:
+  - name: appraisal_db
+    type: PostgreSQL
+    purpose: >
+      Stores AppraisalRequests and their status transitions. Shared schema with
+      the appraisal domain but logically partitioned by service.
+
+dependencies:
+  - service_name: credit-decision-service
+    type: internal (event)
+    purpose: Source of credit_approved events that trigger appraisal.
+  - service_name: proposal-service
+    type: internal
+    purpose: Provides proposal and collateral metadata for routing decisions.
+
+flows:
+  - name: Appraisal Routing
+    description: Routes an approved proposal to the correct valuation service.
+    steps:
+      - Receive credit_approved event
+      - Fetch proposal details from proposal-service (collateral type, asset details)
+      - Create AppraisalRequest record with status REQUESTED
+      - Determine target service based on CollateralType
+      - Publish appraisal_requested event with routing metadata
+      - Monitor downstream completion events and update AppraisalStatus
+
+observability:
+  metrics:
+    - appraisal_requests_total (counter) — requests by collateral_type
+    - appraisal_routing_duration_ms (histogram) — time to route a request
+    - appraisal_status_distribution (gauge) — current counts by status
+  alerts:
+    - appraisal_routing_failure — fires when routing errors exceed 2 % over 5 min
+    - appraisal_timeout_spike — fires when TIMED_OUT status increases by 50 % in 1 h
+  dashboards:
+    - Appraisal Pipeline Overview — request volume by type, status funnel
+    - Routing Performance — latency, error rate, timeout trends
+
+risks_and_limitations:
+  - Routing logic is hard-coded to two collateral types; new types require code changes
+  - Depends on proposal-service for metadata; outages block routing
+  - Timeout thresholds must be tuned per collateral type (vehicles are faster than properties)
+  - No built-in support for multi-collateral proposals (one appraisal per asset)
+
+related_documents:
+  - docs/adr/adr-023-appraisal-routing-strategy.md
+  - docs/runbooks/appraisal-orchestrator-runbook.md
+  - docs/api-contracts/appraisal-orchestrator-openapi.yaml

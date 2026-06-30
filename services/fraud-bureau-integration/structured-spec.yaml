@@ -1,0 +1,107 @@
+service_id: "svc-015"
+service_name: "fraud-bureau-integration"
+domain: "Fraud Prevention"
+subdomain: "External Fraud Data"
+owner_team: "team-fraud"
+tech_stack:
+  language: "Kotlin"
+  framework: "Spring Boot"
+  build_tool: "Gradle"
+
+summary: >
+  Stateless integration service that fetches fraud signals from the external fraud bureau
+  ClearCheck. Translates CredityFlow's customer data into ClearCheck's API format, submits
+  queries, and normalizes the response into internal fraud signal structures.
+
+business_objective: >
+  Enrich fraud assessment with external fraud intelligence from ClearCheck, providing
+  historical fraud indicators, identity inconsistency signals, and cross-institution
+  fraud pattern data that CredityFlow cannot observe internally.
+
+responsibilities:
+  - Integrate with ClearCheck external fraud bureau API
+  - Translate customer identity data into ClearCheck query format
+  - Parse and normalize ClearCheck fraud reports into internal domain model
+  - Handle ClearCheck API errors, timeouts, and rate limiting gracefully
+  - Publish normalized fraud signals for downstream consumption
+  - Maintain circuit breaker for ClearCheck connectivity
+
+entities:
+  - name: "BureauFraudReport"
+    description: "Normalized representation of a ClearCheck fraud report, containing fraud indicators and risk signals"
+  - name: "FraudSignal"
+    description: "Individual fraud signal extracted from the bureau report (e.g., identity_mismatch, velocity_alert, previous_fraud)"
+
+apis:
+  - method: "POST"
+    path: "/api/v1/fraud-bureau/check"
+    description: "Internal endpoint to trigger a fraud bureau check for a customer. Fetches customer data from customer-service, queries ClearCheck, and returns normalized results."
+
+events:
+  publishes:
+    - name: "fraud_bureau_checked"
+      description: "Emitted after ClearCheck query completes with normalized fraud signals"
+      schema_version: "1.0"
+  consumes:
+    - name: "biometrics_validated"
+      description: "Triggers fraud bureau check as part of the fraud pipeline"
+      schema_version: "1.0"
+
+databases: []
+# Stateless service - no own database
+
+dependencies:
+  - service_name: "customer-service"
+    type: "sync-rest"
+    purpose: "Fetches customer identity data for ClearCheck query"
+  - service_name: "ClearCheck"
+    type: "external-api"
+    purpose: "External fraud bureau providing fraud signals and historical fraud data"
+
+flows:
+  - name: "Fraud Bureau Check Flow"
+    description: "Query ClearCheck for fraud signals on a customer"
+    steps:
+      - "Receive biometrics_validated event or direct REST call"
+      - "Fetch customer identity from customer-service"
+      - "Map identity data to ClearCheck query format"
+      - "Submit query to ClearCheck API"
+      - "Parse ClearCheck response and extract fraud signals"
+      - "Normalize signals into internal FraudSignal model"
+      - "Publish fraud_bureau_checked event with signals"
+  - name: "ClearCheck Degraded Mode"
+    description: "Behavior when ClearCheck is unavailable"
+    steps:
+      - "Circuit breaker opens after 3 consecutive failures"
+      - "Publish fraud_bureau_checked with status DEGRADED and empty signals"
+      - "Alert fires for ClearCheck unavailability"
+      - "Circuit breaker attempts half-open after 60 seconds"
+
+observability:
+  metrics:
+    - "fraud_bureau.check.count (counter, by status)"
+    - "fraud_bureau.check.latency_ms (histogram)"
+    - "fraud_bureau.clearcheck.circuit_breaker.state (gauge)"
+    - "fraud_bureau.signals.count (counter, by signal_type)"
+  alerts:
+    - "ClearCheck circuit breaker open for > 5 minutes"
+    - "ClearCheck latency p99 > 5s"
+    - "Fraud bureau check error rate > 5%"
+  dashboards:
+    - "Fraud Bureau Integration Health"
+    - "ClearCheck Signal Distribution"
+
+risks_and_limitations:
+  - "Fully dependent on ClearCheck availability; degraded mode passes customers without external fraud signals"
+  - "ClearCheck API has a rate limit of 100 req/s; burst traffic during peak hours may hit the limit"
+  - "ClearCheck response schema changes require coordinated updates (last breaking change was in Q3 2024)"
+  - "No local data persistence means no replay capability; if event publishing fails, the check must be re-executed"
+
+pii_classification: "processes-pii"
+data_sensitivity: "high"
+
+related_documents:
+  - "docs/fraud-prevention/clearcheck-integration-guide.md"
+  - "docs/fraud-prevention/clearcheck-api-contract-v3.pdf"
+  - "runbooks/clearcheck-circuit-breaker.md"
+  - "docs/fraud-prevention/degraded-mode-policy.md"

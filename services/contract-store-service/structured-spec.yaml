@@ -1,0 +1,125 @@
+service_id: svc-30
+service_name: contract-store-service
+domain: Contract
+subdomain: Document Storage
+owner_team: team-contracts
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Stores signed loan contracts with full version history and audit trail.
+  Uses MongoDB for metadata and S3 for binary document storage, providing
+  download and versioning APIs for internal consumers and backoffice users.
+
+business_objective: >
+  Provide a durable, auditable, and versioned repository for all signed loan contracts,
+  ensuring regulatory compliance with document retention requirements and enabling
+  quick retrieval for customer service, legal disputes, and audits.
+
+contains_pii: true
+contains_financial_data: true
+pii_details: >
+  Signed contracts contain borrower names, CPF numbers, addresses, income data,
+  and loan terms including amounts and interest rates.
+
+responsibilities:
+  - Archive signed contract documents in S3 with server-side encryption
+  - Maintain contract metadata and version history in MongoDB
+  - Provide download endpoints for signed contracts
+  - Support version listing for audit and dispute resolution
+  - Ensure document retention for regulatory compliance (minimum 5 years)
+
+entities:
+  - name: StoredContract
+    description: >
+      Metadata record for a signed contract. References the S3 object key,
+      contract ID, borrower reference, product type, signing date, and current version.
+  - name: ContractVersion
+    description: >
+      Represents a specific version of a stored contract. Tracks version number,
+      S3 object key, checksum (SHA-256), creation timestamp, and the actor who
+      triggered the version (system or user).
+
+apis:
+  - method: GET
+    path: /api/v1/contracts/{id}/download
+    description: >
+      Returns a pre-signed S3 URL for downloading the latest signed contract PDF.
+      Supports version query parameter for historical versions.
+  - method: GET
+    path: /api/v1/contracts/{id}/versions
+    description: >
+      Lists all versions of a contract with metadata including timestamps,
+      checksums, and version numbers.
+
+events:
+  consumes:
+    - name: contract_signed
+      source: digital-signature-service
+      description: >
+        Triggers contract archival. The event payload contains the contract ID,
+        document URL, and signature certificate reference.
+  publishes: []
+
+databases:
+  - name: contract_files
+    type: MongoDB
+    purpose: >
+      Stores contract metadata documents including version history, checksums,
+      and audit trail entries. Chosen for flexible schema to accommodate
+      varying contract metadata across product types.
+  - name: S3
+    type: Object Storage
+    purpose: >
+      Stores the actual contract PDF binaries. Server-side encryption (SSE-S3)
+      is enabled. Lifecycle policies move documents to S3 Glacier after 2 years.
+
+dependencies:
+  - service_name: digital-signature-service
+    type: event
+    purpose: Receives contract_signed events to trigger archival.
+  - service_name: AWS S3
+    type: infrastructure
+    purpose: Binary document storage with encryption and lifecycle management.
+
+flows:
+  - name: Contract Archival
+    description: Stores a newly signed contract with versioning.
+    steps:
+      - Receive contract_signed event from Kafka
+      - Download the signed PDF from the temporary document URL
+      - Compute SHA-256 checksum of the document
+      - Upload PDF to S3 with server-side encryption
+      - Create StoredContract metadata in MongoDB (or new ContractVersion if already exists)
+      - Log audit entry with timestamp and actor
+
+observability:
+  metrics:
+    - contracts_stored_total (counter)
+    - contract_download_total (counter)
+    - s3_upload_duration_seconds (histogram)
+    - s3_download_duration_seconds (histogram)
+    - contract_versions_per_contract (histogram)
+  alerts:
+    - name: S3UploadFailures
+      condition: s3 upload error rate > 5% over 10 min
+      severity: critical
+    - name: MongoDBConnectionPoolExhausted
+      condition: available connections < 5 for 5 min
+      severity: warning
+  dashboards:
+    - Contract Store Overview (storage volume, downloads, versions)
+    - S3 and MongoDB Health (latency, error rates, connection pools)
+
+risks_and_limitations:
+  - Contains PII and financial data; unauthorized access could have severe legal and reputational consequences.
+  - S3 lifecycle policy moves documents to Glacier after 2 years; retrieval from Glacier takes hours and may impact SLA for older contracts.
+  - MongoDB does not enforce a rigid schema; data quality depends on application-level validation.
+  - No deduplication mechanism; if contract_signed is delivered twice, two versions may be created for the same signing event.
+
+related_documents:
+  - BACEN document retention requirements (5-year minimum)
+  - LGPD data protection guidelines for stored PII
+  - AWS S3 encryption and lifecycle configuration guide (internal wiki)

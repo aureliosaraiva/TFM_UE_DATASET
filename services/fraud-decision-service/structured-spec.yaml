@@ -1,0 +1,140 @@
+service_id: svc-17
+service_name: fraud-decision-service
+domain: CredityFlow
+subdomain: Fraud Prevention
+owner_team: team-fraud
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Makes the final fraud decision for each loan proposal — approve, deny, or send to
+  manual review — based on the fraud risk score from fraud-scoring-service combined
+  with configurable business rules. Supports backoffice overrides for manual review cases.
+
+business_objective: >
+  Translate fraud scores into actionable decisions that protect CredityFlow from
+  fraud losses while minimizing false positives that block legitimate customers.
+  Provide a manual review and override mechanism for borderline cases, ensuring
+  human judgment can complement the automated pipeline.
+
+responsibilities:
+  - Evaluate fraud scores against decision rules to produce approve/deny/review outcomes
+  - Apply configurable decision rules (score thresholds, mandatory review triggers)
+  - Persist fraud decisions with full audit trail
+  - Support backoffice override of decisions (with reason tracking)
+  - Publish decision events for downstream processing (credit pipeline, notifications)
+  - Expose decision status and override endpoints for backoffice-bff
+
+entities:
+  - name: FraudDecision
+    description: >
+      The final fraud determination for a proposal. Contains decision outcome
+      (APPROVED, DENIED, MANUAL_REVIEW), the fraud score that triggered it,
+      applied rules, timestamp, and optional override information.
+  - name: FraudOverride
+    description: >
+      Records a backoffice analyst's override of an automated decision. Includes
+      original decision, new decision, analyst ID, reason, and override timestamp.
+  - name: DecisionRule
+    description: >
+      Configurable rule that maps fraud scores and signals to decision outcomes.
+      Examples: score > 750 triggers DENIED, specific watchlist matches trigger
+      MANUAL_REVIEW regardless of score.
+
+apis:
+  - method: GET
+    path: /api/v1/fraud-decisions/{proposal_id}
+    description: >
+      Retrieve the current fraud decision for a proposal, including override
+      history if applicable.
+  - method: POST
+    path: /api/v1/fraud-decisions/{id}/override
+    description: >
+      Override a fraud decision (typically from MANUAL_REVIEW to APPROVED or DENIED).
+      Requires backoffice analyst credentials and a mandatory reason field.
+
+events:
+  publishes:
+    - event_name: fraud_decision_made
+      description: >
+        Emitted when a fraud decision is rendered (automated or override). Contains
+        proposal ID, decision outcome, and score summary.
+    - event_name: fraud_cleared
+      description: >
+        Emitted when a proposal passes fraud checks (decision is APPROVED). Signals
+        the credit pipeline to proceed.
+    - event_name: fraud_flagged
+      description: >
+        Emitted when a proposal is denied or flagged for review. May trigger
+        notification to the applicant or case creation in case-management-service.
+  consumes:
+    - event_name: fraud_scored
+      description: >
+        Receives the computed fraud score from fraud-scoring-service. Triggers
+        the decision evaluation process.
+
+databases:
+  - name: fraud_decisions_db
+    type: PostgreSQL
+    purpose: >
+      Stores fraud decisions, decision rules, override records, and audit logs.
+      Critical for compliance reporting and fraud operations analytics.
+
+dependencies:
+  - service_name: fraud-scoring-service
+    type: event
+    purpose: Receives fraud_scored events as input for decision-making.
+
+flows:
+  - name: Automated Fraud Decision
+    description: Produce a fraud decision from an incoming fraud score.
+    steps:
+      - Receive fraud_scored event with proposal ID and score
+      - Load active decision rules from fraud_decisions_db
+      - Evaluate score against rules (threshold checks, mandatory review triggers)
+      - Determine outcome (APPROVED, DENIED, MANUAL_REVIEW)
+      - Persist FraudDecision record
+      - Publish fraud_decision_made event
+      - If APPROVED, also publish fraud_cleared
+      - If DENIED or MANUAL_REVIEW, also publish fraud_flagged
+  - name: Backoffice Override
+    description: Analyst overrides an automated decision via the backoffice.
+    steps:
+      - Analyst sends POST /api/v1/fraud-decisions/{id}/override with new decision and reason
+      - Validate analyst credentials and permissions
+      - Record FraudOverride with original decision, new decision, and reason
+      - Update FraudDecision with override information
+      - Publish fraud_decision_made with override flag
+      - Publish fraud_cleared or fraud_flagged based on new decision
+
+observability:
+  metrics:
+    - fraud_decisions_total (counter, by outcome: approved/denied/manual_review)
+    - fraud_overrides_total (counter, by direction: review_to_approved/review_to_denied)
+    - fraud_decision_latency_seconds (histogram)
+    - manual_review_backlog_size (gauge, decisions pending review)
+  alerts:
+    - Fraud denial rate exceeds 30% over 1 hour (possible rule misconfiguration or attack)
+    - Manual review backlog exceeds 100 pending decisions
+    - Override rate exceeds 50% (rules may need recalibration)
+    - Decision latency p99 above 2 seconds
+  dashboards:
+    - Fraud Decision Overview (outcomes distribution, override rates, daily trends)
+    - Manual Review Queue (pending reviews, average review time, analyst throughput)
+    - Rule Effectiveness (per-rule trigger rates, false positive analysis)
+
+risks_and_limitations:
+  - Decision rules are database-driven but changes take effect immediately with no rollback mechanism
+  - Override audit trail is append-only but there is no four-eyes principle enforced (single analyst can override)
+  - Manual review queue has no SLA enforcement; stale reviews may block loan disbursement
+  - Rule evaluation order matters; conflicting rules are resolved by priority field, but priority gaps can cause unexpected behavior
+  - No simulation mode for testing rule changes against historical proposals
+
+related_documents:
+  - Fraud Prevention Domain Architecture
+  - Fraud Decision Rules Configuration Guide
+  - Backoffice Override Policy and Procedures
+  - Fraud Operations Runbook
+  - Compliance Audit Requirements for Fraud Decisions

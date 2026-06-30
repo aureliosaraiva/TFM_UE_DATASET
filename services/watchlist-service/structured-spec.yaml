@@ -1,0 +1,109 @@
+service_id: "svc-014"
+service_name: "watchlist-service"
+domain: "Fraud Prevention"
+subdomain: "Sanctions & Watchlist Screening"
+owner_team: "team-fraud"
+tech_stack:
+  language: "Kotlin"
+  framework: "Spring Boot"
+  build_tool: "Gradle"
+
+summary: >
+  Screens customers against sanctions lists, politically exposed persons (PEP) lists,
+  and internal watchlists. Provides real-time and batch screening capabilities to ensure
+  regulatory compliance and fraud prevention during the onboarding flow.
+
+business_objective: >
+  Ensure CredityFlow does not onboard sanctioned individuals or politically exposed persons,
+  meeting regulatory requirements (COAF, BACEN) and reducing exposure to financial crime.
+
+responsibilities:
+  - Screen customer identity data against multiple watchlist sources
+  - Maintain and update internal watchlists (blocklists, graylists)
+  - Ingest and normalize external sanctions and PEP lists periodically
+  - Return screening results with match confidence scores
+  - Support fuzzy name matching to catch transliteration and alias variations
+  - Provide audit trail for all screening operations
+
+entities:
+  - name: "WatchlistEntry"
+    description: "A record in a watchlist source, containing name, aliases, identifiers, and risk classification"
+  - name: "ScreeningResult"
+    description: "The outcome of screening a customer against all configured watchlist sources, including match details and confidence"
+  - name: "WatchlistSource"
+    description: "Metadata about a watchlist source (e.g., OFAC SDN, UN Consolidated, COAF PEP list), including last update timestamp"
+
+apis:
+  - method: "POST"
+    path: "/api/v1/watchlist/screen"
+    description: "Submit a screening request for a customer. Accepts identity data and returns screening results synchronously or asynchronously depending on configuration."
+  - method: "GET"
+    path: "/api/v1/watchlist/results/{id}"
+    description: "Retrieve screening results by screening ID. Returns match details, confidence scores, and source references."
+
+events:
+  publishes:
+    - name: "watchlist_checked"
+      description: "Emitted after screening completes, containing screening result and match summary"
+      schema_version: "1.0"
+  consumes:
+    - name: "biometrics_validated"
+      description: "Consumed indirectly via fraud pipeline trigger to initiate watchlist screening"
+      schema_version: "1.0"
+
+databases:
+  - name: "watchlist_db"
+    type: "PostgreSQL"
+    purpose: "Stores watchlist entries, screening results, source metadata, and audit logs"
+
+dependencies:
+  - service_name: "customer-service"
+    type: "sync-rest"
+    purpose: "Fetches customer identity data (name, CPF, date of birth) for screening"
+
+flows:
+  - name: "Customer Screening Flow"
+    description: "Screen a customer against all active watchlist sources"
+    steps:
+      - "Receive screening request (via REST or event trigger)"
+      - "Fetch customer identity data from customer-service"
+      - "Run fuzzy matching against all active watchlist sources"
+      - "Aggregate matches and compute confidence scores"
+      - "Persist screening result"
+      - "Publish watchlist_checked event"
+  - name: "Watchlist Source Update Flow"
+    description: "Periodic ingestion of updated watchlist data from external sources"
+    steps:
+      - "Scheduled job triggers source fetch (daily for sanctions, weekly for PEP)"
+      - "Download and parse source files (CSV, XML)"
+      - "Normalize entries and upsert into watchlist_db"
+      - "Log update statistics and any parsing errors"
+
+observability:
+  metrics:
+    - "watchlist.screening.count (counter, by source and result)"
+    - "watchlist.screening.latency_ms (histogram)"
+    - "watchlist.match.count (counter, by confidence_band)"
+    - "watchlist.source.update.age_hours (gauge, by source)"
+  alerts:
+    - "Screening latency p99 > 3s"
+    - "Watchlist source not updated for > 48 hours"
+    - "Screening error rate > 2%"
+  dashboards:
+    - "Watchlist Screening Overview"
+    - "Source Freshness Monitor"
+
+risks_and_limitations:
+  - "Fuzzy matching can produce false positives, especially for common names; requires tuning of similarity thresholds"
+  - "External source updates may be delayed, creating a window where new sanctions are not yet reflected"
+  - "Contains PII (customer identity matched against watchlist entries); data retention policies must be enforced"
+  - "High volume of screenings during peak onboarding hours can increase latency"
+
+pii_classification: "contains-pii"
+data_sensitivity: "high"
+
+related_documents:
+  - "docs/fraud-prevention/watchlist-screening-design.md"
+  - "docs/compliance/coaf-screening-requirements.md"
+  - "docs/fraud-prevention/fuzzy-matching-algorithm.md"
+  - "runbooks/watchlist-source-update-failure.md"

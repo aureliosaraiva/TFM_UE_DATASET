@@ -1,0 +1,126 @@
+service_id: svc-22
+service_name: credit-decision-service
+domain: Credit Analysis
+subdomain: Credit Decision
+owner_team: team-credit
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Renders the final credit decision (APPROVED, DENIED, or MANUAL_REVIEW) for a
+  loan proposal based on the policy evaluation outcome. Supports manual overrides
+  by authorised backoffice analysts and records full decision audit trails.
+business_objective: >
+  Deliver timely, auditable credit decisions that balance risk appetite with
+  conversion goals. Provide the backoffice team with tools to handle edge cases
+  that fall outside automated policy rules.
+
+responsibilities:
+  - Consume policy evaluation events and determine the final decision
+  - Route borderline cases to manual review queues
+  - Persist decisions with full audit trail in PostgreSQL
+  - Support manual overrides with reason codes and analyst identification
+  - Publish granular decision events (approved/denied) for downstream orchestration
+  - Expose REST endpoints for decision retrieval and override
+
+entities:
+  - name: CreditDecision
+    description: >
+      The final decision record for a proposal: outcome (APPROVED/DENIED/MANUAL_REVIEW),
+      policy evaluation reference, decision timestamp, and conditions.
+  - name: DecisionOverride
+    description: >
+      A manual override applied by a backoffice analyst, including the original and
+      new outcomes, reason code, analyst ID, and approval chain.
+  - name: ApprovalCondition
+    description: >
+      A condition attached to an approval (e.g., "additional collateral required",
+      "reduced loan amount"), which must be satisfied before disbursement.
+
+apis:
+  - method: GET
+    path: /api/v1/credit-decisions/{proposal_id}
+    description: >
+      Returns the current credit decision for a proposal, including outcome,
+      conditions, and override history.
+  - method: POST
+    path: /api/v1/credit-decisions/{id}/override
+    description: >
+      Allows an authorised analyst to override an existing decision. Requires
+      reason code and is subject to approval chain validation.
+
+events:
+  publishes:
+    - name: credit_decision_made
+      description: >
+        Emitted for every decision (all outcomes). Payload includes proposal_id,
+        outcome, conditions, and policy version reference.
+    - name: credit_approved
+      description: >
+        Emitted only when the outcome is APPROVED. Triggers downstream processes
+        such as appraisal and contract generation.
+    - name: credit_denied
+      description: >
+        Emitted only when the outcome is DENIED. Triggers rejection notification
+        to the customer.
+  consumes:
+    - name: credit_policy_evaluated
+      description: >
+        Provides the policy evaluation result that the decision service uses to
+        determine the final outcome.
+
+databases:
+  - name: credit_decisions_db
+    type: PostgreSQL
+    purpose: >
+      Stores CreditDecisions, DecisionOverrides, and ApprovalConditions. Full
+      audit trail with immutable append-only decision log.
+
+dependencies:
+  - service_name: credit-policy-service
+    type: internal (event)
+    purpose: Provides policy evaluation outcomes consumed via credit_policy_evaluated events.
+
+flows:
+  - name: Automated Credit Decision
+    description: Converts policy evaluation into a final credit decision.
+    steps:
+      - Receive credit_policy_evaluated event
+      - Determine outcome based on aggregate policy result and business rules
+      - If PASS and no conditions, set outcome to APPROVED
+      - If FAIL on critical rules, set outcome to DENIED
+      - If borderline or conditional, set outcome to MANUAL_REVIEW
+      - Persist CreditDecision in credit_decisions_db
+      - Publish credit_decision_made and the specific outcome event
+  - name: Manual Override
+    description: Backoffice analyst overrides an automated decision.
+    steps:
+      - Analyst submits POST /api/v1/credit-decisions/{id}/override
+      - Validate analyst permissions and approval chain
+      - Create DecisionOverride record linked to original decision
+      - Update CreditDecision outcome
+      - Publish new credit_decision_made event (and outcome-specific event)
+
+observability:
+  metrics:
+    - credit_decision_total (counter) — decisions by outcome
+    - credit_decision_duration_seconds (histogram) — time from event receipt to decision
+    - manual_review_queue_size (gauge) — proposals awaiting manual review
+    - override_total (counter) — overrides by original and new outcome
+  alerts:
+    - decision_error_rate_high — fires when processing errors exceed 1 % over 5 min
+    - manual_review_queue_growing — fires when queue size exceeds 100
+    - approval_rate_anomaly — fires when approval rate deviates > 15 % from 7-day average
+  dashboards:
+    - Credit Decision Overview — volume by outcome, latency, approval rate
+    - Manual Review Queue — queue depth, ageing, analyst throughput
+    - Override Audit — override frequency, reason code distribution
+
+risks_and_limitations:
+  - Manual overrides bypass automated controls; must be tightly governed by role-based access
+  - High manual review volumes can create bottlenecks and delay loan processing
+  - Decision audit trail must comply with Central Bank of Brazil regulations
+  - Financial data in decisions requires encryption and restricted access
+
+related_documents:
+  - docs/adr/adr-022-decision-override-governance.md
+  - docs/runbooks/credit-decision-runbook.md
+  - docs/api-contracts/credit-decision-openapi.yaml

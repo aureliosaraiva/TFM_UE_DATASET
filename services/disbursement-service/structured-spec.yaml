@@ -1,0 +1,167 @@
+service_id: svc-35
+service_name: disbursement-service
+domain: Disbursement
+subdomain: Disbursement Order Management
+owner_team: team-disbursement
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Creates and manages disbursement orders for approved loans. Enforces business
+  rules including manual approval requirements for amounts exceeding R$500,000.
+  Serves as the entry point for the disbursement pipeline, bridging the gap
+  between lien registration completion and actual fund transfer.
+
+business_objective: >
+  Ensure loan funds are disbursed accurately and in compliance with internal
+  approval policies. Provide backoffice tools for the operations team to
+  review, approve, and track disbursement orders.
+
+responsibilities:
+  - Create disbursement orders after lien registration is confirmed
+  - Enforce disbursement business rules (amount thresholds, approval requirements)
+  - Route high-value disbursements for manual approval
+  - Expose backoffice APIs for disbursement management
+  - Publish disbursement_requested events for bank transfer execution
+
+entities:
+  - name: DisbursementOrder
+    description: Represents a request to disburse loan funds
+    attributes:
+      - id (UUID)
+      - contract_id (UUID)
+      - borrower_id (UUID)
+      - amount (BigDecimal)
+      - currency (BRL)
+      - status (CREATED | PENDING_APPROVAL | APPROVED | REJECTED | DISBURSING | COMPLETED | FAILED)
+      - requires_approval (Boolean)
+      - created_at (Instant)
+      - updated_at (Instant)
+
+  - name: ApprovalRecord
+    description: Records manual approval or rejection of a disbursement order
+    attributes:
+      - id (UUID)
+      - disbursement_order_id (UUID)
+      - approver_id (UUID)
+      - decision (APPROVED | REJECTED)
+      - reason (String, nullable)
+      - decided_at (Instant)
+
+  - name: DisbursementRule
+    description: Configurable business rules for disbursement processing
+    attributes:
+      - id (UUID)
+      - rule_name (String)
+      - rule_type (AMOUNT_THRESHOLD | APPROVAL_REQUIRED | BLACKOUT_PERIOD)
+      - parameters (JSONB)
+      - active (Boolean)
+
+apis:
+  - method: POST
+    path: /api/v1/disbursements
+    description: Create a new disbursement order
+    request_body: DisbursementOrder
+    response: DisbursementOrder (201 Created)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/disbursements/{id}
+    description: Retrieve a disbursement order by ID
+    path_params:
+      - id (UUID)
+    response: DisbursementOrder (200 OK)
+    auth: Bearer token
+
+  - method: POST
+    path: /api/v1/disbursements/{id}/approve
+    description: Approve or reject a disbursement order (backoffice)
+    path_params:
+      - id (UUID)
+    request_body: ApprovalRecord
+    response: DisbursementOrder (200 OK)
+    auth: Bearer token (requires backoffice role)
+
+events:
+  consumes:
+    - event: registry_completed
+      topic: credityflow.registry
+      description: Triggers disbursement order creation when lien registration is confirmed
+      source: registry-tracker-service
+
+  publishes:
+    - event: disbursement_requested
+      topic: credityflow.disbursement
+      description: Emitted when a disbursement order is approved and ready for bank transfer
+
+databases:
+  - name: disbursement_db
+    type: PostgreSQL
+    schemas:
+      - disbursement
+    tables:
+      - disbursement_orders
+      - approval_records
+      - disbursement_rules
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: registry-tracker-service
+      type: event (registry_completed)
+  downstream:
+    - service: bank-transfer-integration
+      type: event (disbursement_requested)
+
+flows:
+  - name: Disbursement Order Processing
+    steps:
+      - Receive registry_completed event
+      - Create DisbursementOrder with contract and borrower data
+      - Evaluate DisbursementRules (e.g., amount > R$500,000 requires approval)
+      - If approval required, set status to PENDING_APPROVAL and wait for backoffice action
+      - If no approval required (or after approval), publish disbursement_requested event
+      - Track disbursement status through completion
+
+  - name: Manual Approval (Backoffice)
+    steps:
+      - Backoffice user queries pending disbursements via API
+      - Backoffice user approves or rejects via POST /api/v1/disbursements/{id}/approve
+      - If approved, publish disbursement_requested event
+      - If rejected, update status to REJECTED and notify operations
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - disbursement_orders_total (counter, by status)
+    - disbursement_amount_sum (counter, total disbursed amount)
+    - approval_pending_gauge (gauge, orders awaiting approval)
+    - approval_decision_latency_seconds (histogram)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, disbursement_id, contract_id
+  alerts:
+    - name: approval_queue_backlog
+      condition: approval_pending_gauge > 20 for 1 hour
+      severity: warning
+    - name: high_rejection_rate
+      condition: rejection rate > 20% in 1 hour
+      severity: warning
+    - name: disbursement_processing_error
+      condition: error rate > 5% in 15 min
+      severity: critical
+
+risks_and_limitations:
+  - Manual approval is a bottleneck for high-value disbursements; SLA depends on backoffice availability
+  - Contains sensitive financial data; strict access controls and audit logging required
+  - Disbursement rules are database-driven; incorrect rule configuration can block or misroute disbursements
+  - No automated rollback for disbursements that have been sent to the bank transfer service
+
+related_documents:
+  - title: CredityFlow Disbursement Domain Overview
+    link: /docs/domains/disbursement.md
+  - title: Disbursement Approval Policy
+    link: /docs/policies/disbursement-approval.md

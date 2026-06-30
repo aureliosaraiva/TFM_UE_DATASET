@@ -1,0 +1,110 @@
+service_id: svc-19
+service_name: income-verification-service
+domain: Credit Analysis
+subdomain: Income Verification
+owner_team: team-credit
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Verifies the income declared by loan applicants by cross-referencing bureau data,
+  uploaded payslips, and tax returns. Produces a verification result that downstream
+  services use for debt-to-income calculations.
+business_objective: >
+  Reduce default risk by ensuring that declared income is substantiated by independent
+  evidence before a credit decision is made. Minimise manual review by automating
+  verification against multiple data sources.
+
+responsibilities:
+  - Accept income verification requests triggered by bureau data availability
+  - Cross-reference declared income against bureau employment and income data
+  - Validate uploaded documents (payslips, tax returns) via OCR metadata
+  - Persist verification results in PostgreSQL for audit and re-query
+  - Publish income_verified events for downstream consumption
+  - Expose REST endpoints for synchronous queries by backoffice tools
+
+entities:
+  - name: IncomeRecord
+    description: >
+      Represents the declared income for a customer, including gross/net amounts,
+      currency, frequency (monthly/annual), and the declaration date.
+  - name: VerificationResult
+    description: >
+      Outcome of the verification process: VERIFIED, PARTIALLY_VERIFIED, or UNVERIFIED,
+      along with confidence score and discrepancy details.
+  - name: IncomeSource
+    description: >
+      An individual source of income (employer salary, freelance contract, rental income)
+      linked to a customer, with supporting evidence references.
+
+apis:
+  - method: POST
+    path: /api/v1/income/verify
+    description: >
+      Triggers income verification for a given customer and proposal. Accepts declared
+      income details and returns a VerificationResult.
+  - method: GET
+    path: /api/v1/income/{customer_id}
+    description: >
+      Returns the latest income records and verification results for a customer.
+      Used by backoffice and downstream services.
+
+events:
+  publishes:
+    - name: income_verified
+      description: >
+        Emitted when income verification completes. Payload includes proposal_id,
+        customer_id, verification status, confidence score, and verified income amount.
+  consumes:
+    - name: bureau_data_fetched
+      description: >
+        Triggers income verification once bureau data (including employment info)
+        is available.
+
+databases:
+  - name: income_db
+    type: PostgreSQL
+    purpose: >
+      Stores IncomeRecords, VerificationResults, and IncomeSources. Retains full
+      audit trail of every verification attempt for regulatory compliance.
+
+dependencies:
+  - service_name: customer-service
+    type: internal
+    purpose: Retrieves customer profile and document references.
+  - service_name: credit-bureau-integration
+    type: internal
+    purpose: Provides bureau employment and income data used for cross-referencing.
+
+flows:
+  - name: Automated Income Verification
+    description: End-to-end flow from bureau data arrival to income_verified event.
+    steps:
+      - Receive bureau_data_fetched event
+      - Load customer profile and declared income from customer-service
+      - Extract employment and income indicators from bureau data
+      - Compare declared income against bureau indicators and uploaded documents
+      - Compute confidence score and determine verification status
+      - Persist VerificationResult in income_db
+      - Publish income_verified event
+
+observability:
+  metrics:
+    - income_verification_total (counter) — verifications completed, labelled by status
+    - income_verification_duration_seconds (histogram) — end-to-end processing time
+    - income_discrepancy_ratio (gauge) — percentage of verifications with discrepancies
+  alerts:
+    - verification_failure_rate_high — fires when failure rate exceeds 10 % over 10 min
+    - verification_latency_p95_high — fires when p95 exceeds 5 s
+  dashboards:
+    - Income Verification Overview — volume, status distribution, latency
+    - Discrepancy Analysis — discrepancy trends by income source type
+
+risks_and_limitations:
+  - Bureau employment data may be outdated for recently changed jobs
+  - OCR-based document validation has limited accuracy; false positives possible
+  - Contains PII (income amounts, employer data) — strict access controls required
+  - High dependency on customer-service availability
+
+related_documents:
+  - docs/adr/adr-019-income-verification-sources.md
+  - docs/runbooks/income-verification-runbook.md
+  - docs/api-contracts/income-verification-openapi.yaml

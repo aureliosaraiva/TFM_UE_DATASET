@@ -1,0 +1,109 @@
+service_id: svc-01
+service_name: customer-service
+domain: Onboarding
+subdomain: Customer Management
+owner_team: team-onboarding
+summary: >
+  Central customer profile management service. Stores and manages PII
+  (name, CPF, email, phone, address) for all CredityFlow lending products.
+business_objective: >
+  Provide a single source of truth for customer identity and contact information
+  across the entire lending platform, ensuring data consistency and regulatory
+  compliance for KYC requirements.
+responsibilities:
+  - Manage the full lifecycle of customer profiles (create, read, update)
+  - Store and protect PII in compliance with LGPD regulations
+  - Serve as the authoritative source for customer data lookups by downstream services
+  - React to qualified leads by creating initial customer records
+  - Enforce data quality rules on CPF, email, and phone formats
+
+entities:
+  - name: Customer
+    description: >
+      Core entity representing an individual applicant. Holds CPF, full name,
+      date of birth, and references to associated Address and ContactInfo records.
+  - name: Address
+    description: >
+      Physical address tied to a Customer. Includes street, number, complement,
+      neighborhood, city, state, and ZIP code (CEP).
+  - name: ContactInfo
+    description: >
+      Contact details for a Customer, including primary email, secondary email,
+      mobile phone, and landline phone.
+
+apis:
+  - method: POST
+    path: /api/v1/customers
+    description: Create a new customer profile from lead or direct registration data.
+  - method: GET
+    path: /api/v1/customers
+    description: Search customers by CPF, email, or phone. Supports pagination.
+  - method: GET
+    path: /api/v1/customers/{id}
+    description: Retrieve a single customer profile by internal ID.
+  - method: PUT
+    path: /api/v1/customers/{id}
+    description: Update an existing customer profile (address, contact, personal data).
+
+events:
+  publishes:
+    - event_name: customer_created
+      description: Emitted when a new customer record is persisted after validation.
+    - event_name: customer_updated
+      description: Emitted when any customer field is modified.
+  consumes:
+    - event_name: lead_qualified
+      description: >
+        Triggers creation of a customer profile from a marketing-qualified lead.
+        Payload includes name, CPF, email, and phone.
+
+databases:
+  - name: customer_db
+    type: PostgreSQL
+    purpose: >
+      Primary relational store for Customer, Address, and ContactInfo entities.
+      PII columns are encrypted at rest via AWS KMS.
+
+dependencies:
+  - service_name: lead-service
+    type: async
+    purpose: Receives lead_qualified events to bootstrap customer profiles.
+
+flows:
+  - name: Lead-to-Customer
+    description: Converts a qualified lead into a persisted customer profile.
+    steps:
+      - Receive lead_qualified event from SNS/SQS
+      - Validate CPF uniqueness against customer_db
+      - Persist Customer, Address, and ContactInfo records
+      - Publish customer_created event
+  - name: Customer Update
+    description: Handles profile updates from internal or customer-facing channels.
+    steps:
+      - Receive PUT request with updated fields
+      - Validate data formats and business rules
+      - Apply optimistic locking and persist changes
+      - Publish customer_updated event
+
+observability:
+  metrics:
+    - customer_creation_total (counter)
+    - customer_lookup_duration_seconds (histogram)
+    - duplicate_cpf_rejection_total (counter)
+  alerts:
+    - High error rate on POST /api/v1/customers (>5% over 5 min)
+    - Database connection pool exhaustion (>90% utilization)
+    - SQS dead-letter queue depth > 0 for lead_qualified
+  dashboards:
+    - Customer Service Overview (creation rate, lookup latency, error rate)
+    - PII Access Audit (read/write counts by caller service)
+
+risks_and_limitations:
+  - PII exposure risk requires strict access controls and encryption at rest
+  - CPF validation depends on external Receita Federal format rules
+  - High read traffic from downstream services may require read replicas
+  - No soft-delete implemented yet; LGPD erasure requests handled manually
+
+related_documents:
+  - README.md
+  - architecture.md

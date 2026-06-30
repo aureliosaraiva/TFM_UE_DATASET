@@ -1,0 +1,128 @@
+service_id: svc-41
+service_name: negotiation-engine-service
+domain: Collections
+subdomain: Negotiation
+owner_team: team-collections
+lifecycle_status: production
+
+summary: >
+  Generates and manages negotiation offers for overdue borrowers, including
+  discount proposals, payment extensions, and interest-rate reductions.
+
+business_objective: >
+  Recover outstanding debt by presenting borrowers with attractive, financially
+  viable settlement options that maximize recovery value while reducing the need
+  for costly legal proceedings.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Simulate negotiation scenarios based on borrower profile and outstanding balance
+  - Apply discount rules and business constraints to produce valid offers
+  - Persist offer lifecycle from creation through acceptance or rejection
+  - Notify downstream systems when a borrower accepts terms
+  - Provide simulation endpoints for back-office and self-service channels
+
+entities:
+  - name: NegotiationOffer
+    description: A concrete offer presented to a borrower, containing proposed terms and expiration.
+  - name: NegotiationTerms
+    description: The financial parameters of an offer (discount percentage, new due dates, revised interest rate).
+  - name: DiscountRule
+    description: A configurable business rule that determines allowable discount ranges and conditions.
+
+apis:
+  - method: POST
+    path: /api/v1/negotiations/simulate
+    description: Runs a negotiation simulation and returns possible offers without persisting.
+    auth: Bearer JWT
+    response_codes: [200, 400, 422]
+  - method: POST
+    path: /api/v1/negotiations/{id}/accept
+    description: Records borrower acceptance of a negotiation offer.
+    auth: Bearer JWT
+    response_codes: [200, 404, 409]
+
+events:
+  consumes: []
+  publishes:
+    - name: negotiation_offered
+      description: Emitted when a new offer is created and presented to the borrower.
+    - name: negotiation_accepted
+      description: Emitted when a borrower accepts an offer, triggering billing recalculation.
+
+databases:
+  - name: collections_db
+    engine: PostgreSQL
+    contains_pii: false
+    contains_financial_data: true
+    tables:
+      - negotiation_offers
+      - negotiation_terms
+      - discount_rules
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-38
+      service_name: billing-service
+      interaction: REST API (fetch outstanding installments)
+    - service_id: svc-customer
+      service_name: customer-service
+      interaction: REST API (fetch borrower profile and risk tier)
+
+flows:
+  - name: Offer Simulation
+    trigger: POST /api/v1/negotiations/simulate
+    steps:
+      - Fetch outstanding balance from billing-service
+      - Fetch borrower risk profile from customer-service
+      - Evaluate applicable DiscountRules
+      - Calculate possible NegotiationTerms variants
+      - Return simulation results (not persisted)
+  - name: Offer Acceptance
+    trigger: POST /api/v1/negotiations/{id}/accept
+    steps:
+      - Validate offer has not expired
+      - Transition offer status to ACCEPTED
+      - Publish negotiation_accepted event
+      - billing-service recalculates schedule upon receiving event
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - negotiation_offers_created_total
+    - negotiation_offers_accepted_total
+    - negotiation_simulation_duration_seconds
+    - negotiation_acceptance_rate
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: LowAcceptanceRate
+      condition: negotiation_acceptance_rate < 0.10
+      severity: warning
+    - name: SimulationLatencyHigh
+      condition: negotiation_simulation_duration_seconds_p99 > 3
+      severity: warning
+
+risks_and_limitations:
+  - Discount rules must be carefully governed; misconfigured rules could authorize excessive discounts.
+  - Stale billing data during simulation can lead to offers that are invalid at acceptance time; optimistic locking mitigates this.
+  - Financial calculations must use BigDecimal to avoid rounding errors on monetary values.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Negotiation Strategy Playbook
+    link: ../docs/negotiation-strategy.md
+  - title: Discount Rule Configuration Guide
+    link: ../docs/discount-rules-guide.md

@@ -1,0 +1,158 @@
+service_id: svc-36
+service_name: bank-transfer-integration
+domain: Disbursement
+subdomain: Bank Transfer Execution
+owner_team: team-disbursement
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Executes bank transfers via the BancoParceiro API, supporting both TED and PIX
+  transfer methods. Handles the communication with the partner bank, manages
+  transfer lifecycle, and publishes transfer initiation events for downstream
+  confirmation tracking.
+
+business_objective: >
+  Reliably execute fund transfers to borrowers' bank accounts using the most
+  appropriate transfer method (PIX for speed, TED for compatibility), ensuring
+  traceability and compliance with banking regulations.
+
+responsibilities:
+  - Execute bank transfers via BancoParceiro API (TED and PIX)
+  - Select appropriate transfer method based on amount and recipient bank
+  - Track transfer lifecycle from initiation to bank acknowledgment
+  - Handle transfer failures and error responses from BancoParceiro
+  - Publish transfer initiation events for confirmation tracking
+
+entities:
+  - name: BankTransfer
+    description: Represents a bank transfer execution
+    attributes:
+      - id (UUID)
+      - disbursement_order_id (UUID)
+      - transfer_method (TransferMethod)
+      - amount (BigDecimal)
+      - currency (BRL)
+      - status (CREATED | SUBMITTED | ACKNOWLEDGED | FAILED | CANCELLED)
+      - bank_protocol (String, nullable)
+      - submitted_at (Instant, nullable)
+      - acknowledged_at (Instant, nullable)
+      - error_details (String, nullable)
+
+  - name: TransferMethod
+    description: Enum defining the bank transfer method
+    values:
+      - TED
+      - PIX
+
+  - name: BankAccount
+    description: Recipient bank account details
+    attributes:
+      - id (UUID)
+      - bank_transfer_id (UUID)
+      - bank_code (String)
+      - branch (String)
+      - account_number (String)
+      - account_type (CORRENTE | POUPANCA)
+      - holder_cpf_cnpj (String)
+      - holder_name (String)
+      - pix_key (String, nullable)
+
+apis:
+  - method: POST
+    path: /api/v1/transfers
+    description: Initiate a bank transfer
+    request_body: BankTransfer
+    response: BankTransfer (202 Accepted)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/transfers/{id}/status
+    description: Check the status of a bank transfer
+    path_params:
+      - id (UUID)
+    response: BankTransfer (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: disbursement_requested
+      topic: credityflow.disbursement
+      description: Triggers bank transfer execution for an approved disbursement
+      source: disbursement-service
+
+  publishes:
+    - event: bank_transfer_initiated
+      topic: credityflow.disbursement
+      description: Emitted when the bank acknowledges the transfer submission
+
+databases:
+  - name: disbursement_db
+    type: PostgreSQL
+    schemas:
+      - bank_transfer
+    tables:
+      - bank_transfers
+      - bank_accounts
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: disbursement-service
+      type: event (disbursement_requested)
+  downstream:
+    - service: payment-confirmation-service
+      type: event (bank_transfer_initiated)
+  external:
+    - name: BancoParceiro
+      type: REST API
+      description: Partner bank API for executing TED and PIX transfers
+      auth: OAuth2 client credentials + IP whitelist
+
+flows:
+  - name: Bank Transfer Execution
+    steps:
+      - Receive disbursement_requested event
+      - Extract recipient bank account and amount details
+      - Determine transfer method (PIX if pix_key available and amount within PIX limits, otherwise TED)
+      - Submit transfer request to BancoParceiro API
+      - Receive acknowledgment from BancoParceiro with bank protocol number
+      - Persist BankTransfer with ACKNOWLEDGED status
+      - Publish bank_transfer_initiated event
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - bank_transfers_total (counter, by method and status)
+    - bank_transfer_amount_sum (counter, total transferred)
+    - banco_parceiro_api_latency_seconds (histogram)
+    - banco_parceiro_api_errors_total (counter, by error_type)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, transfer_id, disbursement_order_id
+  alerts:
+    - name: banco_parceiro_api_down
+      condition: error rate > 50% in 10 min
+      severity: critical
+    - name: transfer_submission_failure
+      condition: transfer failure rate > 5% in 15 min
+      severity: critical
+    - name: high_transfer_latency
+      condition: p99 latency > 30 seconds
+      severity: warning
+
+risks_and_limitations:
+  - Contains sensitive financial data (bank accounts, transfer amounts); strict access controls required
+  - BancoParceiro API has maintenance windows (typically Sunday 00:00-06:00)
+  - PIX transfers are limited to R$1,000,000 per transaction by Central Bank regulation
+  - TED transfers must be submitted within banking hours (06:30-17:00 BRT on business days)
+  - IP whitelist requirement means the service must run from known egress IPs
+
+related_documents:
+  - title: BancoParceiro API Integration Guide
+    link: /docs/integrations/banco-parceiro/
+  - title: CredityFlow Disbursement Domain Overview
+    link: /docs/domains/disbursement.md

@@ -1,0 +1,113 @@
+service_id: svc-47
+service_name: case-management-service
+domain: Backoffice
+subdomain: Case Management
+owner_team: team-backoffice
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Central service for creating, assigning, tracking, and resolving manual
+  review cases that arise from fraud flags, registry failures, collections
+  contacts, and other exception flows.
+business_objective: >
+  Ensure that every exception or flagged item across the credit lifecycle is
+  tracked through a structured case workflow, enabling consistent SLAs,
+  auditability, and accountability for resolution.
+
+responsibilities:
+  - Create cases automatically from domain events (fraud flags, registry failures, etc.)
+  - Assign cases to operators based on type, priority, and team capacity
+  - Track case state transitions (open, in-progress, escalated, resolved)
+  - Persist resolution metadata for downstream audit and reporting
+  - Expose APIs for case query, update, and resolution
+
+entities:
+  - name: Case
+    description: >
+      Root aggregate representing a review case.  Contains type, priority,
+      current status, assigned operator, SLA deadline, and a reference to the
+      originating entity (e.g., proposal ID or customer ID).
+  - name: CaseType
+    description: >
+      Enumeration of case categories (fraud_review, registry_failure,
+      collections_followup, document_exception, etc.) used for routing and SLA rules.
+  - name: CaseAssignment
+    description: >
+      Links a case to an operator, recording assignment timestamp, reassignment
+      history, and workload balancing metadata.
+  - name: Resolution
+    description: >
+      Captures the outcome of a case (approved, rejected, escalated_to_legal),
+      the resolving operator, resolution notes, and timestamp.
+
+apis:
+  - method: POST
+    path: /api/v1/cases
+    description: Creates a new case, typically called by event handlers or the backoffice BFF.
+  - method: GET
+    path: /api/v1/cases/{id}
+    description: Returns full case details including assignment and resolution history.
+  - method: PUT
+    path: /api/v1/cases/{id}/resolve
+    description: Resolves a case with a given outcome, operator ID, and notes.
+
+events:
+  publishes:
+    - case_created
+    - case_resolved
+  consumes:
+    - fraud_flagged
+    - registry_failed
+    - collections_contact_attempted
+
+databases:
+  - name: case_management_db
+    type: PostgreSQL
+    purpose: >
+      Stores cases, assignments, and resolutions.  Uses row-level security
+      to partition data by team and optimistic locking for concurrent updates.
+
+dependencies:
+  - service_name: proposal-service
+    type: synchronous
+    purpose: Enrich case details with proposal information when displaying a case.
+
+flows:
+  - name: Automatic Case Creation
+    description: A domain event triggers creation of a new review case.
+    steps:
+      - An event (e.g., fraud_flagged) arrives on the message bus.
+      - The event handler maps the event to a CaseType and priority.
+      - A new Case is persisted in case_management_db.
+      - A case_created event is published for downstream consumers (audit, backoffice BFF).
+  - name: Case Resolution
+    description: An operator resolves a case through the backoffice.
+    steps:
+      - Operator calls PUT /api/v1/cases/{id}/resolve with outcome and notes.
+      - Service validates the operator's assignment and checks for conflicts.
+      - A Resolution record is created and the Case status moves to resolved.
+      - A case_resolved event is published.
+
+observability:
+  metrics:
+    - cases_created_total (counter, by case type)
+    - cases_resolved_total (counter, by outcome)
+    - case_resolution_time_seconds (histogram, by case type)
+    - cases_open (gauge, by case type and priority)
+  alerts:
+    - "Open cases with breached SLA > 10 for 15 min"
+    - "Case creation error rate > 1 % for 5 min"
+    - "Average resolution time > 24 h for fraud_review cases"
+  dashboards:
+    - Case Management Overview (open vs resolved, SLA compliance)
+    - Case Aging Report (cases by age bucket and priority)
+
+risks_and_limitations:
+  - Contains PII via case references to customer and proposal data.
+  - Optimistic locking may cause conflicts when two operators act on the same case simultaneously.
+  - SLA calculation depends on accurate timestamps; clock skew between services must be kept under 1 s.
+  - No built-in escalation automation; SLA breach alerts rely on operator action.
+
+related_documents:
+  - "ADR-047: Case lifecycle state machine"
+  - "OPS-010: SLA definitions by case type"
+  - "SEC-016: PII handling in case management"

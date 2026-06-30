@@ -1,0 +1,139 @@
+service_id: svc-29
+service_name: digital-signature-service
+domain: Contract
+subdomain: Digital Signature
+owner_team: team-contracts
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Manages the digital signature lifecycle for loan contracts by orchestrating
+  requests to the DocuSign-BR provider. Handles signature request creation,
+  status tracking, and callback processing when signatures are completed.
+
+business_objective: >
+  Enable legally binding digital signatures on loan contracts, eliminating the need
+  for physical document handling and reducing contract turnaround time from days to minutes.
+
+responsibilities:
+  - Create digital signature requests via DocuSign-BR API
+  - Track signature status through the signing workflow
+  - Process DocuSign-BR callbacks upon signature completion
+  - Store signature certificates for legal proof
+  - Emit events when contracts are signed
+
+contains_pii: true
+pii_details: >
+  Stores signer names, CPF numbers, email addresses, and phone numbers
+  required by DocuSign-BR for identity verification.
+
+entities:
+  - name: SignatureRequest
+    description: >
+      Represents a pending or completed signature request sent to DocuSign-BR.
+      Contains contract reference, signer details, envelope ID, and request timestamp.
+  - name: SignatureStatus
+    description: >
+      Tracks the current state of a signature request (PENDING, SENT, VIEWED, SIGNED, DECLINED, EXPIRED).
+      Updated via callback or polling.
+  - name: SignatureCertificate
+    description: >
+      The digital certificate returned by DocuSign-BR after successful signing.
+      Contains certificate chain, timestamp authority proof, and hash of the signed document.
+
+apis:
+  - method: POST
+    path: /api/v1/signatures/request
+    description: >
+      Creates a new signature request for a compliant contract. Sends the document
+      to DocuSign-BR and returns a SignatureRequest with tracking information.
+  - method: GET
+    path: /api/v1/signatures/{id}/status
+    description: >
+      Returns the current status of a signature request, including signer activity timeline.
+  - method: POST
+    path: /api/v1/signatures/callback
+    description: >
+      Webhook endpoint called by DocuSign-BR when a signing event occurs
+      (viewed, signed, declined, etc.).
+
+events:
+  consumes:
+    - name: compliance_checked
+      source: compliance-check-service
+      description: >
+        Triggers signature request creation for contracts that passed compliance checks.
+        Only PASS verdicts are acted upon.
+  publishes:
+    - name: signature_requested
+      description: Emitted when a signature request is successfully sent to DocuSign-BR.
+    - name: contract_signed
+      description: >
+        Emitted when all required signers have completed signing. Carries the contract ID
+        and signature certificate reference.
+
+databases:
+  - name: signature_db
+    type: PostgreSQL
+    purpose: >
+      Stores signature requests, status history, and certificate references.
+      PII fields (signer name, CPF, email) are encrypted at the column level.
+
+dependencies:
+  - service_name: compliance-check-service
+    type: event
+    purpose: Receives compliance_checked events to trigger signature requests.
+  - service_name: DocuSign-BR
+    type: external_api
+    purpose: External digital signature provider for legally valid electronic signatures in Brazil.
+
+flows:
+  - name: Signature Request Flow
+    description: From compliance approval to signature request creation.
+    steps:
+      - Receive compliance_checked event with PASS verdict
+      - Load contract document and signer details
+      - Build DocuSign-BR envelope with document and signing fields
+      - Call DocuSign-BR API to create envelope
+      - Persist SignatureRequest with envelope ID
+      - Publish signature_requested event
+  - name: Signature Callback Flow
+    description: Processing DocuSign-BR webhook when signing completes.
+    steps:
+      - Receive POST /api/v1/signatures/callback from DocuSign-BR
+      - Validate webhook signature (HMAC)
+      - Update SignatureStatus based on event type
+      - If event is SIGNED, download certificate from DocuSign-BR
+      - Persist SignatureCertificate
+      - Publish contract_signed event
+
+observability:
+  metrics:
+    - signature_requests_total (counter, by status)
+    - signature_callback_received_total (counter, by event_type)
+    - docusign_api_call_duration_seconds (histogram)
+    - docusign_api_errors_total (counter, by error_type)
+    - signatures_pending_gauge (gauge)
+  alerts:
+    - name: DocuSignAPIDown
+      condition: docusign_api_errors_total rate > 10/min for 5 min
+      severity: critical
+    - name: SignaturesPendingTooLong
+      condition: any signature pending > 72 hours
+      severity: warning
+  dashboards:
+    - Signature Pipeline (requests, completions, avg time-to-sign)
+    - DocuSign-BR Integration Health (API latency, error rates, availability)
+
+risks_and_limitations:
+  - DocuSign-BR is a single external dependency; an outage blocks the entire signing flow.
+  - PII handling requires strict access controls and encryption; a data leak has regulatory consequences.
+  - Callback delivery from DocuSign-BR is at-least-once; the service must handle duplicate callbacks idempotently.
+  - Signature expiration (default 7 days) can cause contracts to time out if signers do not act promptly.
+
+related_documents:
+  - ICP-Brasil digital signature standards
+  - DocuSign-BR API integration guide (internal wiki)
+  - PII handling policy — CredityFlow Security Team

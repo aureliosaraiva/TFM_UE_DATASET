@@ -1,0 +1,2934 @@
+[
+  {
+    "service_id": "svc-01",
+    "service_name": "lead-intake-service",
+    "service_type": "backend",
+    "domain": "Onboarding",
+    "subdomain": "Lead Capture",
+    "business_purpose": "Captures and persists incoming leads from multiple acquisition channels (web, mobile, partner APIs). Validates lead data and triggers the initial qualification pipeline.",
+    "short_description": "Ingests and stores new loan leads from all acquisition channels.",
+    "owner_team": "team-onboarding",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-lead-intake-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "lead_intake_db",
+    "publishes_events": [
+      "lead_created"
+    ],
+    "consumes_events": [],
+    "depends_on_services": [
+      "auth-service",
+      "feature-flag-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "eligibility-service"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": false,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Lead",
+      "LeadSource",
+      "AcquisitionChannel"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/leads",
+      "GET /api/v1/leads/{id}",
+      "GET /api/v1/leads",
+      "PATCH /api/v1/leads/{id}"
+    ],
+    "observability_notes": "Tracks lead volume per channel via Prometheus counters. Alerts on ingestion error rate > 1%.",
+    "known_limitations": "Does not deduplicate leads across channels in real time; deduplication runs as an async batch job every 15 minutes.",
+    "related_documents": [
+      "docs/onboarding-flow.md",
+      "docs/lead-intake-api.md"
+    ]
+  },
+  {
+    "service_id": "svc-02",
+    "service_name": "eligibility-service",
+    "service_type": "backend",
+    "domain": "Onboarding",
+    "subdomain": "Pre-qualification",
+    "business_purpose": "Runs lightweight eligibility rules against lead data (age, geography, minimum income) to pre-qualify applicants before a full credit analysis. Reduces unnecessary downstream processing.",
+    "short_description": "Pre-qualifies leads using configurable eligibility rules.",
+    "owner_team": "team-onboarding",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-eligibility-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "eligibility_db",
+    "publishes_events": [
+      "lead_qualified"
+    ],
+    "consumes_events": [
+      "lead_created"
+    ],
+    "depends_on_services": [
+      "feature-flag-service",
+      "lead-intake-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "EligibilityCheck",
+      "EligibilityRule",
+      "EligibilityResult"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/eligibility/check",
+      "GET /api/v1/eligibility/{leadId}",
+      "GET /api/v1/eligibility/rules"
+    ],
+    "observability_notes": "Dashboards track approval/rejection ratios per rule. SLA alert if p99 latency exceeds 500ms.",
+    "known_limitations": "Rules engine is file-based; changes require a deployment. Migration to a database-backed rules engine is planned.",
+    "related_documents": [
+      "docs/onboarding-flow.md",
+      "docs/eligibility-rules.md"
+    ]
+  },
+  {
+    "service_id": "svc-03",
+    "service_name": "customer-service",
+    "service_type": "backend",
+    "domain": "Onboarding",
+    "subdomain": "Customer Profile",
+    "business_purpose": "Manages the canonical customer profile including personal data, contact information, and address history. Acts as the single source of truth for customer identity across the platform.",
+    "short_description": "Stores and manages canonical customer profiles and personal data.",
+    "owner_team": "team-onboarding",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-customer-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "customer_db",
+    "publishes_events": [],
+    "consumes_events": [
+      "lead_qualified"
+    ],
+    "depends_on_services": [
+      "auth-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "billing-service",
+      "biometrics-capture-service",
+      "collections-contact-service",
+      "contract-generation-service",
+      "credit-bureau-integration",
+      "customer-portal-bff",
+      "document-validation-service",
+      "fraud-bureau-integration",
+      "income-verification-service",
+      "legal-collections-service",
+      "notification-service",
+      "proposal-service",
+      "renegotiation-eligibility-service",
+      "watchlist-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Customer",
+      "Address",
+      "ContactInfo",
+      "CustomerDocument"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/customers",
+      "GET /api/v1/customers/{id}",
+      "PUT /api/v1/customers/{id}",
+      "GET /api/v1/customers/search"
+    ],
+    "observability_notes": "Read-heavy service; monitors cache hit ratio and DB connection pool saturation.",
+    "known_limitations": "Address validation is limited to Brazilian addresses. International address support is not yet implemented.",
+    "related_documents": [
+      "docs/customer-data-model.md",
+      "docs/pii-handling-guide.md"
+    ]
+  },
+  {
+    "service_id": "svc-04",
+    "service_name": "proposal-service",
+    "service_type": "backend",
+    "domain": "Onboarding",
+    "subdomain": "Loan Proposal",
+    "business_purpose": "Manages the full lifecycle of a loan proposal from creation through approval. Orchestrates the initial steps of document collection, biometrics, and triggers downstream analysis workflows.",
+    "short_description": "Manages loan proposal lifecycle and orchestrates the initial origination steps.",
+    "owner_team": "team-onboarding",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-proposal-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "proposal_db",
+    "publishes_events": [
+      "proposal_started",
+      "proposal_updated"
+    ],
+    "consumes_events": [
+      "appraisal_completed",
+      "biometrics_validated",
+      "contract_signed",
+      "credit_decision_made",
+      "disbursement_done",
+      "documents_validated",
+      "fraud_decision_made",
+      "lead_qualified",
+      "registry_completed"
+    ],
+    "depends_on_services": [
+      "appraisal-orchestrator-service",
+      "biometrics-capture-service",
+      "credit-decision-service",
+      "customer-service",
+      "digital-signature-service",
+      "disbursement-service",
+      "document-validation-service",
+      "eligibility-service",
+      "feature-flag-service",
+      "fraud-decision-service",
+      "registry-orchestrator-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "case-management-service",
+      "customer-portal-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Proposal",
+      "ProposalStep",
+      "ProposalStatus",
+      "CollateralInfo"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/proposals",
+      "GET /api/v1/proposals/{id}",
+      "GET /api/v1/proposals/{id}/status",
+      "PATCH /api/v1/proposals/{id}",
+      "POST /api/v1/proposals/{id}/submit"
+    ],
+    "observability_notes": "Central orchestration service with distributed tracing enabled. Monitors step transition latencies and stuck proposal alerts.",
+    "known_limitations": "Proposal state machine does not support parallel step execution; steps are sequential which increases end-to-end origination time.",
+    "related_documents": [
+      "docs/onboarding-flow.md",
+      "docs/proposal-state-machine.md",
+      "docs/origination-pipeline.md"
+    ]
+  },
+  {
+    "service_id": "svc-05",
+    "service_name": "document-upload-service",
+    "service_type": "backend",
+    "domain": "Document Management",
+    "subdomain": "Document Ingestion",
+    "business_purpose": "Handles secure upload of customer documents (ID, proof of income, vehicle registration, property deeds) via presigned S3 URLs. Stores metadata in MongoDB and triggers classification.",
+    "short_description": "Manages secure document upload and storage via presigned URLs.",
+    "owner_team": "team-documents",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-document-upload-service",
+    "api_style": "rest",
+    "database_type": "MongoDB+S3",
+    "database_name": "document_upload_db",
+    "publishes_events": [
+      "documents_requested",
+      "documents_uploaded"
+    ],
+    "consumes_events": [
+      "documents_requested",
+      "proposal_started"
+    ],
+    "depends_on_services": [
+      "auth-service",
+      "document-store-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "ocr-worker"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": false,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "DocumentUpload",
+      "UploadSession",
+      "FileMetadata"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/documents/upload-url",
+      "POST /api/v1/documents/confirm-upload",
+      "GET /api/v1/documents/{id}/status"
+    ],
+    "observability_notes": "Monitors upload success rates, file sizes, and S3 presigned URL generation latency.",
+    "known_limitations": "Maximum file size is 20MB. Multi-page PDFs over 50 pages may timeout during initial processing.",
+    "related_documents": [
+      "docs/document-upload-flow.md",
+      "docs/s3-bucket-policy.md"
+    ]
+  },
+  {
+    "service_id": "svc-06",
+    "service_name": "ocr-worker",
+    "service_type": "worker",
+    "domain": "Document Management",
+    "subdomain": "Document Extraction",
+    "business_purpose": "Asynchronously processes uploaded documents through OCR to extract text and structured data fields (name, CPF, income values). Feeds extracted data to the classifier and validation services.",
+    "short_description": "Extracts text and structured data from uploaded documents using OCR.",
+    "owner_team": "team-documents",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-ocr-worker",
+    "api_style": "event-driven",
+    "database_type": null,
+    "database_name": null,
+    "publishes_events": [],
+    "consumes_events": [
+      "documents_uploaded"
+    ],
+    "depends_on_services": [
+      "document-store-service",
+      "document-upload-service"
+    ],
+    "used_by_services": [
+      "document-classifier-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": false,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "OcrJob",
+      "ExtractedField",
+      "OcrResult"
+    ],
+    "main_endpoints_or_interfaces": [
+      "Kafka consumer: document-uploads topic",
+      "POST /internal/ocr/process (internal API for retries)"
+    ],
+    "observability_notes": "Tracks OCR accuracy rates per document type and processing latency histograms. GPU utilization alerts on Tessaract workers.",
+    "known_limitations": "Handwritten documents have significantly lower extraction accuracy (~60%). Does not support scanned documents with resolution below 150 DPI.",
+    "related_documents": [
+      "docs/ocr-pipeline.md",
+      "docs/document-extraction-accuracy.md"
+    ]
+  },
+  {
+    "service_id": "svc-07",
+    "service_name": "document-classifier-service",
+    "service_type": "backend",
+    "domain": "Document Management",
+    "subdomain": "Document Classification",
+    "business_purpose": "Classifies uploaded documents into predefined categories (identity, proof of income, vehicle registration, property deed, etc.) using ML models and OCR-extracted text.",
+    "short_description": "Classifies documents into categories using ML and OCR data.",
+    "owner_team": "team-documents",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-document-classifier-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "document_classifier_db",
+    "publishes_events": [
+      "documents_classified"
+    ],
+    "consumes_events": [
+      "documents_uploaded"
+    ],
+    "depends_on_services": [
+      "document-store-service",
+      "ocr-worker"
+    ],
+    "used_by_services": [
+      "document-validation-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "ClassificationResult",
+      "DocumentCategory",
+      "ClassificationModel"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/classify",
+      "GET /api/v1/classifications/{documentId}",
+      "GET /api/v1/categories"
+    ],
+    "observability_notes": "Monitors classification confidence scores distribution and model drift metrics. Alert on confidence below threshold for > 5% of documents.",
+    "known_limitations": "Model retraining is manual and requires data science team involvement. New document types require 500+ labeled samples.",
+    "related_documents": [
+      "docs/document-classification-model.md",
+      "docs/ml-model-versioning.md"
+    ]
+  },
+  {
+    "service_id": "svc-08",
+    "service_name": "document-validation-service",
+    "service_type": "backend",
+    "domain": "Document Management",
+    "subdomain": "Document Verification",
+    "business_purpose": "Validates document authenticity and completeness by cross-referencing extracted data with customer profile and running fraud detection heuristics on document images.",
+    "short_description": "Validates document authenticity and data consistency against customer records.",
+    "owner_team": "team-documents",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-document-validation-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "document_validation_db",
+    "publishes_events": [
+      "documents_validated"
+    ],
+    "consumes_events": [
+      "documents_classified"
+    ],
+    "depends_on_services": [
+      "customer-service",
+      "document-classifier-service",
+      "document-store-service"
+    ],
+    "used_by_services": [
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "ValidationResult",
+      "ValidationRule",
+      "DocumentIssue"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/validations",
+      "GET /api/v1/validations/{proposalId}",
+      "POST /api/v1/validations/{id}/override"
+    ],
+    "observability_notes": "Tracks validation pass/fail rates per document type and rule. Alert on sudden increase in rejection rates.",
+    "known_limitations": "Manual override requires backoffice user role. Override audit trail is stored but not yet exposed via API.",
+    "related_documents": [
+      "docs/document-validation-rules.md",
+      "docs/document-fraud-detection.md"
+    ]
+  },
+  {
+    "service_id": "svc-09",
+    "service_name": "document-store-service",
+    "service_type": "backend",
+    "domain": "Document Management",
+    "subdomain": "Document Storage",
+    "business_purpose": "Provides a unified API for storing and retrieving documents and their metadata. Manages document lifecycle including retention policies and encryption at rest.",
+    "short_description": "Centralized document storage and retrieval with encryption and retention management.",
+    "owner_team": "team-documents",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-document-store-service",
+    "api_style": "rest",
+    "database_type": "MongoDB+S3",
+    "database_name": "document_store_db",
+    "publishes_events": [
+      "documents_submitted"
+    ],
+    "consumes_events": [
+      "documents_validated"
+    ],
+    "depends_on_services": [
+      "auth-service"
+    ],
+    "used_by_services": [
+      "appraisal-report-service",
+      "backoffice-bff",
+      "contract-store-service",
+      "document-classifier-service",
+      "document-upload-service",
+      "document-validation-service",
+      "face-match-service",
+      "income-verification-service",
+      "ocr-worker"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "StoredDocument",
+      "DocumentVersion",
+      "RetentionPolicy"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/documents",
+      "GET /api/v1/documents/{id}",
+      "GET /api/v1/documents/{id}/download",
+      "DELETE /api/v1/documents/{id}",
+      "GET /api/v1/documents/by-proposal/{proposalId}"
+    ],
+    "observability_notes": "Monitors S3 upload/download latency, storage consumption growth, and MongoDB query performance.",
+    "known_limitations": "Does not support document versioning diff views. Full document history retrieval can be slow for proposals with 20+ documents.",
+    "related_documents": [
+      "docs/document-storage-architecture.md",
+      "docs/data-retention-policy.md"
+    ]
+  },
+  {
+    "service_id": "svc-10",
+    "service_name": "biometrics-capture-service",
+    "service_type": "backend",
+    "domain": "Biometrics",
+    "subdomain": "Biometric Collection",
+    "business_purpose": "Manages the biometric data capture workflow including selfie photos and video sessions. Coordinates liveness detection and face matching steps for identity verification.",
+    "short_description": "Orchestrates biometric data capture and identity verification workflows.",
+    "owner_team": "team-identity",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-biometrics-capture-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "biometrics_db",
+    "publishes_events": [
+      "biometrics_captured",
+      "biometrics_requested",
+      "biometrics_validated"
+    ],
+    "consumes_events": [
+      "biometrics_requested",
+      "documents_submitted",
+      "face_match_completed"
+    ],
+    "depends_on_services": [
+      "auth-service",
+      "customer-service",
+      "face-match-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "face-match-service",
+      "liveness-worker",
+      "proposal-service"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "BiometricSession",
+      "CaptureResult",
+      "VerificationStatus"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/biometrics/sessions",
+      "POST /api/v1/biometrics/sessions/{id}/capture",
+      "GET /api/v1/biometrics/sessions/{id}/status",
+      "GET /api/v1/biometrics/by-proposal/{proposalId}"
+    ],
+    "observability_notes": "Monitors capture success rates per device type and SDK version. Alerts on liveness check failure spikes.",
+    "known_limitations": "Requires minimum camera resolution of 720p. Low-light conditions significantly reduce liveness detection accuracy.",
+    "related_documents": [
+      "docs/biometrics-flow.md",
+      "docs/identity-verification.md"
+    ]
+  },
+  {
+    "service_id": "svc-11",
+    "service_name": "liveness-worker",
+    "service_type": "worker",
+    "domain": "Biometrics",
+    "subdomain": "Liveness Detection",
+    "business_purpose": "Processes captured biometric data to verify the subject is a live person and not a photo, video replay, or mask attack. Uses passive and active liveness detection algorithms.",
+    "short_description": "Performs liveness detection on biometric captures to prevent spoofing attacks.",
+    "owner_team": "team-identity",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-liveness-worker",
+    "api_style": "event-driven",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [
+      "liveness_verified"
+    ],
+    "consumes_events": [
+      "biometrics_captured"
+    ],
+    "depends_on_services": [
+      "biometrics-capture-service"
+    ],
+    "used_by_services": [
+      "face-match-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": false,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "LivenessCheck",
+      "LivenessScore",
+      "SpoofingIndicator"
+    ],
+    "main_endpoints_or_interfaces": [
+      "Kafka consumer: biometrics-captures topic",
+      "POST /internal/liveness/analyze"
+    ],
+    "observability_notes": "Tracks liveness pass/fail rates and average processing time. GPU memory utilization alerts for ML inference pods.",
+    "known_limitations": "Active liveness challenges are limited to 3 gesture types. Processing time increases to ~5s under high load due to GPU contention.",
+    "related_documents": [
+      "docs/liveness-detection.md",
+      "docs/anti-spoofing-model.md"
+    ]
+  },
+  {
+    "service_id": "svc-12",
+    "service_name": "face-match-service",
+    "service_type": "backend",
+    "domain": "Biometrics",
+    "subdomain": "Face Matching",
+    "business_purpose": "Compares the captured selfie against the photo extracted from the identity document to confirm the applicant is who they claim to be. Returns a similarity score and match decision.",
+    "short_description": "Matches selfie photos against ID document photos for identity confirmation.",
+    "owner_team": "team-identity",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-face-match-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "face_match_db",
+    "publishes_events": [
+      "face_match_completed"
+    ],
+    "consumes_events": [
+      "liveness_verified"
+    ],
+    "depends_on_services": [
+      "biometrics-capture-service",
+      "document-store-service",
+      "liveness-worker"
+    ],
+    "used_by_services": [
+      "biometrics-capture-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "FaceMatchResult",
+      "SimilarityScore",
+      "MatchDecision"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/face-match/compare",
+      "GET /api/v1/face-match/{sessionId}/result"
+    ],
+    "observability_notes": "Monitors similarity score distribution and false accept/reject rates. Alert on model inference latency exceeding 3s.",
+    "known_limitations": "Accuracy degrades for ID documents older than 10 years due to aging effects. Threshold tuning requires manual A/B testing.",
+    "related_documents": [
+      "docs/face-match-algorithm.md",
+      "docs/biometrics-flow.md"
+    ]
+  },
+  {
+    "service_id": "svc-13",
+    "service_name": "device-fingerprint-service",
+    "service_type": "backend",
+    "domain": "Fraud Prevention",
+    "subdomain": "Device Intelligence",
+    "business_purpose": "Collects and analyzes device-level signals (browser fingerprint, IP geolocation, device reputation) to detect suspicious devices and session anomalies associated with fraud.",
+    "short_description": "Analyzes device signals and fingerprints to detect suspicious access patterns.",
+    "owner_team": "team-fraud",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Node.js",
+    "framework": "Express",
+    "repository_name": "credityflow-device-fingerprint-service",
+    "api_style": "rest",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [
+      "device_fingerprint_checked"
+    ],
+    "consumes_events": [
+      "biometrics_validated",
+      "fraud_check_started"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "fraud-scoring-service"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": false,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "DeviceFingerprint",
+      "DeviceRiskScore",
+      "IpGeolocation"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/device/fingerprint",
+      "GET /api/v1/device/{fingerprintId}/risk",
+      "POST /api/v1/device/session-check"
+    ],
+    "observability_notes": "Real-time dashboard for device risk score distribution. Alert on spike in high-risk device detections (>10% in 5min window).",
+    "known_limitations": "VPN/proxy detection has ~85% accuracy. Device fingerprint persistence is limited on Safari due to Intelligent Tracking Prevention.",
+    "related_documents": [
+      "docs/device-fingerprinting.md",
+      "docs/fraud-prevention-overview.md"
+    ]
+  },
+  {
+    "service_id": "svc-14",
+    "service_name": "watchlist-service",
+    "service_type": "backend",
+    "domain": "Fraud Prevention",
+    "subdomain": "Sanctions and Watchlists",
+    "business_purpose": "Screens applicants against internal blocklists, PEP (Politically Exposed Persons) lists, sanctions lists, and adverse media databases. Required for AML/KYC compliance.",
+    "short_description": "Screens applicants against sanctions, PEP, and internal watchlists for AML compliance.",
+    "owner_team": "team-fraud",
+    "criticality": "critical-high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-watchlist-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "watchlist_db",
+    "publishes_events": [
+      "watchlist_checked"
+    ],
+    "consumes_events": [
+      "fraud_check_started"
+    ],
+    "depends_on_services": [
+      "customer-service"
+    ],
+    "used_by_services": [
+      "fraud-scoring-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "WatchlistEntry",
+      "ScreeningResult",
+      "PepMatch",
+      "SanctionMatch"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/screening/check",
+      "GET /api/v1/screening/{customerId}/results",
+      "POST /api/v1/watchlist/entries",
+      "DELETE /api/v1/watchlist/entries/{id}"
+    ],
+    "observability_notes": "Monitors screening latency and match rates. Regulatory alert on any sanctions list update delay > 24h.",
+    "known_limitations": "Fuzzy name matching generates false positives for common Brazilian names. Manual review queue can grow during batch processing peaks.",
+    "related_documents": [
+      "docs/aml-kyc-policy.md",
+      "docs/watchlist-integration.md",
+      "docs/compliance-screening.md"
+    ]
+  },
+  {
+    "service_id": "svc-15",
+    "service_name": "fraud-bureau-integration",
+    "service_type": "integration",
+    "domain": "Fraud Prevention",
+    "subdomain": "External Bureau Data",
+    "business_purpose": "Integrates with external fraud prevention bureaus (Serasa Experian, Quod) to fetch fraud scores, identity confirmation data, and known fraud indicators for applicants.",
+    "short_description": "Fetches fraud data from external bureaus like Serasa Experian and Quod.",
+    "owner_team": "team-fraud",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-fraud-bureau-integration",
+    "api_style": "rest",
+    "database_type": null,
+    "database_name": null,
+    "publishes_events": [
+      "fraud_bureau_checked"
+    ],
+    "consumes_events": [
+      "fraud_check_started"
+    ],
+    "depends_on_services": [
+      "customer-service"
+    ],
+    "used_by_services": [
+      "fraud-scoring-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": false,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "BureauRequest",
+      "BureauResponse",
+      "FraudIndicator"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/bureau/fraud-check",
+      "GET /api/v1/bureau/fraud-check/{requestId}"
+    ],
+    "observability_notes": "Monitors external bureau API response times, error rates, and circuit breaker state. Alert on bureau timeout rate > 5%.",
+    "known_limitations": "Subject to external bureau rate limits (500 req/min per bureau). Circuit breaker opens after 3 consecutive failures, fallback returns cached data if available.",
+    "related_documents": [
+      "docs/fraud-bureau-integration.md",
+      "docs/external-api-resilience.md"
+    ]
+  },
+  {
+    "service_id": "svc-16",
+    "service_name": "fraud-scoring-service",
+    "service_type": "backend",
+    "domain": "Fraud Prevention",
+    "subdomain": "Fraud Risk Assessment",
+    "business_purpose": "Aggregates signals from device fingerprinting, watchlist screening, and bureau data to compute a consolidated fraud risk score using ML models. Provides the score to the fraud decision service.",
+    "short_description": "Computes a consolidated fraud risk score from multiple fraud signals using ML models.",
+    "owner_team": "team-fraud",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-fraud-scoring-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "fraud_scoring_db",
+    "publishes_events": [
+      "fraud_check_started",
+      "fraud_scored"
+    ],
+    "consumes_events": [
+      "biometrics_validated",
+      "device_fingerprint_checked",
+      "fraud_bureau_checked",
+      "watchlist_checked"
+    ],
+    "depends_on_services": [
+      "device-fingerprint-service",
+      "fraud-bureau-integration",
+      "watchlist-service"
+    ],
+    "used_by_services": [
+      "credit-scoring-engine",
+      "fraud-decision-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "FraudScore",
+      "SignalWeight",
+      "FraudModel",
+      "ScoreBreakdown"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/fraud/score",
+      "GET /api/v1/fraud/score/{proposalId}",
+      "GET /api/v1/fraud/model/version"
+    ],
+    "observability_notes": "Monitors score distribution, model prediction latency, and feature drift. A/B testing metrics for model versions.",
+    "known_limitations": "Model retraining requires minimum 10,000 labeled samples. Cold start issue for completely new fraud patterns not in training data.",
+    "related_documents": [
+      "docs/fraud-scoring-model.md",
+      "docs/fraud-prevention-overview.md"
+    ]
+  },
+  {
+    "service_id": "svc-17",
+    "service_name": "fraud-decision-service",
+    "service_type": "backend",
+    "domain": "Fraud Prevention",
+    "subdomain": "Fraud Decision",
+    "business_purpose": "Makes the final fraud accept/reject/review decision based on the fraud score and configurable business rules. Routes flagged proposals to manual review in the backoffice.",
+    "short_description": "Makes final fraud accept/reject/review decisions based on scores and business rules.",
+    "owner_team": "team-fraud",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-fraud-decision-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "fraud_decision_db",
+    "publishes_events": [
+      "fraud_cleared",
+      "fraud_decision_made",
+      "fraud_flagged"
+    ],
+    "consumes_events": [
+      "fraud_scored"
+    ],
+    "depends_on_services": [
+      "feature-flag-service",
+      "fraud-scoring-service"
+    ],
+    "used_by_services": [
+      "case-management-service",
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "FraudDecision",
+      "DecisionRule",
+      "ReviewCase"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/fraud/decide",
+      "GET /api/v1/fraud/decision/{proposalId}",
+      "POST /api/v1/fraud/decision/{id}/override"
+    ],
+    "observability_notes": "Tracks decision distribution (approved/rejected/review), override rates, and rule trigger frequencies.",
+    "known_limitations": "Override requires fraud analyst role. Decision rules are evaluated sequentially; complex rule sets may cause latency spikes.",
+    "related_documents": [
+      "docs/fraud-decision-rules.md",
+      "docs/fraud-prevention-overview.md"
+    ]
+  },
+  {
+    "service_id": "svc-18",
+    "service_name": "credit-bureau-integration",
+    "service_type": "integration",
+    "domain": "Credit Analysis",
+    "subdomain": "Bureau Data Fetching",
+    "business_purpose": "Integrates with credit bureaus (Serasa, SPC, Boa Vista) to fetch credit reports, score histories, and outstanding debt information for loan applicants.",
+    "short_description": "Fetches credit reports and scores from external credit bureaus.",
+    "owner_team": "team-credit",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-credit-bureau-integration",
+    "api_style": "rest",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [
+      "bureau_data_fetched"
+    ],
+    "consumes_events": [
+      "credit_check_started",
+      "fraud_cleared"
+    ],
+    "depends_on_services": [
+      "customer-service"
+    ],
+    "used_by_services": [
+      "credit-scoring-engine",
+      "income-verification-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": false,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "BureauRequest",
+      "CreditReport",
+      "DebtSummary",
+      "ScoreHistory"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/bureau/credit-check",
+      "GET /api/v1/bureau/credit-check/{requestId}",
+      "GET /api/v1/bureau/reports/{customerId}"
+    ],
+    "observability_notes": "Monitors bureau API latency per provider, cache hit rates on Redis, and circuit breaker transitions.",
+    "known_limitations": "Bureau data is cached for 24 hours to reduce costs; real-time data requires cache invalidation. Rate limited to 300 req/min per bureau.",
+    "related_documents": [
+      "docs/credit-bureau-integration.md",
+      "docs/external-api-resilience.md"
+    ]
+  },
+  {
+    "service_id": "svc-19",
+    "service_name": "income-verification-service",
+    "service_type": "backend",
+    "domain": "Credit Analysis",
+    "subdomain": "Income Analysis",
+    "business_purpose": "Verifies declared income by cross-referencing bureau data, uploaded pay stubs, tax returns, and bank statements. Computes verified income and debt-to-income ratio.",
+    "short_description": "Verifies and computes applicant income from multiple data sources.",
+    "owner_team": "team-credit",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-income-verification-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "income_verification_db",
+    "publishes_events": [
+      "income_verified"
+    ],
+    "consumes_events": [
+      "bureau_data_fetched",
+      "documents_validated"
+    ],
+    "depends_on_services": [
+      "credit-bureau-integration",
+      "customer-service",
+      "document-store-service"
+    ],
+    "used_by_services": [
+      "credit-scoring-engine"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "IncomeVerification",
+      "IncomeSource",
+      "DebtToIncomeRatio"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/income/verify",
+      "GET /api/v1/income/verification/{proposalId}",
+      "GET /api/v1/income/dti/{proposalId}"
+    ],
+    "observability_notes": "Tracks income verification success rates and discrepancy rates between declared and verified income.",
+    "known_limitations": "Self-employed income verification relies heavily on tax returns which may be outdated. Bank statement parsing supports only major Brazilian banks.",
+    "related_documents": [
+      "docs/income-verification.md",
+      "docs/credit-analysis-flow.md"
+    ]
+  },
+  {
+    "service_id": "svc-20",
+    "service_name": "credit-scoring-engine",
+    "service_type": "backend",
+    "domain": "Credit Analysis",
+    "subdomain": "Credit Scoring",
+    "business_purpose": "Computes internal credit scores using ML models that combine bureau data, verified income, fraud signals, and behavioral data. Produces risk tier classification for the policy engine.",
+    "short_description": "Calculates internal credit risk scores using ML models and aggregated data.",
+    "owner_team": "team-credit",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Python",
+    "framework": "FastAPI",
+    "repository_name": "credityflow-credit-scoring-engine",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "credit_scoring_db",
+    "publishes_events": [
+      "credit_check_started",
+      "credit_scored"
+    ],
+    "consumes_events": [
+      "bureau_data_fetched",
+      "fraud_cleared",
+      "income_verified"
+    ],
+    "depends_on_services": [
+      "credit-bureau-integration",
+      "fraud-scoring-service",
+      "income-verification-service"
+    ],
+    "used_by_services": [
+      "credit-policy-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "CreditScore",
+      "RiskTier",
+      "ScoringModel",
+      "FeatureVector"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/credit/score",
+      "GET /api/v1/credit/score/{proposalId}",
+      "GET /api/v1/credit/model/metrics"
+    ],
+    "observability_notes": "Model performance dashboards track Gini coefficient, KS statistic, and PSI. Alert on score distribution drift exceeding 5% threshold.",
+    "known_limitations": "Model inference latency is ~2s for the full feature set. Thin-file applicants (< 6 months credit history) receive lower confidence scores.",
+    "related_documents": [
+      "docs/credit-scoring-model.md",
+      "docs/ml-model-versioning.md",
+      "docs/credit-analysis-flow.md"
+    ]
+  },
+  {
+    "service_id": "svc-21",
+    "service_name": "credit-policy-service",
+    "service_type": "backend",
+    "domain": "Credit Analysis",
+    "subdomain": "Credit Policy",
+    "business_purpose": "Evaluates the credit score against configurable lending policies (LTV limits, DTI thresholds, term limits, rate tables) to determine eligible loan products, amounts, and rates.",
+    "short_description": "Evaluates credit scores against lending policies to determine eligible loan terms.",
+    "owner_team": "team-credit",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-credit-policy-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "credit_policy_db",
+    "publishes_events": [
+      "credit_policy_evaluated"
+    ],
+    "consumes_events": [
+      "credit_scored"
+    ],
+    "depends_on_services": [
+      "credit-scoring-engine",
+      "feature-flag-service"
+    ],
+    "used_by_services": [
+      "credit-decision-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "CreditPolicy",
+      "PolicyRule",
+      "LoanOffer",
+      "RateTable"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/policy/evaluate",
+      "GET /api/v1/policy/rules",
+      "PUT /api/v1/policy/rules/{id}",
+      "GET /api/v1/policy/offers/{proposalId}"
+    ],
+    "observability_notes": "Monitors policy pass/fail rates per rule and tier. Tracks rate table changes and their impact on approval rates.",
+    "known_limitations": "Policy changes take effect immediately and cannot be scheduled. No built-in simulation mode for testing policy changes before deployment.",
+    "related_documents": [
+      "docs/credit-policy-rules.md",
+      "docs/rate-tables.md"
+    ]
+  },
+  {
+    "service_id": "svc-22",
+    "service_name": "credit-decision-service",
+    "service_type": "backend",
+    "domain": "Credit Analysis",
+    "subdomain": "Credit Decision",
+    "business_purpose": "Makes the final credit approval or denial decision based on policy evaluation results. Determines final loan amount, rate, and term. Supports manual override for edge cases.",
+    "short_description": "Makes final credit approval/denial decisions and determines loan terms.",
+    "owner_team": "team-credit",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-credit-decision-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "credit_decision_db",
+    "publishes_events": [
+      "credit_approved",
+      "credit_decision_made",
+      "credit_denied"
+    ],
+    "consumes_events": [
+      "credit_policy_evaluated"
+    ],
+    "depends_on_services": [
+      "credit-policy-service"
+    ],
+    "used_by_services": [
+      "case-management-service",
+      "contract-generation-service",
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "CreditDecision",
+      "ApprovalTerms",
+      "DenialReason"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/credit/decide",
+      "GET /api/v1/credit/decision/{proposalId}",
+      "POST /api/v1/credit/decision/{id}/override"
+    ],
+    "observability_notes": "Tracks approval/denial rates, average approved amounts, and override frequency. Alert on approval rate deviation > 10% from daily baseline.",
+    "known_limitations": "Override requires credit committee role for amounts above R$500,000. Decision audit log is append-only and cannot be modified.",
+    "related_documents": [
+      "docs/credit-decision-rules.md",
+      "docs/credit-analysis-flow.md"
+    ]
+  },
+  {
+    "service_id": "svc-23",
+    "service_name": "appraisal-orchestrator-service",
+    "service_type": "backend",
+    "domain": "Appraisal",
+    "subdomain": "Appraisal Workflow",
+    "business_purpose": "Orchestrates the collateral appraisal process by routing to the appropriate appraisal service (vehicle or property) based on collateral type and coordinating inspector assignments.",
+    "short_description": "Routes and coordinates collateral appraisal workflows based on asset type.",
+    "owner_team": "team-appraisal",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-appraisal-orchestrator-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "appraisal_orchestrator_db",
+    "publishes_events": [
+      "appraisal_requested"
+    ],
+    "consumes_events": [
+      "appraisal_requested",
+      "credit_approved",
+      "property_appraised",
+      "vehicle_appraised"
+    ],
+    "depends_on_services": [
+      "appraisal-report-service",
+      "property-appraisal-service",
+      "vehicle-appraisal-service"
+    ],
+    "used_by_services": [
+      "contract-generation-service",
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "AppraisalOrder",
+      "CollateralType",
+      "InspectorAssignment"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/appraisals",
+      "GET /api/v1/appraisals/{proposalId}",
+      "GET /api/v1/appraisals/{id}/status"
+    ],
+    "observability_notes": "Monitors appraisal turnaround time by collateral type and inspector. Alert on orders pending > 48h without inspector assignment.",
+    "known_limitations": "Inspector assignment is geographic but coverage gaps exist in remote areas. Does not support mixed collateral (vehicle + property) on a single proposal.",
+    "related_documents": [
+      "docs/appraisal-flow.md",
+      "docs/collateral-types.md"
+    ]
+  },
+  {
+    "service_id": "svc-24",
+    "service_name": "vehicle-appraisal-service",
+    "service_type": "backend",
+    "domain": "Appraisal",
+    "subdomain": "Vehicle Valuation",
+    "business_purpose": "Performs vehicle appraisal by integrating with FIPE table data, analyzing vehicle photos, and collecting inspector reports to determine the fair market value of vehicle collateral.",
+    "short_description": "Appraises vehicle collateral using FIPE data, photos, and inspector reports.",
+    "owner_team": "team-appraisal",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-vehicle-appraisal-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "vehicle_appraisal_db",
+    "publishes_events": [
+      "vehicle_appraised"
+    ],
+    "consumes_events": [
+      "appraisal_requested"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "appraisal-orchestrator-service",
+      "appraisal-report-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "VehicleAppraisal",
+      "FipeReference",
+      "VehicleCondition",
+      "InspectionReport"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/vehicle-appraisals",
+      "GET /api/v1/vehicle-appraisals/{id}",
+      "POST /api/v1/vehicle-appraisals/{id}/inspection-report",
+      "GET /api/v1/fipe/{vehicleCode}"
+    ],
+    "observability_notes": "Tracks appraisal valuations vs FIPE reference delta. Monitors FIPE API availability.",
+    "known_limitations": "FIPE data is updated monthly; intra-month price changes are not reflected. Heavy/specialty vehicles may not have FIPE references.",
+    "related_documents": [
+      "docs/vehicle-appraisal.md",
+      "docs/fipe-integration.md"
+    ]
+  },
+  {
+    "service_id": "svc-25",
+    "service_name": "property-appraisal-service",
+    "service_type": "backend",
+    "domain": "Appraisal",
+    "subdomain": "Property Valuation",
+    "business_purpose": "Performs real estate appraisal by analyzing property registry data, comparable sales, inspector reports, and market indices to determine the fair market value of property collateral.",
+    "short_description": "Appraises property collateral using market data, comparables, and inspector reports.",
+    "owner_team": "team-appraisal",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-property-appraisal-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "property_appraisal_db",
+    "publishes_events": [
+      "property_appraised"
+    ],
+    "consumes_events": [
+      "appraisal_requested"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "appraisal-orchestrator-service",
+      "appraisal-report-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "PropertyAppraisal",
+      "ComparableSale",
+      "PropertyCondition",
+      "MarketIndex"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/property-appraisals",
+      "GET /api/v1/property-appraisals/{id}",
+      "POST /api/v1/property-appraisals/{id}/inspection-report",
+      "GET /api/v1/property-appraisals/{id}/comparables"
+    ],
+    "observability_notes": "Monitors valuation accuracy by comparing appraised values with final sale prices. Tracks inspector report submission SLA.",
+    "known_limitations": "Comparable sales data coverage is limited in rural areas. AVM (Automated Valuation Model) is only available for urban areas in major metropolitan regions.",
+    "related_documents": [
+      "docs/property-appraisal.md",
+      "docs/comparable-sales-methodology.md"
+    ]
+  },
+  {
+    "service_id": "svc-26",
+    "service_name": "appraisal-report-service",
+    "service_type": "backend",
+    "domain": "Appraisal",
+    "subdomain": "Appraisal Reporting",
+    "business_purpose": "Generates structured appraisal reports in PDF format with photos, valuation data, and inspector notes. Stores reports for regulatory compliance and audit purposes.",
+    "short_description": "Generates and stores PDF appraisal reports for compliance and audit.",
+    "owner_team": "team-appraisal",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-appraisal-report-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL+S3",
+    "database_name": "appraisal_report_db",
+    "publishes_events": [
+      "appraisal_completed"
+    ],
+    "consumes_events": [
+      "property_appraised",
+      "vehicle_appraised"
+    ],
+    "depends_on_services": [
+      "document-store-service",
+      "property-appraisal-service",
+      "vehicle-appraisal-service"
+    ],
+    "used_by_services": [
+      "appraisal-orchestrator-service",
+      "backoffice-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "AppraisalReport",
+      "ReportTemplate",
+      "ReportAttachment"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/reports/generate",
+      "GET /api/v1/reports/{appraisalId}",
+      "GET /api/v1/reports/{id}/download"
+    ],
+    "observability_notes": "Tracks report generation time and failure rates. Monitors S3 storage consumption for appraisal assets.",
+    "known_limitations": "PDF generation is synchronous and can take up to 30s for reports with many photos. No support for generating reports in formats other than PDF.",
+    "related_documents": [
+      "docs/appraisal-report-template.md",
+      "docs/appraisal-flow.md"
+    ]
+  },
+  {
+    "service_id": "svc-27",
+    "service_name": "contract-generation-service",
+    "service_type": "backend",
+    "domain": "Contract",
+    "subdomain": "Contract Creation",
+    "business_purpose": "Generates loan contract documents by merging approved loan terms, customer data, and collateral details into legally compliant contract templates. Supports multiple collateral types and loan products.",
+    "short_description": "Generates loan contract documents from templates with approved terms and customer data.",
+    "owner_team": "team-contracts",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-contract-generation-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "contract_generation_db",
+    "publishes_events": [
+      "contract_generated",
+      "contract_generation_requested"
+    ],
+    "consumes_events": [
+      "appraisal_completed",
+      "contract_generation_requested"
+    ],
+    "depends_on_services": [
+      "appraisal-orchestrator-service",
+      "credit-decision-service",
+      "customer-service"
+    ],
+    "used_by_services": [
+      "compliance-check-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "Contract",
+      "ContractTemplate",
+      "ContractClause",
+      "LoanTerms"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/contracts/generate",
+      "GET /api/v1/contracts/{proposalId}",
+      "GET /api/v1/contracts/{id}/preview"
+    ],
+    "observability_notes": "Monitors contract generation latency and template rendering errors. Alert on generation failure rate > 2%.",
+    "known_limitations": "Template changes require legal review and a new deployment. Supports only Portuguese language contracts.",
+    "related_documents": [
+      "docs/contract-generation.md",
+      "docs/contract-templates.md"
+    ]
+  },
+  {
+    "service_id": "svc-28",
+    "service_name": "compliance-check-service",
+    "service_type": "backend",
+    "domain": "Contract",
+    "subdomain": "Regulatory Compliance",
+    "business_purpose": "Validates generated contracts against regulatory requirements (BACEN rules, consumer protection laws, interest rate caps) before they are sent for signature.",
+    "short_description": "Validates contracts against regulatory requirements before signature.",
+    "owner_team": "team-contracts",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-compliance-check-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "compliance_check_db",
+    "publishes_events": [
+      "compliance_checked"
+    ],
+    "consumes_events": [
+      "contract_generated"
+    ],
+    "depends_on_services": [
+      "contract-generation-service"
+    ],
+    "used_by_services": [
+      "digital-signature-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "ComplianceCheck",
+      "ComplianceRule",
+      "ComplianceViolation"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/compliance/check",
+      "GET /api/v1/compliance/{contractId}/result",
+      "GET /api/v1/compliance/rules"
+    ],
+    "observability_notes": "Tracks compliance violation rates by rule type. Alert on any new violation type not seen in production before.",
+    "known_limitations": "Rule updates require coordination with legal team and manual regression testing. Does not support real-time regulatory feed integration.",
+    "related_documents": [
+      "docs/compliance-rules.md",
+      "docs/bacen-requirements.md"
+    ]
+  },
+  {
+    "service_id": "svc-29",
+    "service_name": "digital-signature-service",
+    "service_type": "integration",
+    "domain": "Contract",
+    "subdomain": "Digital Signing",
+    "business_purpose": "Integrates with digital signature providers (DocuSign, Clicksign) to send contracts for electronic signature. Manages signature workflows, reminders, and collects signed documents.",
+    "short_description": "Sends contracts for electronic signature via external providers and tracks completion.",
+    "owner_team": "team-contracts",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-digital-signature-service",
+    "api_style": "mixed",
+    "database_type": "PostgreSQL",
+    "database_name": "digital_signature_db",
+    "publishes_events": [
+      "contract_signed",
+      "signature_requested"
+    ],
+    "consumes_events": [
+      "compliance_checked"
+    ],
+    "depends_on_services": [
+      "compliance-check-service",
+      "contract-store-service",
+      "notification-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "proposal-service"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "SignatureEnvelope",
+      "SignerInfo",
+      "SignatureStatus",
+      "SignedDocument"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/signatures/send",
+      "GET /api/v1/signatures/{contractId}/status",
+      "POST /api/v1/signatures/webhook (callback from provider)"
+    ],
+    "observability_notes": "Monitors signature completion rates, time-to-sign, and provider webhook reliability. Alert on pending signatures > 72h.",
+    "known_limitations": "Webhook delivery from external providers can be delayed up to 5 minutes. Fallback polling runs every 10 minutes. Only supports ICP-Brasil digital certificates for advanced signatures.",
+    "related_documents": [
+      "docs/digital-signature-flow.md",
+      "docs/signature-provider-integration.md"
+    ]
+  },
+  {
+    "service_id": "svc-30",
+    "service_name": "contract-store-service",
+    "service_type": "backend",
+    "domain": "Contract",
+    "subdomain": "Contract Storage",
+    "business_purpose": "Stores and manages signed contracts with versioning, immutability guarantees, and retention policies. Provides secure retrieval for audit, regulatory, and customer-facing use cases.",
+    "short_description": "Stores signed contracts with versioning and immutability for audit and compliance.",
+    "owner_team": "team-contracts",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-contract-store-service",
+    "api_style": "rest",
+    "database_type": "MongoDB+S3",
+    "database_name": "contract_store_db",
+    "publishes_events": [],
+    "consumes_events": [
+      "contract_signed"
+    ],
+    "depends_on_services": [
+      "document-store-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "cartorio-integration-service",
+      "customer-portal-bff",
+      "digital-signature-service",
+      "legal-collections-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "StoredContract",
+      "ContractVersion",
+      "ContractAccess"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/contract-store",
+      "GET /api/v1/contract-store/{contractId}",
+      "GET /api/v1/contract-store/{contractId}/download",
+      "GET /api/v1/contract-store/by-proposal/{proposalId}"
+    ],
+    "observability_notes": "Monitors storage growth, retrieval latency, and access patterns. Alert on any write failure to the immutable store.",
+    "known_limitations": "Contracts are write-once; amendments create new versions rather than modifying existing documents. Search is limited to metadata fields.",
+    "related_documents": [
+      "docs/contract-storage.md",
+      "docs/data-retention-policy.md"
+    ]
+  },
+  {
+    "service_id": "svc-31",
+    "service_name": "registry-orchestrator-service",
+    "service_type": "backend",
+    "domain": "Registry",
+    "subdomain": "Lien Registration Workflow",
+    "business_purpose": "Orchestrates the collateral lien registration process by routing to DETRAN (vehicles) or Cartorio (property) integration services and tracking registration status until completion.",
+    "short_description": "Orchestrates collateral lien registration across DETRAN and Cartorio systems.",
+    "owner_team": "team-registry",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-registry-orchestrator-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "registry_orchestrator_db",
+    "publishes_events": [
+      "registry_requested"
+    ],
+    "consumes_events": [
+      "cartorio_lien_registered",
+      "contract_signed",
+      "detran_lien_registered",
+      "registry_requested"
+    ],
+    "depends_on_services": [
+      "cartorio-integration-service",
+      "detran-integration-service",
+      "registry-tracker-service"
+    ],
+    "used_by_services": [
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "RegistryOrder",
+      "LienRegistration",
+      "RegistrationStatus"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/registry/register",
+      "GET /api/v1/registry/{proposalId}/status",
+      "POST /api/v1/registry/{id}/retry"
+    ],
+    "observability_notes": "Monitors registration completion rates and turnaround times per registry type. Alert on registration stuck > 5 business days.",
+    "known_limitations": "Cannot cancel a registration in progress once submitted to external systems. Retry logic is limited to 3 attempts before requiring manual intervention.",
+    "related_documents": [
+      "docs/registry-flow.md",
+      "docs/lien-registration.md"
+    ]
+  },
+  {
+    "service_id": "svc-32",
+    "service_name": "detran-integration-service",
+    "service_type": "integration",
+    "domain": "Registry",
+    "subdomain": "Vehicle Lien Registration",
+    "business_purpose": "Integrates with state DETRAN (Department of Transit) systems to register and release vehicle liens. Handles the asynchronous nature of DETRAN responses and state-specific protocols.",
+    "short_description": "Registers and releases vehicle liens via state DETRAN system integrations.",
+    "owner_team": "team-registry",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-detran-integration-service",
+    "api_style": "mixed",
+    "database_type": "PostgreSQL",
+    "database_name": "detran_integration_db",
+    "publishes_events": [
+      "detran_lien_registered"
+    ],
+    "consumes_events": [
+      "registry_requested"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "registry-orchestrator-service",
+      "registry-tracker-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "DetranRequest",
+      "VehicleLien",
+      "DetranResponse",
+      "StateProtocol"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/detran/register-lien",
+      "GET /api/v1/detran/lien/{requestId}/status",
+      "POST /api/v1/detran/release-lien"
+    ],
+    "observability_notes": "Monitors per-state DETRAN API availability and response times. Alert on any state system unavailability > 2h during business hours.",
+    "known_limitations": "Each state has different API protocols and availability windows. Some states (AM, AP, RR) still require manual registration via physical office.",
+    "related_documents": [
+      "docs/detran-integration.md",
+      "docs/state-protocol-matrix.md"
+    ]
+  },
+  {
+    "service_id": "svc-33",
+    "service_name": "cartorio-integration-service",
+    "service_type": "integration",
+    "domain": "Registry",
+    "subdomain": "Property Lien Registration",
+    "business_purpose": "Integrates with Cartorio (notary office) systems to register and release property liens (alienação fiduciária). Manages the complex document exchange required for property registry.",
+    "short_description": "Registers and releases property liens via Cartorio notary system integrations.",
+    "owner_team": "team-registry",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-cartorio-integration-service",
+    "api_style": "mixed",
+    "database_type": "PostgreSQL",
+    "database_name": "cartorio_integration_db",
+    "publishes_events": [
+      "cartorio_lien_registered"
+    ],
+    "consumes_events": [
+      "registry_requested"
+    ],
+    "depends_on_services": [
+      "contract-store-service"
+    ],
+    "used_by_services": [
+      "registry-orchestrator-service",
+      "registry-tracker-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "CartorioRequest",
+      "PropertyLien",
+      "RegistryDocument",
+      "CartorioResponse"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/cartorio/register-lien",
+      "GET /api/v1/cartorio/lien/{requestId}/status",
+      "POST /api/v1/cartorio/release-lien"
+    ],
+    "observability_notes": "Monitors Cartorio system availability and document acceptance rates. Alert on rejection rate > 10% indicating potential document formatting issues.",
+    "known_limitations": "Property registration can take 5-30 business days depending on the Cartorio. Many Cartorios lack digital integration, requiring physical document courier.",
+    "related_documents": [
+      "docs/cartorio-integration.md",
+      "docs/property-lien-registration.md"
+    ]
+  },
+  {
+    "service_id": "svc-34",
+    "service_name": "registry-tracker-service",
+    "service_type": "backend",
+    "domain": "Registry",
+    "subdomain": "Registration Tracking",
+    "business_purpose": "Tracks the status of all pending lien registrations with periodic polling of external systems. Provides status updates to the orchestrator and generates alerts for stalled registrations.",
+    "short_description": "Polls and tracks the status of pending lien registrations across external systems.",
+    "owner_team": "team-registry",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-registry-tracker-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "registry_tracker_db",
+    "publishes_events": [
+      "registry_completed",
+      "registry_failed"
+    ],
+    "consumes_events": [
+      "cartorio_lien_registered",
+      "detran_lien_registered"
+    ],
+    "depends_on_services": [
+      "cartorio-integration-service",
+      "detran-integration-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "registry-orchestrator-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "RegistryTracker",
+      "StatusCheck",
+      "TrackingAlert"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/tracker/{registrationId}/status",
+      "GET /api/v1/tracker/pending",
+      "GET /api/v1/tracker/stalled"
+    ],
+    "observability_notes": "Monitors polling job execution and stalled registration counts. Dashboard for SLA compliance per registry type.",
+    "known_limitations": "Polling interval is 1 hour minimum to avoid rate limiting from external systems. Real-time status updates are not available.",
+    "related_documents": [
+      "docs/registry-tracking.md",
+      "docs/registry-sla.md"
+    ]
+  },
+  {
+    "service_id": "svc-35",
+    "service_name": "disbursement-service",
+    "service_type": "backend",
+    "domain": "Disbursement",
+    "subdomain": "Disbursement Orchestration",
+    "business_purpose": "Orchestrates the loan disbursement process including final pre-disbursement checks, transfer amount calculation (net of fees and insurance), and coordination with bank transfer integration.",
+    "short_description": "Orchestrates loan disbursement including pre-checks and transfer coordination.",
+    "owner_team": "team-disbursement",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-disbursement-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "disbursement_db",
+    "publishes_events": [
+      "disbursement_done",
+      "disbursement_requested"
+    ],
+    "consumes_events": [
+      "bank_transfer_confirmed",
+      "disbursement_requested",
+      "registry_completed"
+    ],
+    "depends_on_services": [
+      "bank-transfer-integration",
+      "payment-confirmation-service"
+    ],
+    "used_by_services": [
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Disbursement",
+      "DisbursementCheck",
+      "TransferAmount",
+      "FeeBreakdown"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/disbursements",
+      "GET /api/v1/disbursements/{proposalId}",
+      "GET /api/v1/disbursements/{id}/status"
+    ],
+    "observability_notes": "Monitors disbursement completion time and failure rates. Critical alert on any disbursement stuck in processing > 4h.",
+    "known_limitations": "Disbursement cannot be partially executed; it is all-or-nothing. Reversals require manual intervention through backoffice.",
+    "related_documents": [
+      "docs/disbursement-flow.md",
+      "docs/disbursement-checks.md"
+    ]
+  },
+  {
+    "service_id": "svc-36",
+    "service_name": "bank-transfer-integration",
+    "service_type": "integration",
+    "domain": "Disbursement",
+    "subdomain": "Bank Transfer",
+    "business_purpose": "Integrates with banking systems (PIX, TED, DOC) to execute loan disbursement transfers to borrower accounts. Handles transfer initiation, status tracking, and error handling.",
+    "short_description": "Executes loan disbursement bank transfers via PIX, TED, and DOC channels.",
+    "owner_team": "team-disbursement",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-bank-transfer-integration",
+    "api_style": "mixed",
+    "database_type": "PostgreSQL",
+    "database_name": "bank_transfer_db",
+    "publishes_events": [
+      "bank_transfer_initiated"
+    ],
+    "consumes_events": [
+      "disbursement_requested"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "disbursement-service",
+      "payment-confirmation-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "BankTransfer",
+      "TransferChannel",
+      "TransferStatus",
+      "BankAccount"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/transfers",
+      "GET /api/v1/transfers/{id}/status",
+      "POST /api/v1/transfers/webhook (bank callback)"
+    ],
+    "observability_notes": "Monitors transfer success rates per channel (PIX/TED/DOC) and bank. Alert on transfer failure rate > 1% in any 15min window.",
+    "known_limitations": "TED transfers are limited to banking hours (6:30-17:00 BRT). PIX has a R$1M per-transaction limit. DOC is deprecated but maintained for legacy accounts.",
+    "related_documents": [
+      "docs/bank-transfer-integration.md",
+      "docs/pix-integration.md"
+    ]
+  },
+  {
+    "service_id": "svc-37",
+    "service_name": "payment-confirmation-service",
+    "service_type": "backend",
+    "domain": "Disbursement",
+    "subdomain": "Payment Reconciliation",
+    "business_purpose": "Confirms that bank transfers were successfully credited to borrower accounts by reconciling transfer records with bank statements and settlement files.",
+    "short_description": "Reconciles and confirms successful disbursement transfers against bank records.",
+    "owner_team": "team-disbursement",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-payment-confirmation-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "payment_confirmation_db",
+    "publishes_events": [
+      "bank_transfer_confirmed"
+    ],
+    "consumes_events": [
+      "bank_transfer_initiated"
+    ],
+    "depends_on_services": [
+      "bank-transfer-integration"
+    ],
+    "used_by_services": [
+      "disbursement-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "PaymentConfirmation",
+      "ReconciliationRecord",
+      "SettlementFile"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/confirmations/{transferId}",
+      "POST /api/v1/confirmations/reconcile",
+      "GET /api/v1/confirmations/unmatched"
+    ],
+    "observability_notes": "Monitors reconciliation match rates and unmatched transfer counts. Alert on unmatched transfers > 24h old.",
+    "known_limitations": "Settlement file processing is batch-based (runs every 2h). Real-time confirmation is only available for PIX transfers.",
+    "related_documents": [
+      "docs/payment-reconciliation.md",
+      "docs/settlement-file-format.md"
+    ]
+  },
+  {
+    "service_id": "svc-38",
+    "service_name": "billing-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Installment Management",
+    "business_purpose": "Manages the loan repayment schedule by generating installments (boletos and PIX payment codes), tracking payments, and maintaining the outstanding balance for each active loan.",
+    "short_description": "Generates installments and tracks loan repayment schedules and balances.",
+    "owner_team": "team-collections",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-billing-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "billing_db",
+    "publishes_events": [
+      "installment_created",
+      "installment_due",
+      "overdue_installment"
+    ],
+    "consumes_events": [
+      "disbursement_done",
+      "negotiation_accepted"
+    ],
+    "depends_on_services": [
+      "customer-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "customer-portal-bff",
+      "dunning-service",
+      "legal-collections-service",
+      "negotiation-engine-service",
+      "renegotiation-eligibility-service",
+      "renegotiation-simulation-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Installment",
+      "PaymentSchedule",
+      "BoletoPayment",
+      "LoanBalance"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/billing/schedules",
+      "GET /api/v1/billing/schedules/{loanId}",
+      "GET /api/v1/billing/installments/{id}",
+      "POST /api/v1/billing/installments/{id}/pay",
+      "GET /api/v1/billing/overdue"
+    ],
+    "observability_notes": "Monitors payment processing success rates, overdue installment growth, and boleto generation errors. Daily alert on total overdue portfolio value.",
+    "known_limitations": "Boleto registration with banks can take up to 2 business days. Early payoff calculation does not support partial prepayment.",
+    "related_documents": [
+      "docs/billing-flow.md",
+      "docs/installment-calculation.md"
+    ]
+  },
+  {
+    "service_id": "svc-39",
+    "service_name": "dunning-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Dunning Process",
+    "business_purpose": "Manages the automated dunning process for overdue installments including configurable escalation workflows (SMS, email, phone call scheduling) based on days past due.",
+    "short_description": "Automates dunning escalation workflows for overdue loan installments.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-dunning-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "dunning_db",
+    "publishes_events": [
+      "dunning_started"
+    ],
+    "consumes_events": [
+      "overdue_installment"
+    ],
+    "depends_on_services": [
+      "billing-service",
+      "notification-service"
+    ],
+    "used_by_services": [
+      "collections-contact-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "DunningCase",
+      "EscalationStep",
+      "DunningRule",
+      "ContactAttempt"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/dunning/cases",
+      "GET /api/v1/dunning/cases/{loanId}",
+      "POST /api/v1/dunning/cases/{id}/escalate",
+      "PUT /api/v1/dunning/rules"
+    ],
+    "observability_notes": "Tracks dunning effectiveness by recovery rates per escalation step. Monitors contact attempt success rates.",
+    "known_limitations": "Escalation rules are time-based only; does not consider customer payment behavior patterns. Maximum 10 escalation steps per dunning workflow.",
+    "related_documents": [
+      "docs/dunning-workflow.md",
+      "docs/collections-strategy.md"
+    ]
+  },
+  {
+    "service_id": "svc-40",
+    "service_name": "collections-contact-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Customer Contact",
+    "business_purpose": "Manages outbound contact attempts with delinquent borrowers including phone call scheduling, SMS campaigns, and email follow-ups. Tracks contact outcomes for compliance reporting.",
+    "short_description": "Manages outbound contact attempts with delinquent borrowers across channels.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-collections-contact-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "collections_contact_db",
+    "publishes_events": [
+      "collections_contact_attempted"
+    ],
+    "consumes_events": [
+      "dunning_started",
+      "overdue_installment"
+    ],
+    "depends_on_services": [
+      "customer-service",
+      "dunning-service",
+      "notification-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "negotiation-engine-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "ContactAttempt",
+      "ContactOutcome",
+      "ContactSchedule",
+      "ChannelPreference"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/contacts/schedule",
+      "GET /api/v1/contacts/by-loan/{loanId}",
+      "POST /api/v1/contacts/{id}/outcome",
+      "GET /api/v1/contacts/queue"
+    ],
+    "observability_notes": "Monitors contact success rates per channel and time slot. Compliance alert on contacts outside permitted hours.",
+    "known_limitations": "Phone call scheduling depends on external dialer integration which has limited capacity (200 concurrent calls). WhatsApp channel is not yet supported.",
+    "related_documents": [
+      "docs/collections-contact.md",
+      "docs/contact-compliance.md"
+    ]
+  },
+  {
+    "service_id": "svc-41",
+    "service_name": "negotiation-engine-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Debt Negotiation",
+    "business_purpose": "Generates and manages debt negotiation offers for delinquent borrowers. Calculates discount options, new payment plans, and tracks negotiation outcomes.",
+    "short_description": "Generates debt negotiation offers and manages settlement workflows for delinquent loans.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-negotiation-engine-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "negotiation_db",
+    "publishes_events": [
+      "negotiation_accepted",
+      "negotiation_offered"
+    ],
+    "consumes_events": [
+      "collections_contact_attempted"
+    ],
+    "depends_on_services": [
+      "billing-service",
+      "collections-contact-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "customer-portal-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "NegotiationOffer",
+      "SettlementPlan",
+      "DiscountRule",
+      "NegotiationOutcome"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/negotiations/generate-offers",
+      "GET /api/v1/negotiations/{loanId}/offers",
+      "POST /api/v1/negotiations/offers/{id}/accept",
+      "GET /api/v1/negotiations/{loanId}/history"
+    ],
+    "observability_notes": "Tracks negotiation acceptance rates, average discount percentages, and recovery amounts. Dashboard for portfolio recovery projections.",
+    "known_limitations": "Discount rules have a maximum cap of 40% of outstanding principal. Offers expire after 7 days and cannot be extended.",
+    "related_documents": [
+      "docs/negotiation-rules.md",
+      "docs/collections-strategy.md"
+    ]
+  },
+  {
+    "service_id": "svc-42",
+    "service_name": "legal-collections-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Legal Collections",
+    "business_purpose": "Manages the legal collections process for severely delinquent loans including protest (cartório protest), lawsuit filing, collateral repossession orders, and integration with law firms.",
+    "short_description": "Manages legal collections actions including protest, lawsuits, and repossession orders.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-legal-collections-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "legal_collections_db",
+    "publishes_events": [
+      "legal_action_started"
+    ],
+    "consumes_events": [
+      "overdue_installment"
+    ],
+    "depends_on_services": [
+      "billing-service",
+      "contract-store-service",
+      "customer-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "case-management-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "LegalCase",
+      "ProtestOrder",
+      "LawsuitFiling",
+      "RepossessionOrder"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/legal/cases",
+      "GET /api/v1/legal/cases/{loanId}",
+      "POST /api/v1/legal/cases/{id}/protest",
+      "POST /api/v1/legal/cases/{id}/lawsuit",
+      "GET /api/v1/legal/cases/{id}/status"
+    ],
+    "observability_notes": "Monitors legal case progression, average time to resolution, and recovery rates from legal actions.",
+    "known_limitations": "Integration with law firm systems is file-based (SFTP CSV exchange). Real-time case status updates depend on manual entry by law firm partners.",
+    "related_documents": [
+      "docs/legal-collections.md",
+      "docs/protest-flow.md",
+      "docs/repossession-process.md"
+    ]
+  },
+  {
+    "service_id": "svc-43",
+    "service_name": "renegotiation-eligibility-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Renegotiation",
+    "business_purpose": "Evaluates whether a delinquent borrower qualifies for loan renegotiation based on payment history, current delinquency status, and configurable business policies.",
+    "short_description": "Evaluates borrower eligibility for loan renegotiation based on policies and history.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-renegotiation-eligibility-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "renegotiation_eligibility_db",
+    "publishes_events": [
+      "renegotiation_eligible",
+      "renegotiation_requested"
+    ],
+    "consumes_events": [
+      "renegotiation_requested"
+    ],
+    "depends_on_services": [
+      "billing-service",
+      "customer-service"
+    ],
+    "used_by_services": [
+      "customer-portal-bff",
+      "renegotiation-simulation-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "RenegotiationEligibility",
+      "EligibilityPolicy",
+      "CustomerHistory"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/renegotiation/eligibility/check",
+      "GET /api/v1/renegotiation/eligibility/{loanId}"
+    ],
+    "observability_notes": "Tracks eligibility check volumes and approval rates. Monitors policy rule effectiveness.",
+    "known_limitations": "A borrower who has already renegotiated twice is automatically ineligible. Policy changes require a service redeployment.",
+    "related_documents": [
+      "docs/renegotiation-policy.md",
+      "docs/collections-strategy.md"
+    ]
+  },
+  {
+    "service_id": "svc-44",
+    "service_name": "renegotiation-simulation-service",
+    "service_type": "backend",
+    "domain": "Collections",
+    "subdomain": "Renegotiation",
+    "business_purpose": "Simulates renegotiation scenarios for eligible borrowers, generating new payment schedules with different term, rate, and discount combinations for borrower selection.",
+    "short_description": "Simulates renegotiation payment scenarios with various term and rate options.",
+    "owner_team": "team-collections",
+    "criticality": "medium",
+    "lifecycle_status": "beta",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-renegotiation-simulation-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "renegotiation_simulation_db",
+    "publishes_events": [
+      "renegotiation_simulated"
+    ],
+    "consumes_events": [
+      "renegotiation_eligible",
+      "renegotiation_requested"
+    ],
+    "depends_on_services": [
+      "billing-service",
+      "renegotiation-eligibility-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff",
+      "customer-portal-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "RenegotiationSimulation",
+      "PaymentScenario",
+      "SimulationParameters"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/renegotiation/simulate",
+      "GET /api/v1/renegotiation/simulations/{loanId}",
+      "POST /api/v1/renegotiation/simulations/{id}/accept"
+    ],
+    "observability_notes": "Monitors simulation volumes, accepted scenario types, and conversion rates from simulation to accepted renegotiation.",
+    "known_limitations": "Maximum of 5 simulation scenarios per request. Interest rate floor is set by Treasury and cannot go below the minimum spread.",
+    "related_documents": [
+      "docs/renegotiation-simulation.md",
+      "docs/renegotiation-policy.md"
+    ]
+  },
+  {
+    "service_id": "svc-45",
+    "service_name": "customer-portal-bff",
+    "service_type": "bff",
+    "domain": "Customer Portal",
+    "subdomain": "Customer Experience",
+    "business_purpose": "Backend-for-frontend service that aggregates data from multiple backend services to serve the customer-facing portal and mobile app. Handles session management and request orchestration.",
+    "short_description": "Aggregates backend data for the customer portal and mobile app interfaces.",
+    "owner_team": "team-portal",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Node.js",
+    "framework": "Express",
+    "repository_name": "credityflow-customer-portal-bff",
+    "api_style": "rest",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [],
+    "consumes_events": [
+      "biometrics_requested",
+      "documents_requested",
+      "installment_due",
+      "negotiation_offered",
+      "renegotiation_simulated",
+      "signature_requested"
+    ],
+    "depends_on_services": [
+      "auth-service",
+      "billing-service",
+      "biometrics-capture-service",
+      "contract-store-service",
+      "customer-service",
+      "digital-signature-service",
+      "document-upload-service",
+      "eligibility-service",
+      "lead-intake-service",
+      "negotiation-engine-service",
+      "proposal-service",
+      "renegotiation-eligibility-service",
+      "renegotiation-simulation-service"
+    ],
+    "used_by_services": [],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": false,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "PortalSession",
+      "CustomerDashboard",
+      "ProposalSummary"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/portal/dashboard",
+      "GET /api/v1/portal/proposals",
+      "GET /api/v1/portal/loans/{id}",
+      "GET /api/v1/portal/installments",
+      "POST /api/v1/portal/renegotiation/request"
+    ],
+    "observability_notes": "Monitors API response times, error rates, and concurrent session counts. CDN cache hit ratio for static assets.",
+    "known_limitations": "Does not support real-time push notifications; client polls every 30 seconds. Session timeout is fixed at 30 minutes.",
+    "related_documents": [
+      "docs/customer-portal-architecture.md",
+      "docs/bff-pattern.md"
+    ]
+  },
+  {
+    "service_id": "svc-46",
+    "service_name": "backoffice-bff",
+    "service_type": "bff",
+    "domain": "Backoffice",
+    "subdomain": "Internal Operations",
+    "business_purpose": "Backend-for-frontend service that aggregates data from multiple backend services to serve the internal backoffice application used by analysts, operators, and managers.",
+    "short_description": "Aggregates backend data for the internal backoffice operations application.",
+    "owner_team": "team-backoffice",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Node.js",
+    "framework": "Express",
+    "repository_name": "credityflow-backoffice-bff",
+    "api_style": "rest",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [],
+    "consumes_events": [],
+    "depends_on_services": [
+      "appraisal-report-service",
+      "audit-service",
+      "auth-service",
+      "billing-service",
+      "case-management-service",
+      "collections-contact-service",
+      "contract-store-service",
+      "customer-service",
+      "document-store-service",
+      "legal-collections-service",
+      "negotiation-engine-service",
+      "proposal-service",
+      "registry-tracker-service",
+      "renegotiation-simulation-service"
+    ],
+    "used_by_services": [],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "BackofficeSession",
+      "OperatorDashboard",
+      "WorkQueue"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/backoffice/dashboard",
+      "GET /api/v1/backoffice/proposals",
+      "GET /api/v1/backoffice/cases",
+      "GET /api/v1/backoffice/collections",
+      "GET /api/v1/backoffice/reports"
+    ],
+    "observability_notes": "Monitors API response times per endpoint and active operator sessions. Alert on response times > 3s for dashboard endpoints.",
+    "known_limitations": "Bulk operations (e.g., mass case assignment) are limited to 100 items per request. Advanced search requires Elasticsearch which has a 10s query timeout.",
+    "related_documents": [
+      "docs/backoffice-architecture.md",
+      "docs/bff-pattern.md"
+    ]
+  },
+  {
+    "service_id": "svc-47",
+    "service_name": "case-management-service",
+    "service_type": "backend",
+    "domain": "Backoffice",
+    "subdomain": "Case Workflow",
+    "business_purpose": "Manages operational cases that require human intervention including fraud reviews, credit exceptions, document re-submissions, and customer complaints. Provides work queues and SLA tracking.",
+    "short_description": "Manages operational cases requiring human review with work queues and SLA tracking.",
+    "owner_team": "team-backoffice",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-case-management-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "case_management_db",
+    "publishes_events": [
+      "case_created",
+      "case_resolved"
+    ],
+    "consumes_events": [
+      "collections_contact_attempted",
+      "fraud_flagged",
+      "legal_action_started",
+      "registry_failed"
+    ],
+    "depends_on_services": [
+      "credit-decision-service",
+      "fraud-decision-service",
+      "legal-collections-service",
+      "proposal-service"
+    ],
+    "used_by_services": [
+      "backoffice-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "Case",
+      "CaseType",
+      "WorkQueue",
+      "CaseComment",
+      "SlaTracker"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/cases",
+      "GET /api/v1/cases/{id}",
+      "GET /api/v1/cases/queue/{queueName}",
+      "POST /api/v1/cases/{id}/assign",
+      "POST /api/v1/cases/{id}/resolve",
+      "POST /api/v1/cases/{id}/comments"
+    ],
+    "observability_notes": "Monitors case resolution times by type, queue depths, and SLA compliance rates. Alert on queue depth > 50 unassigned cases.",
+    "known_limitations": "Case routing rules are static and based on case type only; does not consider operator skill or current workload. Maximum 20 concurrent cases per operator.",
+    "related_documents": [
+      "docs/case-management.md",
+      "docs/sla-policy.md"
+    ]
+  },
+  {
+    "service_id": "svc-48",
+    "service_name": "audit-service",
+    "service_type": "backend",
+    "domain": "Platform",
+    "subdomain": "Audit Trail",
+    "business_purpose": "Captures and stores immutable audit events from all services for regulatory compliance, security investigation, and operational troubleshooting. Provides search and reporting capabilities.",
+    "short_description": "Captures and stores immutable audit events from all platform services.",
+    "owner_team": "team-platform",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-audit-service",
+    "api_style": "mixed",
+    "database_type": "Elasticsearch",
+    "database_name": "audit_events_index",
+    "publishes_events": [
+      "audit_event_logged"
+    ],
+    "consumes_events": [
+      "biometrics_validated",
+      "case_created",
+      "case_resolved",
+      "collections_contact_attempted",
+      "compliance_checked",
+      "contract_generation_requested",
+      "contract_signed",
+      "credit_check_started",
+      "credit_decision_made",
+      "credit_denied",
+      "disbursement_done",
+      "disbursement_requested",
+      "documents_uploaded",
+      "documents_validated",
+      "dunning_started",
+      "fraud_check_started",
+      "fraud_decision_made",
+      "fraud_flagged",
+      "lead_created",
+      "legal_action_started",
+      "negotiation_accepted",
+      "notification_sent",
+      "overdue_installment",
+      "proposal_started",
+      "registry_completed",
+      "registry_requested",
+      "renegotiation_requested"
+    ],
+    "depends_on_services": [],
+    "used_by_services": [
+      "backoffice-bff"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": true,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "AuditEvent",
+      "AuditTrail",
+      "AuditSearch"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/audit/events",
+      "GET /api/v1/audit/events/search",
+      "GET /api/v1/audit/trail/{entityType}/{entityId}",
+      "Kafka consumer: all audit-relevant topics"
+    ],
+    "observability_notes": "Monitors Elasticsearch cluster health, indexing lag, and storage consumption. Alert on indexing lag > 5 minutes.",
+    "known_limitations": "Full-text search performance degrades for queries spanning more than 90 days. Index rotation is monthly; older data moves to cold storage after 1 year.",
+    "related_documents": [
+      "docs/audit-architecture.md",
+      "docs/compliance-audit-requirements.md"
+    ]
+  },
+  {
+    "service_id": "svc-49",
+    "service_name": "notification-service",
+    "service_type": "backend",
+    "domain": "Notifications",
+    "subdomain": "Notification Delivery",
+    "business_purpose": "Sends notifications to customers and internal users across multiple channels (email, SMS, push, WhatsApp) based on events from other services. Manages delivery tracking and retry logic.",
+    "short_description": "Delivers notifications across email, SMS, push, and WhatsApp channels.",
+    "owner_team": "team-notifications",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-notification-service",
+    "api_style": "mixed",
+    "database_type": "PostgreSQL",
+    "database_name": "notification_db",
+    "publishes_events": [
+      "notification_requested",
+      "notification_sent"
+    ],
+    "consumes_events": [
+      "appraisal_completed",
+      "biometrics_requested",
+      "biometrics_validated",
+      "case_created",
+      "case_resolved",
+      "contract_signed",
+      "credit_approved",
+      "credit_denied",
+      "disbursement_done",
+      "documents_requested",
+      "documents_submitted",
+      "dunning_started",
+      "fraud_cleared",
+      "fraud_flagged",
+      "installment_created",
+      "installment_due",
+      "lead_created",
+      "lead_qualified",
+      "legal_action_started",
+      "negotiation_accepted",
+      "negotiation_offered",
+      "notification_requested",
+      "overdue_installment",
+      "proposal_started",
+      "proposal_updated",
+      "registry_completed",
+      "registry_failed",
+      "renegotiation_eligible",
+      "renegotiation_simulated",
+      "signature_requested"
+    ],
+    "depends_on_services": [
+      "customer-service",
+      "notification-template-service"
+    ],
+    "used_by_services": [
+      "collections-contact-service",
+      "digital-signature-service",
+      "dunning-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "Notification",
+      "DeliveryAttempt",
+      "ChannelConfig",
+      "NotificationLog"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/notifications/send",
+      "GET /api/v1/notifications/{id}/status",
+      "GET /api/v1/notifications/by-customer/{customerId}",
+      "Kafka consumer: notification-triggers topic"
+    ],
+    "observability_notes": "Monitors delivery rates per channel, bounce rates, and provider API errors. Alert on delivery success rate < 95% for any channel.",
+    "known_limitations": "WhatsApp Business API has a 24h messaging window restriction. SMS delivery to some rural carriers has higher failure rates. Push notification delivery is fire-and-forget.",
+    "related_documents": [
+      "docs/notification-architecture.md",
+      "docs/channel-provider-integration.md"
+    ]
+  },
+  {
+    "service_id": "svc-50",
+    "service_name": "notification-template-service",
+    "service_type": "backend",
+    "domain": "Notifications",
+    "subdomain": "Template Management",
+    "business_purpose": "Manages notification templates for all channels with support for variable substitution, localization, and A/B testing of message variants.",
+    "short_description": "Manages notification message templates with variable substitution and A/B testing.",
+    "owner_team": "team-notifications",
+    "criticality": "low",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-notification-template-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL",
+    "database_name": "notification_template_db",
+    "publishes_events": [],
+    "consumes_events": [],
+    "depends_on_services": [],
+    "used_by_services": [
+      "notification-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "NotificationTemplate",
+      "TemplateVersion",
+      "TemplateVariable",
+      "AbTestVariant"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/templates",
+      "GET /api/v1/templates/{id}",
+      "PUT /api/v1/templates/{id}",
+      "GET /api/v1/templates/by-event/{eventType}",
+      "POST /api/v1/templates/{id}/render-preview"
+    ],
+    "observability_notes": "Monitors template rendering errors and cache hit rates. Low traffic service with basic health monitoring.",
+    "known_limitations": "Template rendering does not support conditional logic beyond simple if/else. Maximum template size is 10KB.",
+    "related_documents": [
+      "docs/notification-templates.md",
+      "docs/template-variables.md"
+    ]
+  },
+  {
+    "service_id": "svc-51",
+    "service_name": "auth-service",
+    "service_type": "backend",
+    "domain": "Platform",
+    "subdomain": "Authentication and Authorization",
+    "business_purpose": "Provides centralized authentication (OAuth2/OIDC) and authorization (RBAC) for all platform services. Manages user sessions, API keys, and service-to-service authentication via JWT tokens.",
+    "short_description": "Provides centralized OAuth2 authentication and RBAC authorization for the platform.",
+    "owner_team": "team-platform",
+    "criticality": "high",
+    "lifecycle_status": "production",
+    "main_language": "Kotlin",
+    "framework": "Spring Boot",
+    "repository_name": "credityflow-auth-service",
+    "api_style": "rest",
+    "database_type": "PostgreSQL+Redis",
+    "database_name": "auth_db",
+    "publishes_events": [],
+    "consumes_events": [],
+    "depends_on_services": [],
+    "used_by_services": [
+      "backoffice-bff",
+      "biometrics-capture-service",
+      "customer-portal-bff",
+      "customer-service",
+      "document-store-service",
+      "document-upload-service",
+      "lead-intake-service"
+    ],
+    "exposes_external_api": true,
+    "contains_pii": true,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": true,
+    "primary_entities": [
+      "User",
+      "Role",
+      "Permission",
+      "ApiKey",
+      "Session",
+      "JwtToken"
+    ],
+    "main_endpoints_or_interfaces": [
+      "POST /api/v1/auth/login",
+      "POST /api/v1/auth/token",
+      "POST /api/v1/auth/refresh",
+      "GET /api/v1/auth/userinfo",
+      "POST /api/v1/auth/api-keys",
+      "GET /api/v1/auth/roles"
+    ],
+    "observability_notes": "Monitors login success/failure rates, token issuance volume, and Redis session store latency. Alert on brute force detection (>10 failed logins per IP in 5min).",
+    "known_limitations": "Does not support multi-factor authentication via hardware tokens (only TOTP and SMS). Session revocation propagation can take up to 60s due to JWT caching.",
+    "related_documents": [
+      "docs/auth-architecture.md",
+      "docs/rbac-model.md",
+      "docs/api-key-management.md"
+    ]
+  },
+  {
+    "service_id": "svc-52",
+    "service_name": "feature-flag-service",
+    "service_type": "backend",
+    "domain": "Platform",
+    "subdomain": "Feature Management",
+    "business_purpose": "Provides centralized feature flag management for controlled rollouts, A/B testing, and kill switches across all platform services. Supports user-level, percentage-based, and environment-based targeting.",
+    "short_description": "Manages feature flags for controlled rollouts and A/B testing across services.",
+    "owner_team": "team-platform",
+    "criticality": "medium",
+    "lifecycle_status": "production",
+    "main_language": "Go",
+    "framework": "Gin",
+    "repository_name": "credityflow-feature-flag-service",
+    "api_style": "rest",
+    "database_type": "Redis",
+    "database_name": null,
+    "publishes_events": [],
+    "consumes_events": [],
+    "depends_on_services": [],
+    "used_by_services": [
+      "credit-policy-service",
+      "eligibility-service",
+      "fraud-decision-service",
+      "lead-intake-service",
+      "proposal-service"
+    ],
+    "exposes_external_api": false,
+    "contains_pii": false,
+    "contains_financial_data": false,
+    "supports_backoffice": true,
+    "supports_customer_journey": false,
+    "primary_entities": [
+      "FeatureFlag",
+      "FlagRule",
+      "TargetingSegment",
+      "RolloutPercentage"
+    ],
+    "main_endpoints_or_interfaces": [
+      "GET /api/v1/flags/{flagKey}",
+      "POST /api/v1/flags/{flagKey}/evaluate",
+      "GET /api/v1/flags",
+      "PUT /api/v1/flags/{flagKey}",
+      "POST /api/v1/flags"
+    ],
+    "observability_notes": "Monitors flag evaluation latency (target p99 < 5ms) and cache hit rates. Dashboard for active flags and their rollout status.",
+    "known_limitations": "Flag evaluation is eventually consistent; changes propagate within 10 seconds. Maximum 500 active flags. Complex targeting rules with > 10 conditions may impact evaluation performance.",
+    "related_documents": [
+      "docs/feature-flags.md",
+      "docs/rollout-strategy.md"
+    ]
+  }
+]

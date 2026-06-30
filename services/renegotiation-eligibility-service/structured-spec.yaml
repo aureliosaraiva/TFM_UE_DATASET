@@ -1,0 +1,125 @@
+service_id: svc-43
+service_name: renegotiation-eligibility-service
+domain: Collections
+subdomain: Renegotiation
+owner_team: team-collections
+lifecycle_status: production
+
+summary: >
+  Evaluates whether a borrower qualifies for debt renegotiation by applying a
+  configurable rule engine against payment history, risk profile, and product
+  constraints.
+
+business_objective: >
+  Gate renegotiation access to borrowers who meet business and regulatory
+  criteria, ensuring that renegotiation offers are extended only when they
+  improve expected recovery outcomes.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Evaluate borrower eligibility for renegotiation against business rules
+  - Manage and version eligibility rule configurations
+  - Publish eligibility decisions for downstream simulation services
+  - Expose a rules catalog endpoint for back-office configuration review
+  - Log every eligibility decision for audit and analytics
+
+entities:
+  - name: RenegotiationEligibility
+    description: The eligibility assessment record for a specific borrower and debt combination.
+  - name: EligibilityRule
+    description: A configurable business rule (e.g., minimum days overdue, maximum renegotiation count).
+  - name: EligibilityResult
+    description: The outcome of an eligibility check, including which rules passed or failed.
+
+apis:
+  - method: POST
+    path: /api/v1/renegotiation/check-eligibility
+    description: Checks whether a borrower is eligible for renegotiation.
+    auth: Bearer JWT
+    response_codes: [200, 400]
+  - method: GET
+    path: /api/v1/renegotiation/rules
+    description: Returns the current set of active eligibility rules.
+    auth: Bearer JWT
+    response_codes: [200]
+
+events:
+  consumes: []
+  publishes:
+    - name: renegotiation_requested
+      description: Emitted when an eligibility check is initiated.
+    - name: renegotiation_eligible
+      description: Emitted when a borrower passes all eligibility rules.
+
+databases:
+  - name: renegotiation_db
+    engine: PostgreSQL
+    contains_pii: false
+    contains_financial_data: false
+    tables:
+      - renegotiation_eligibilities
+      - eligibility_rules
+      - eligibility_results
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-38
+      service_name: billing-service
+      interaction: REST API (fetch overdue installment data)
+    - service_id: svc-customer
+      service_name: customer-service
+      interaction: REST API (fetch borrower risk tier and renegotiation history)
+
+flows:
+  - name: Eligibility Check
+    trigger: POST /api/v1/renegotiation/check-eligibility
+    steps:
+      - Publish renegotiation_requested event
+      - Fetch overdue installments from billing-service
+      - Fetch borrower profile and history from customer-service
+      - Load active EligibilityRules
+      - Evaluate each rule; record pass/fail in EligibilityResult
+      - Persist RenegotiationEligibility with final decision
+      - If eligible, publish renegotiation_eligible event
+      - Return result to caller
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - renegotiation_eligibility_checks_total
+    - renegotiation_eligible_total
+    - renegotiation_ineligible_total
+    - renegotiation_rule_evaluation_duration_seconds
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: HighIneligibilityRate
+      condition: renegotiation_ineligible_total / renegotiation_eligibility_checks_total > 0.95
+      severity: warning
+    - name: RuleEvaluationSlow
+      condition: renegotiation_rule_evaluation_duration_seconds_p99 > 2
+      severity: warning
+
+risks_and_limitations:
+  - Rule misconfiguration can block all renegotiations or allow ineligible borrowers through; changes should require approval.
+  - Dependency on billing-service and customer-service means eligibility checks fail if either is unavailable.
+  - Eligibility decisions must be idempotent; re-checks for the same debt should not produce conflicting results within a short window.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Renegotiation Policy
+    link: ../docs/renegotiation-policy.md
+  - title: Eligibility Rule Catalog
+    link: ../docs/eligibility-rules-catalog.md

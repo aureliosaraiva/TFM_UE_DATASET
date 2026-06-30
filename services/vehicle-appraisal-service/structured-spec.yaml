@@ -1,0 +1,114 @@
+service_id: svc-24
+service_name: vehicle-appraisal-service
+domain: Appraisal
+subdomain: Vehicle Valuation
+owner_team: team-appraisal
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Values vehicles offered as loan collateral by fetching base prices from the FIPE
+  table API and applying condition-based adjustments (mileage, age, inspection results).
+  Produces a final market valuation used for LTV calculations.
+business_objective: >
+  Provide accurate, defensible vehicle valuations that protect the lender against
+  over-collateralisation risk while maintaining competitive LTV ratios for borrowers.
+
+responsibilities:
+  - Consume appraisal_requested events for VEHICLE collateral type
+  - Query FIPE API for base reference price by make, model, year
+  - Apply depreciation and condition adjustment factors
+  - Incorporate physical inspection results when available
+  - Persist valuations in PostgreSQL
+  - Publish vehicle_appraised events with final valuation
+
+entities:
+  - name: VehicleValuation
+    description: >
+      The computed market value of a vehicle, including FIPE base price, adjustment
+      factors, final appraised value, and valuation date.
+  - name: FIPEReference
+    description: >
+      Reference data from the FIPE table: make, model, year, fuel type, and the
+      corresponding base market price.
+  - name: InspectionResult
+    description: >
+      Results from physical vehicle inspection: odometer reading, body condition
+      score, mechanical condition score, and identified defects.
+
+apis:
+  - method: POST
+    path: /api/v1/vehicles/appraise
+    description: >
+      Triggers vehicle appraisal for a given proposal. Accepts vehicle details
+      (make, model, year, plate) and returns the valuation.
+  - method: GET
+    path: /api/v1/vehicles/{id}/valuation
+    description: >
+      Returns the latest valuation for a vehicle appraisal request.
+
+events:
+  publishes:
+    - name: vehicle_appraised
+      description: >
+        Emitted when vehicle valuation completes. Payload includes proposal_id,
+        vehicle_id, fipe_base_price, adjusted_value, and adjustment_breakdown.
+  consumes:
+    - name: appraisal_requested
+      description: >
+        Triggers vehicle appraisal when the collateral type is VEHICLE.
+
+databases:
+  - name: appraisal_db
+    type: PostgreSQL
+    purpose: >
+      Stores VehicleValuations, FIPEReferences, and InspectionResults. Shared
+      appraisal domain schema.
+
+dependencies:
+  - service_name: FIPE-API
+    type: external
+    purpose: >
+      Brazilian vehicle price reference table (Tabela FIPE). Provides base market
+      prices for vehicles by make, model, year, and fuel type.
+  - service_name: appraisal-orchestrator-service
+    type: internal (event)
+    purpose: Source of appraisal_requested events for vehicle collateral.
+
+flows:
+  - name: Vehicle Valuation
+    description: Full valuation flow from appraisal request to published result.
+    steps:
+      - Receive appraisal_requested event with collateral_type = VEHICLE
+      - Extract vehicle identifiers (make, model, year, plate)
+      - Query FIPE API for base reference price
+      - Apply mileage depreciation factor
+      - Apply age-based depreciation curve
+      - If inspection data available, apply condition adjustments
+      - Compute final appraised value
+      - Persist VehicleValuation in appraisal_db
+      - Publish vehicle_appraised event
+
+observability:
+  metrics:
+    - vehicle_appraisal_total (counter) — appraisals completed
+    - vehicle_appraisal_duration_seconds (histogram) — end-to-end valuation time
+    - fipe_api_call_duration_seconds (histogram) — external API latency
+    - fipe_api_errors_total (counter) — FIPE API failures by status
+    - valuation_adjustment_ratio (histogram) — ratio of final value to FIPE base
+  alerts:
+    - fipe_api_error_rate_high — fires when FIPE errors exceed 5 % over 5 min
+    - appraisal_latency_p95_high — fires when p95 exceeds 4 s
+    - valuation_adjustment_outlier — fires when adjustment exceeds 40 %
+  dashboards:
+    - Vehicle Appraisal Operations — volume, latency, FIPE cache hits
+    - Valuation Analytics — adjustment distribution, price trends by segment
+
+risks_and_limitations:
+  - FIPE table is updated monthly; intra-month price changes are not reflected
+  - FIPE API has rate limits and occasional downtime
+  - Condition adjustments use a simplified model; exotic or modified vehicles may be mispriced
+  - Physical inspection is optional and may not be available at appraisal time
+
+related_documents:
+  - docs/adr/adr-024-fipe-integration-strategy.md
+  - docs/runbooks/vehicle-appraisal-runbook.md
+  - docs/api-contracts/vehicle-appraisal-openapi.yaml

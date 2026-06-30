@@ -1,0 +1,106 @@
+service_id: svc-18
+service_name: credit-bureau-integration
+domain: Credit Analysis
+subdomain: Bureau Data Retrieval
+owner_team: team-credit
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Fetches credit data from the external ServicosBureau provider, including credit history,
+  outstanding debts, and credit scores. Responses are cached in Redis with a 24-hour TTL
+  to reduce external call volume and latency.
+business_objective: >
+  Provide the credit analysis pipeline with reliable, up-to-date bureau information so
+  downstream services (scoring, policy, decision) can assess borrower risk accurately
+  while minimising costs from repeated external API calls.
+
+responsibilities:
+  - Translate internal customer identifiers into ServicosBureau query parameters
+  - Call ServicosBureau REST API and normalise the response into the canonical BureauReport model
+  - Cache bureau responses in Redis (TTL 24 h) to avoid redundant external calls
+  - Publish bureau_data_fetched events so downstream services can react asynchronously
+  - Mask and encrypt PII fields at rest and in transit
+  - Handle ServicosBureau rate-limits, circuit-breaking, and retry with exponential back-off
+
+entities:
+  - name: BureauReport
+    description: >
+      Aggregate root that represents the full credit report returned by ServicosBureau
+      for a single customer, including score, history entries, and debt records.
+  - name: CreditHistory
+    description: >
+      Time-ordered list of credit events (account openings, closures, late payments)
+      extracted from the bureau report.
+  - name: DebtRecord
+    description: >
+      Individual outstanding debt obligation reported by a creditor, including
+      principal, interest rate, and delinquency status.
+
+apis:
+  - method: POST
+    path: /api/v1/credit-bureau/fetch
+    description: >
+      Internal endpoint that triggers a bureau data fetch for a given customer/proposal.
+      Returns the normalised BureauReport or a cache hit. Requires service-to-service JWT.
+
+events:
+  publishes:
+    - name: bureau_data_fetched
+      description: >
+        Emitted after a BureauReport has been successfully retrieved (or served from cache).
+        Payload contains proposal_id, customer_id, score, and a summary of debt records.
+  consumes:
+    - name: fraud_cleared
+      description: >
+        Indicates that the fraud-check step has passed for a proposal, signalling that
+        the bureau fetch can proceed.
+
+databases:
+  - name: credit_bureau_cache
+    type: Redis
+    purpose: >
+      Stores serialised BureauReport objects keyed by customer CPF hash.
+      TTL of 24 hours balances data freshness against external API cost.
+
+dependencies:
+  - service_name: ServicosBureau
+    type: external
+    purpose: >
+      Third-party credit bureau API that provides credit history, score, and debt data
+      for Brazilian individuals and companies.
+
+flows:
+  - name: Bureau Data Fetch
+    description: Triggered when fraud checks pass; retrieves or caches bureau data.
+    steps:
+      - Receive fraud_cleared event from Kafka
+      - Check Redis cache for existing BureauReport (key = hashed CPF)
+      - If cache miss, call ServicosBureau REST API with customer CPF
+      - Normalise response into BureauReport domain model
+      - Store result in Redis with 24 h TTL
+      - Publish bureau_data_fetched event to Kafka
+      - Return BureauReport to caller (if synchronous POST was used)
+
+observability:
+  metrics:
+    - bureau_fetch_total (counter) — total fetch requests, labelled by cache_hit/miss
+    - bureau_fetch_duration_seconds (histogram) — latency of external bureau calls
+    - bureau_cache_hit_ratio (gauge) — rolling cache hit percentage
+    - bureau_external_errors_total (counter) — errors from ServicosBureau, labelled by status code
+  alerts:
+    - bureau_error_rate_high — fires when external error rate exceeds 5 % over 5 min
+    - bureau_latency_p99_high — fires when p99 latency exceeds 3 s
+    - bureau_cache_eviction_spike — fires when eviction rate doubles within 10 min
+  dashboards:
+    - Credit Bureau Operations — cache hit ratio, call volume, latency percentiles
+    - Bureau Error Analysis — error breakdown by status code and time
+
+risks_and_limitations:
+  - ServicosBureau imposes rate limits (600 req/min); sustained spikes may cause throttling
+  - Cached data can be up to 24 h stale; real-time accuracy is not guaranteed
+  - PII (CPF, name, financial data) is stored in Redis — encryption at rest and network-level TLS are mandatory
+  - ServicosBureau downtime directly blocks the credit pipeline unless stale cache is accepted
+
+related_documents:
+  - docs/adr/adr-018-bureau-cache-strategy.md
+  - docs/runbooks/bureau-integration-runbook.md
+  - docs/api-contracts/credit-bureau-openapi.yaml

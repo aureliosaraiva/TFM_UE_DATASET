@@ -1,0 +1,164 @@
+service_id: svc-34
+service_name: registry-tracker-service
+domain: Registry
+subdomain: Registration Tracking
+owner_team: team-registry
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Tracks the status of lien registrations across both DETRAN and cartorio channels.
+  Implements retry logic with exponential backoff for failed registrations and
+  publishes final status events (completed or failed) consumed by downstream services.
+
+business_objective: >
+  Provide a unified view of all lien registration statuses and ensure failed
+  registrations are retried automatically, minimizing manual intervention and
+  ensuring the lending pipeline progresses without unnecessary delays.
+
+responsibilities:
+  - Aggregate registration status updates from DETRAN and cartorio integrations
+  - Retry failed registrations with exponential backoff
+  - Publish registry_completed or registry_failed events
+  - Provide APIs for tracking registration status and listing pending registrations
+  - Enforce maximum retry limits and escalate persistent failures
+
+entities:
+  - name: RegistrationStatus
+    description: Aggregated status of a lien registration
+    attributes:
+      - id (UUID)
+      - registration_request_id (UUID)
+      - channel (DETRAN | CARTORIO)
+      - status (PENDING | IN_PROGRESS | COMPLETED | FAILED | RETRYING)
+      - last_updated (Instant)
+      - completion_details (String, nullable)
+      - failure_reason (String, nullable)
+
+  - name: RetryRecord
+    description: Tracks retry attempts for a registration
+    attributes:
+      - id (UUID)
+      - registration_status_id (UUID)
+      - attempt_number (Int)
+      - scheduled_at (Instant)
+      - executed_at (Instant, nullable)
+      - result (SUCCESS | FAILURE)
+      - error_details (String, nullable)
+      - next_retry_at (Instant, nullable)
+
+  - name: CompletionConfirmation
+    description: Final confirmation of a successful registration
+    attributes:
+      - id (UUID)
+      - registration_status_id (UUID)
+      - protocol_number (String)
+      - confirmed_at (Instant)
+      - confirmation_source (DETRAN | CARTORIO)
+      - metadata (JSONB)
+
+apis:
+  - method: GET
+    path: /api/v1/registrations/{id}/track
+    description: Get the tracking status of a specific registration
+    path_params:
+      - id (UUID)
+    response: RegistrationStatus (200 OK)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/registrations/pending
+    description: List all registrations with pending or retrying status
+    query_params:
+      - channel (optional, DETRAN | CARTORIO)
+      - page (optional, default 0)
+      - size (optional, default 20)
+    response: Page<RegistrationStatus> (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: detran_lien_registered
+      topic: credityflow.registry
+      description: DETRAN registration completed or failed
+      source: detran-integration-service
+
+    - event: cartorio_lien_registered
+      topic: credityflow.registry
+      description: Cartorio registration completed or failed
+      source: cartorio-integration-service
+
+  publishes:
+    - event: registry_completed
+      topic: credityflow.registry
+      description: Emitted when a lien registration is confirmed across any channel
+
+    - event: registry_failed
+      topic: credityflow.registry
+      description: Emitted when a registration permanently fails after all retries
+
+databases:
+  - name: registry_db
+    type: PostgreSQL
+    schemas:
+      - registry_tracker
+    tables:
+      - registration_statuses
+      - retry_records
+      - completion_confirmations
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: detran-integration-service
+      type: event (detran_lien_registered)
+    - service: cartorio-integration-service
+      type: event (cartorio_lien_registered)
+  downstream:
+    - service: disbursement-service
+      type: event (registry_completed)
+
+flows:
+  - name: Registration Tracking and Retry
+    steps:
+      - Receive detran_lien_registered or cartorio_lien_registered event
+      - Update RegistrationStatus in the database
+      - If successful, create CompletionConfirmation and publish registry_completed
+      - If failed, create RetryRecord and schedule retry with exponential backoff
+      - If max retries exceeded, publish registry_failed and alert operations
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - registration_completions_total (counter, by channel)
+    - registration_failures_total (counter, by channel and reason)
+    - retry_attempts_total (counter, by channel and attempt_number)
+    - pending_registrations_gauge (gauge, by channel)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, registration_id
+  alerts:
+    - name: high_failure_rate
+      condition: registry_failed rate > 10% in 1 hour
+      severity: critical
+    - name: max_retries_exceeded
+      condition: any registration reaches max retry limit
+      severity: warning
+    - name: pending_registrations_backlog
+      condition: pending_registrations_gauge > 100
+      severity: warning
+
+risks_and_limitations:
+  - Exponential backoff delays may accumulate for registrations with transient failures
+  - Max retry limit (default 5) may not be sufficient for some intermittent DETRAN issues
+  - Cartorio registrations have inherently long processing times that inflate pending counts
+  - Failed registrations after max retries require manual intervention
+
+related_documents:
+  - title: CredityFlow Registry Domain Overview
+    link: /docs/domains/registry.md
+  - title: Retry and Backoff Strategy
+    link: /docs/patterns/retry-backoff.md

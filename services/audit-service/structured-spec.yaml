@@ -1,0 +1,132 @@
+service_id: svc-48
+service_name: audit-service
+domain: Platform
+subdomain: Compliance & Audit
+owner_team: team-platform
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Central audit logging service that ingests domain events from across the
+  entire CredityFlow ecosystem and persists them as immutable, searchable
+  audit records in Elasticsearch.  Designed for compliance, forensic
+  investigation, and regulatory reporting.
+business_objective: >
+  Satisfy regulatory audit requirements by maintaining a tamper-evident,
+  queryable log of every significant business action across the credit
+  lifecycle, enabling rapid incident investigation and compliance reporting.
+
+responsibilities:
+  - Consume domain events from all CredityFlow services and normalize them into audit records
+  - Persist audit events in an append-only Elasticsearch index
+  - Provide full-text search and entity-scoped queries for audit trails
+  - Generate compliance reports on demand
+  - Guarantee at-least-once ingestion with deduplication by event ID
+
+entities:
+  - name: AuditEvent
+    description: >
+      Immutable record of a single business action.  Contains event type, timestamp,
+      actor (user or system), entity type, entity ID, payload snapshot, and
+      correlation ID for distributed tracing.
+  - name: AuditTrail
+    description: >
+      Logical grouping of AuditEvents for a given entity (e.g., all events for
+      proposal P-12345), materialized as an Elasticsearch query, not a stored aggregate.
+  - name: ComplianceReport
+    description: >
+      Pre-defined or ad-hoc report that aggregates audit data for regulatory
+      submissions.  Includes filters by date range, event type, and entity class.
+
+apis:
+  - method: GET
+    path: /api/v1/audit/events
+    description: >
+      Paginated, filterable search across all audit events.  Supports full-text
+      search, date ranges, event types, and actor filters.
+  - method: GET
+    path: /api/v1/audit/events/{entity_type}/{entity_id}
+    description: >
+      Returns the complete audit trail for a specific entity, ordered chronologically.
+
+events:
+  publishes:
+    - audit_event_logged
+  consumes:
+    - lead_created
+    - proposal_started
+    - documents_uploaded
+    - biometrics_validated
+    - fraud_check_started
+    - fraud_decision_made
+    - fraud_flagged
+    - credit_check_started
+    - credit_decision_made
+    - contract_generation_requested
+    - compliance_checked
+    - contract_signed
+    - registry_requested
+    - disbursement_requested
+    - disbursement_done
+    - overdue_installment
+    - dunning_started
+    - collections_contact_attempted
+    - legal_action_started
+    - renegotiation_requested
+    - notification_sent
+    - case_created
+    - case_resolved
+
+databases:
+  - name: audit_log_store
+    type: Elasticsearch
+    purpose: >
+      High-volume, append-only store optimized for full-text search and
+      time-range queries.  Uses date-based index rotation (daily indices) with
+      ILM policies for hot/warm/cold tiering.
+
+dependencies: []
+
+flows:
+  - name: Event Ingestion
+    description: Domain events are consumed, normalized, and persisted as audit records.
+    steps:
+      - A domain event arrives on the message bus (e.g., fraud_decision_made).
+      - The ingestion handler extracts actor, entity, and payload fields.
+      - The event is deduplicated by its unique event ID.
+      - An AuditEvent document is indexed into the current daily Elasticsearch index.
+      - An audit_event_logged event is published for downstream consumers.
+  - name: Audit Trail Query
+    description: An operator or compliance system queries the full trail for an entity.
+    steps:
+      - A GET request is made to /api/v1/audit/events/{entity_type}/{entity_id}.
+      - The service issues an Elasticsearch query filtered by entity type and ID, sorted by timestamp.
+      - Results are paginated and returned as a chronological audit trail.
+
+observability:
+  metrics:
+    - audit_events_ingested_total (counter, by event type)
+    - audit_ingestion_lag_seconds (histogram)
+    - audit_query_duration_seconds (histogram, by query type)
+    - audit_deduplication_hits_total (counter)
+    - elasticsearch_index_size_bytes (gauge, by index)
+  alerts:
+    - "Ingestion lag > 30 s for 5 min (consumer falling behind)"
+    - "Elasticsearch cluster health yellow or red"
+    - "Disk usage on hot tier > 80 %"
+    - "Ingestion error rate > 0.1 % for 5 min"
+  dashboards:
+    - Audit Ingestion Pipeline (event throughput, lag, dedup rate)
+    - Elasticsearch Cluster Health (shard allocation, disk, query latency)
+    - Compliance Coverage (event type distribution, missing-event gaps)
+
+risks_and_limitations:
+  - Contains PII and financial data in event payloads; access must be restricted to compliance and platform teams.
+  - Elasticsearch is eventually consistent; recent events may not appear in queries for a few seconds.
+  - High event volume (thousands per second at peak) requires careful index sizing and ILM tuning.
+  - At-least-once delivery means duplicates are possible; consumers of audit_event_logged must be idempotent.
+  - Long-term storage costs grow linearly with event volume; cold-tier archival to S3 is planned but not yet implemented.
+
+related_documents:
+  - "ADR-048: Elasticsearch over PostgreSQL for audit storage"
+  - "COMP-003: Regulatory audit retention policy (7 years)"
+  - "SEC-020: PII encryption at rest in Elasticsearch"
+  - "RUN-035: ILM policy for daily index rotation"

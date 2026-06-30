@@ -1,0 +1,122 @@
+service_id: svc-45
+service_name: customer-portal-bff
+domain: Customer Portal
+subdomain: Self-Service
+owner_team: team-portal
+tech_stack: Node.js / Express
+summary: >
+  Backend-for-Frontend service that aggregates data from multiple downstream
+  microservices to power the customer self-service portal.  It handles session
+  management, request fan-out, response shaping, and acts as the single entry
+  point for all portal UI interactions.
+business_objective: >
+  Provide customers with a unified, performant portal experience that surfaces
+  proposals, documents, payments, and account status without exposing internal
+  service topology.
+
+responsibilities:
+  - Aggregate and shape responses from downstream services for the portal UI
+  - Manage portal session lifecycle via Redis
+  - Enforce authentication and authorization for customer-facing endpoints
+  - Translate domain events into dashboard notifications
+  - Protect PII by filtering sensitive fields before they reach the client
+
+entities:
+  - name: PortalSession
+    description: >
+      Represents an authenticated customer session, stored in Redis with a TTL.
+      Tracks session metadata such as device fingerprint, login timestamp, and
+      last-activity time.
+  - name: DashboardView
+    description: >
+      A read-optimized projection that merges proposal status, upcoming payments,
+      pending document requests, and recent notifications into a single payload
+      consumed by the portal dashboard widget.
+
+apis:
+  - method: GET
+    path: /api/v1/portal/dashboard
+    description: Returns the aggregated dashboard view for the authenticated customer.
+  - method: GET
+    path: /api/v1/portal/proposals
+    description: Lists all proposals belonging to the authenticated customer, with current status.
+  - method: GET
+    path: /api/v1/portal/documents
+    description: Returns pending and completed document requests for the customer.
+  - method: GET
+    path: /api/v1/portal/payments
+    description: Returns upcoming and past payment information sourced from the billing service.
+
+events:
+  publishes: []
+  consumes:
+    - documents_requested
+    - biometrics_requested
+    - signature_requested
+    - installment_due
+    - negotiation_offered
+    - renegotiation_simulated
+
+databases:
+  - name: portal_session_cache
+    type: Redis
+    purpose: >
+      Stores ephemeral portal sessions with configurable TTL.  Used for fast
+      session lookup on every authenticated request.
+
+dependencies:
+  - service_name: auth-service
+    type: synchronous
+    purpose: JWT validation and token refresh for customer sessions.
+  - service_name: proposal-service
+    type: synchronous
+    purpose: Fetch proposal details and status for display on the portal.
+  - service_name: customer-service
+    type: synchronous
+    purpose: Retrieve customer profile data for personalization.
+  - service_name: billing-service
+    type: synchronous
+    purpose: Obtain payment schedules, upcoming installments, and payment history.
+  - service_name: document-upload-service
+    type: synchronous
+    purpose: Query document request status and upload URLs.
+
+flows:
+  - name: Dashboard Load
+    description: Assembles the full dashboard payload when a customer opens the portal.
+    steps:
+      - Customer authenticates via auth-service and obtains a JWT.
+      - Portal UI calls GET /api/v1/portal/dashboard.
+      - BFF fans out parallel requests to proposal-service, billing-service, customer-service, and document-upload-service.
+      - Responses are merged into a DashboardView and returned to the UI.
+  - name: Event-Driven Notification Badge
+    description: Updates the notification badge count based on consumed domain events.
+    steps:
+      - A domain event (e.g., installment_due) arrives on the message bus.
+      - BFF writes a lightweight notification entry to the session cache.
+      - On the next dashboard poll the badge count reflects the new event.
+
+observability:
+  metrics:
+    - portal_request_duration_seconds (histogram, by endpoint)
+    - portal_downstream_call_duration_seconds (histogram, by target service)
+    - portal_active_sessions (gauge)
+    - portal_error_rate (counter, by status code)
+  alerts:
+    - "P95 latency on /dashboard > 2 s for 5 min"
+    - "Downstream error rate > 5 % for any dependency over 3 min"
+    - "Active sessions drop > 50 % in 10 min (possible auth outage)"
+  dashboards:
+    - Customer Portal Overview (request volume, latency, error rate)
+    - Downstream Health (per-dependency latency and error breakdown)
+
+risks_and_limitations:
+  - Contains PII; all responses must be filtered through a PII-redaction middleware before logging.
+  - Single point of failure for the portal UI; circuit breakers are mandatory on every downstream call.
+  - Dashboard payload size can grow with the number of active proposals; pagination must be enforced.
+  - Redis session store is not replicated across regions; a regional failover will invalidate all sessions.
+
+related_documents:
+  - "ADR-045: BFF pattern for customer portal"
+  - "SEC-012: PII handling in BFF layers"
+  - "RUN-030: Portal session TTL policy"

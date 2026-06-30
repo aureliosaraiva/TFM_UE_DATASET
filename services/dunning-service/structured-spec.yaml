@@ -1,0 +1,133 @@
+service_id: svc-39
+service_name: dunning-service
+domain: Collections
+subdomain: Dunning & Contact
+owner_team: team-collections
+lifecycle_status: production
+
+summary: >
+  Orchestrates multi-channel dunning campaigns (SMS, email, push notification)
+  to recover overdue payments before they escalate to legal proceedings.
+
+business_objective: >
+  Maximize early-stage debt recovery through automated, sequenced contact
+  strategies while maintaining regulatory compliance and positive borrower
+  experience.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Launch dunning campaigns when overdue installments are detected
+  - Execute multi-step contact sequences across SMS, email, and push channels
+  - Track delivery status and borrower responses for each contact attempt
+  - Allow manual pause/resume of campaigns by operations staff
+  - Respect quiet hours and regulatory contact frequency limits
+
+entities:
+  - name: DunningCampaign
+    description: A campaign instance tied to an overdue installment, tracking its lifecycle from start to resolution.
+  - name: DunningStep
+    description: A single step within a campaign sequence (e.g., "Day 3 - Send SMS reminder").
+  - name: ContactAttempt
+    description: Record of a single outbound contact with delivery status and response.
+
+apis:
+  - method: GET
+    path: /api/v1/dunning/campaigns
+    description: Lists active and historical dunning campaigns with filtering.
+    auth: Bearer JWT
+    response_codes: [200]
+  - method: POST
+    path: /api/v1/dunning/campaigns/{id}/pause
+    description: Pauses an active dunning campaign.
+    auth: Bearer JWT
+    response_codes: [200, 404, 409]
+
+events:
+  consumes:
+    - name: overdue_installment
+      source: billing-service
+      description: Triggers creation of a new dunning campaign.
+  publishes:
+    - name: dunning_started
+      description: Emitted when a dunning campaign begins execution.
+
+databases:
+  - name: dunning_db
+    engine: PostgreSQL
+    contains_pii: false
+    contains_financial_data: false
+    tables:
+      - dunning_campaigns
+      - dunning_steps
+      - contact_attempts
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event consumption and publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-38
+      service_name: billing-service
+      interaction: event (overdue_installment)
+  external:
+    - name: SMS Gateway
+      purpose: Outbound SMS delivery
+    - name: Email Provider
+      purpose: Outbound email delivery
+    - name: Push Notification Service
+      purpose: Mobile push delivery
+
+flows:
+  - name: Campaign Launch
+    trigger: overdue_installment event
+    steps:
+      - Consume overdue_installment from Kafka
+      - Resolve the appropriate dunning sequence template based on overdue amount and history
+      - Create DunningCampaign and associated DunningSteps
+      - Publish dunning_started event
+      - Schedule first contact step execution
+  - name: Step Execution
+    trigger: Scheduled timer per step
+    steps:
+      - Load next pending DunningStep
+      - Select channel (SMS, email, push) and render template
+      - Dispatch via channel gateway
+      - Record ContactAttempt with delivery status
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - dunning_campaigns_started_total
+    - dunning_contact_attempts_total
+    - dunning_contact_delivery_success_rate
+    - dunning_campaigns_paused_total
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: LowDeliveryRate
+      condition: dunning_contact_delivery_success_rate < 0.85
+      severity: warning
+    - name: CampaignBacklog
+      condition: dunning_pending_steps_count > 10000
+      severity: critical
+
+risks_and_limitations:
+  - Channel provider outages can delay contact attempts; retries must be bounded to avoid regulatory violations.
+  - Quiet-hour enforcement depends on accurate borrower timezone data from customer-service.
+  - High campaign volume during economic downturns may exceed channel provider rate limits.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Dunning Sequence Templates
+    link: ../docs/dunning-templates.md
+  - title: Regulatory Contact Rules
+    link: ../docs/contact-compliance.md

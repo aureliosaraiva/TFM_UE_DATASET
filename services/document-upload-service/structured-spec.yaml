@@ -1,0 +1,123 @@
+service_id: svc-03
+service_name: document-upload-service
+domain: Document Management
+subdomain: Document Ingestion
+owner_team: team-documents
+summary: >
+  Handles document uploads from customers and internal systems, persisting
+  files to S3 and metadata to MongoDB. First entry point in the document
+  processing pipeline.
+business_objective: >
+  Provide a reliable and secure ingestion layer for identity documents,
+  income proofs, and collateral documentation required during the loan
+  proposal process.
+responsibilities:
+  - Accept document file uploads via REST API (multipart/form-data)
+  - Validate file type, size, and basic integrity before storage
+  - Store raw files in S3 with server-side encryption
+  - Persist document metadata (type, proposal_id, timestamps) in MongoDB
+  - Manage upload sessions for multi-document submissions
+  - Publish events to trigger downstream OCR and classification
+
+entities:
+  - name: Document
+    description: >
+      Represents an uploaded file. Stores S3 key, original filename, MIME type,
+      file size, proposal_id, and upload timestamp.
+  - name: DocumentType
+    description: >
+      Enum of accepted document categories: RG, CNH, CPF_CARD, INCOME_PROOF,
+      ADDRESS_PROOF, VEHICLE_REGISTRATION, PROPERTY_DEED.
+  - name: UploadSession
+    description: >
+      Groups multiple document uploads for a single proposal submission.
+      Tracks which required documents have been received.
+
+apis:
+  - method: POST
+    path: /api/v1/documents/upload
+    description: >
+      Upload a document file. Accepts multipart/form-data with file, proposal_id,
+      and document_type. Returns document ID and S3 reference.
+  - method: GET
+    path: /api/v1/documents/{id}
+    description: Retrieve document metadata and a pre-signed S3 URL for download.
+  - method: GET
+    path: /api/v1/sessions/{sessionId}
+    description: Get upload session status showing received vs. required documents.
+
+events:
+  publishes:
+    - event_name: documents_requested
+      description: >
+        Emitted when a proposal triggers document requirements. Contains
+        proposal_id and list of required document types.
+    - event_name: documents_uploaded
+      description: >
+        Emitted after a document is successfully stored in S3 and metadata
+        is persisted. Triggers OCR processing.
+  consumes:
+    - event_name: proposal_started
+      description: >
+        Triggers creation of an upload session with the required document
+        checklist based on product type and collateral.
+
+databases:
+  - name: document_meta_db
+    type: MongoDB
+    purpose: >
+      Stores document metadata, upload sessions, and S3 references.
+      Flexible schema accommodates varying metadata per document type.
+  - name: document_files
+    type: S3
+    purpose: >
+      Object storage for raw document files. Bucket uses SSE-S3 encryption,
+      versioning enabled, lifecycle policy moves to Glacier after 7 years.
+
+dependencies:
+  - service_name: proposal-service
+    type: async
+    purpose: Receives proposal_started events to initialize upload sessions.
+
+flows:
+  - name: Document Upload
+    description: Customer uploads a document for their proposal.
+    steps:
+      - Receive POST with file and metadata
+      - Validate file type (PDF, JPEG, PNG) and size (<10MB)
+      - Upload file to S3 with encryption
+      - Persist metadata in MongoDB
+      - Update upload session progress
+      - Publish documents_uploaded event
+  - name: Upload Session Initialization
+    description: Proposal creation triggers required document list.
+    steps:
+      - Receive proposal_started event
+      - Determine required documents based on product type
+      - Create UploadSession record
+      - Publish documents_requested event (for notification service)
+
+observability:
+  metrics:
+    - document_upload_total (counter, by document_type)
+    - document_upload_size_bytes (histogram)
+    - upload_duration_seconds (histogram)
+    - s3_put_errors_total (counter)
+  alerts:
+    - S3 upload failure rate > 1% over 5 min
+    - Upload latency p99 > 10 seconds
+    - MongoDB write errors > 0
+  dashboards:
+    - Document Upload Overview (volume, types, sizes, errors)
+    - Upload Session Completion Rate (required vs. received)
+
+risks_and_limitations:
+  - Large file uploads can time out on slow connections; no resumable upload support yet
+  - Contains PII (identity documents with photos, CPF numbers)
+  - S3 bucket misconfiguration could expose sensitive documents
+  - No virus scanning on uploaded files currently
+  - MongoDB single-node deployment is a SPOF in non-production environments
+
+related_documents:
+  - README.md
+  - architecture.md

@@ -1,0 +1,3347 @@
+[
+  {
+    "source": "svc-lead-intake-service",
+    "target": "domain-onboarding",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "domain-onboarding",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "domain-onboarding",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "domain-onboarding",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "domain-document-management",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "domain-document-management",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "domain-document-management",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "domain-document-management",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "domain-document-management",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "domain-biometrics",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "domain-biometrics",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "domain-biometrics",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "domain-biometrics",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "domain-fraud-prevention",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "domain-fraud-prevention",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "domain-fraud-prevention",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "domain-fraud-prevention",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "domain-credit-analysis",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "domain-credit-analysis",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "domain-credit-analysis",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "domain-credit-analysis",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "domain-credit-analysis",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "domain-appraisal",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "domain-appraisal",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "domain-appraisal",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "domain-appraisal",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "domain-contract",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "domain-contract",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "domain-contract",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "domain-contract",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "domain-registry",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "domain-registry",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "domain-registry",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "domain-registry",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "domain-disbursement",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "domain-disbursement",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "domain-disbursement",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "domain-collections",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "domain-customer-portal",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "domain-backoffice",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "domain-backoffice",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "domain-backoffice",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "domain-notifications",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "domain-notifications",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "domain-platform",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "domain-platform",
+    "relation": "BELONGS_TO_DOMAIN"
+  },
+  {
+    "source": "team-team-onboarding",
+    "target": "svc-lead-intake-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-onboarding",
+    "target": "svc-eligibility-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-onboarding",
+    "target": "svc-customer-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-onboarding",
+    "target": "svc-proposal-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-documents",
+    "target": "svc-document-upload-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-documents",
+    "target": "svc-ocr-worker",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-documents",
+    "target": "svc-document-classifier-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-documents",
+    "target": "svc-document-validation-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-documents",
+    "target": "svc-document-store-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-identity",
+    "target": "svc-biometrics-capture-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-identity",
+    "target": "svc-liveness-worker",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-identity",
+    "target": "svc-face-match-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-fraud",
+    "target": "svc-device-fingerprint-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-fraud",
+    "target": "svc-watchlist-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-fraud",
+    "target": "svc-fraud-bureau-integration",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-fraud",
+    "target": "svc-fraud-scoring-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-fraud",
+    "target": "svc-fraud-decision-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-credit",
+    "target": "svc-credit-bureau-integration",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-credit",
+    "target": "svc-income-verification-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-credit",
+    "target": "svc-credit-scoring-engine",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-credit",
+    "target": "svc-credit-policy-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-credit",
+    "target": "svc-credit-decision-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-appraisal",
+    "target": "svc-appraisal-orchestrator-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-appraisal",
+    "target": "svc-vehicle-appraisal-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-appraisal",
+    "target": "svc-property-appraisal-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-appraisal",
+    "target": "svc-appraisal-report-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-contracts",
+    "target": "svc-contract-generation-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-contracts",
+    "target": "svc-compliance-check-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-contracts",
+    "target": "svc-digital-signature-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-contracts",
+    "target": "svc-contract-store-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-registry",
+    "target": "svc-registry-orchestrator-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-registry",
+    "target": "svc-detran-integration-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-registry",
+    "target": "svc-cartorio-integration-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-registry",
+    "target": "svc-registry-tracker-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-disbursement",
+    "target": "svc-disbursement-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-disbursement",
+    "target": "svc-bank-transfer-integration",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-disbursement",
+    "target": "svc-payment-confirmation-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-billing-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-dunning-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-collections-contact-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-negotiation-engine-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-legal-collections-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-renegotiation-eligibility-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-collections",
+    "target": "svc-renegotiation-simulation-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-portal",
+    "target": "svc-customer-portal-bff",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-backoffice",
+    "target": "svc-backoffice-bff",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-backoffice",
+    "target": "svc-case-management-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-platform",
+    "target": "svc-audit-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-notifications",
+    "target": "svc-notification-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-notifications",
+    "target": "svc-notification-template-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-platform",
+    "target": "svc-auth-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "team-team-platform",
+    "target": "svc-feature-flag-service",
+    "relation": "OWNS"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "db-lead_intake_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "db-eligibility_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "db-customer_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "db-proposal_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "db-document_meta_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "db-document_files",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "db-document_meta_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "db-document_classification_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "db-document_validation_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "db-document_meta_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "db-document_files",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "db-biometrics_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "db-biometrics_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "db-biometrics_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "db-biometrics_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "db-device_fingerprint_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "db-watchlist_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "db-fraud_scores_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "db-fraud_scores_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "db-fraud_decisions_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "db-credit_bureau_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "db-income_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "db-credit_scores_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "db-credit_policy_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "db-credit_decisions_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "db-appraisal_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "db-appraisal_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "db-appraisal_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "db-appraisal_report_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "db-appraisal_reports",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "db-contract_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "db-contract_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "db-signature_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "db-contract_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "db-contract_files",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "db-registry_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "db-registry_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "db-registry_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "db-registry_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "db-disbursement_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "db-disbursement_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "db-disbursement_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "db-billing_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "db-dunning_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "db-collections_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "db-collections_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "db-legal_collections_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "db-renegotiation_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "db-renegotiation_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "db-portal_session_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "db-backoffice_session_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "db-case_management_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "db-audit_log_store",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "db-notification_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "db-notification_templates_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "db-auth_db",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "db-auth_session_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "db-feature_flags_cache",
+    "relation": "USES_DATABASE"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "evt-lead_created",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "evt-lead_qualified",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "evt-proposal_started",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "evt-proposal_updated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "evt-documents_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "evt-documents_uploaded",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "evt-documents_classified",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "evt-documents_validated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "evt-documents_submitted",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "evt-biometrics_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "evt-biometrics_captured",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "evt-liveness_verified",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "evt-face_match_completed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "evt-device_fingerprint_checked",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "evt-watchlist_checked",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "evt-fraud_bureau_checked",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "evt-fraud_scored",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "evt-fraud_decision_made",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "evt-fraud_cleared",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "evt-fraud_flagged",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "evt-bureau_data_fetched",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "evt-income_verified",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "evt-credit_scored",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "evt-credit_policy_evaluated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "evt-credit_decision_made",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "evt-credit_approved",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "evt-credit_denied",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "evt-appraisal_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "evt-vehicle_appraised",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "evt-property_appraised",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "evt-appraisal_completed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "evt-contract_generation_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "evt-contract_generated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "evt-compliance_checked",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "evt-signature_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "evt-contract_signed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "evt-registry_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "evt-detran_lien_registered",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "evt-cartorio_lien_registered",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "evt-registry_completed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "evt-registry_failed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "evt-disbursement_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "evt-bank_transfer_initiated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "evt-bank_transfer_confirmed",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "evt-disbursement_done",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "evt-installment_created",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "evt-installment_due",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "evt-overdue_installment",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "evt-dunning_started",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "evt-collections_contact_attempted",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "evt-negotiation_offered",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "evt-negotiation_accepted",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "evt-legal_action_started",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "evt-renegotiation_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "evt-renegotiation_eligible",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "evt-renegotiation_simulated",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-notification_sent",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "evt-notification_requested",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "evt-case_created",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "evt-case_resolved",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-audit_event_logged",
+    "relation": "PUBLISHES"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "evt-lead_created",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "evt-lead_qualified",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "evt-proposal_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "evt-documents_uploaded",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "evt-documents_uploaded",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "evt-documents_classified",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "evt-documents_validated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "evt-documents_submitted",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "evt-biometrics_captured",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "evt-liveness_verified",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "evt-biometrics_captured",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "evt-biometrics_validated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "evt-fraud_check_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "evt-device_fingerprint_checked",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "evt-watchlist_checked",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "evt-fraud_bureau_checked",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "evt-fraud_scored",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "evt-fraud_cleared",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "evt-credit_check_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "evt-bureau_data_fetched",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "evt-bureau_data_fetched",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "evt-income_verified",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "evt-credit_scored",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "evt-credit_policy_evaluated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "evt-credit_approved",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "evt-appraisal_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "evt-appraisal_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "evt-vehicle_appraised",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "evt-property_appraised",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "evt-appraisal_completed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "evt-contract_generated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "evt-compliance_checked",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "evt-contract_signed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "evt-contract_signed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "evt-registry_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "evt-registry_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "evt-detran_lien_registered",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "evt-cartorio_lien_registered",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "evt-registry_completed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "evt-disbursement_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "evt-bank_transfer_initiated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "evt-disbursement_done",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "evt-overdue_installment",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "evt-dunning_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "evt-overdue_installment",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "evt-collections_contact_attempted",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "evt-renegotiation_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "evt-renegotiation_eligible",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-notification_requested",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-lead_created",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-proposal_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-credit_approved",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-credit_denied",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-contract_signed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-disbursement_done",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-overdue_installment",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "evt-dunning_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-lead_created",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-proposal_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-documents_submitted",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-biometrics_validated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-fraud_decision_made",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-credit_decision_made",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-contract_signed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-registry_completed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-disbursement_done",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "evt-legal_action_started",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "evt-proposal_updated",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "evt-installment_due",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "evt-fraud_flagged",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "evt-registry_failed",
+    "relation": "CONSUMES"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "svc-lead-intake-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "svc-eligibility-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "svc-document-upload-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "svc-ocr-worker",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "svc-document-classifier-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "svc-document-validation-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "svc-document-store-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "svc-biometrics-capture-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "svc-liveness-worker",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "svc-document-store-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "svc-biometrics-capture-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "svc-device-fingerprint-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "svc-watchlist-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "svc-fraud-bureau-integration",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "svc-fraud-scoring-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "svc-credit-bureau-integration",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "svc-credit-bureau-integration",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "svc-income-verification-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "svc-credit-scoring-engine",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "svc-credit-policy-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "svc-credit-decision-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "svc-appraisal-orchestrator-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "svc-appraisal-orchestrator-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "svc-vehicle-appraisal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "svc-property-appraisal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "svc-appraisal-report-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "svc-contract-generation-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "svc-compliance-check-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "svc-digital-signature-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "svc-contract-store-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "svc-registry-orchestrator-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "svc-registry-orchestrator-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "svc-detran-integration-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "svc-cartorio-integration-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "svc-registry-tracker-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "svc-disbursement-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "svc-bank-transfer-integration",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "svc-disbursement-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "svc-billing-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "svc-dunning-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "svc-billing-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "svc-collections-contact-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "svc-billing-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "svc-renegotiation-eligibility-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "svc-auth-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "svc-billing-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "svc-auth-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "svc-case-management-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "svc-proposal-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "svc-notification-template-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "svc-customer-service",
+    "relation": "DEPENDS_ON"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-lead-intake-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-eligibility-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-proposal-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-upload-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-ocr-worker",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-classifier-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-validation-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-document-store-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-biometrics-capture-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-liveness-worker",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-face-match-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-device-fingerprint-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-watchlist-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-scoring-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-fraud-decision-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-income-verification-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-scoring-engine",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-policy-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-decision-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-orchestrator-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-appraisal-report-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-generation-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-compliance-check-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-contract-store-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-orchestrator-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-registry-tracker-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-disbursement-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-payment-confirmation-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-billing-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-dunning-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-collections-contact-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-negotiation-engine-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-legal-collections-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-customer-portal-bff",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-backoffice-bff",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-case-management-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-audit-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-notification-template-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-auth-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-feature-flag-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-eligibility-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-renegotiation",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-autocredit",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-homeequity",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-autorefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-homerefi",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-renegotiation-simulation-service",
+    "target": "prod-topup",
+    "relation": "SUPPORTS_PRODUCT"
+  },
+  {
+    "source": "svc-credit-bureau-integration",
+    "target": "partner-servicosbureau",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-fraud-bureau-integration",
+    "target": "partner-clearcheck",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-digital-signature-service",
+    "target": "partner-docusign-br",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-detran-integration-service",
+    "target": "partner-detran-api",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-cartorio-integration-service",
+    "target": "partner-cartorio-digital",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-bank-transfer-integration",
+    "target": "partner-bancoparceiro",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-vehicle-appraisal-service",
+    "target": "partner-fipe-api",
+    "relation": "INTEGRATES_WITH"
+  },
+  {
+    "source": "svc-property-appraisal-service",
+    "target": "partner-inspecaoexpress",
+    "relation": "INTEGRATES_WITH"
+  }
+]

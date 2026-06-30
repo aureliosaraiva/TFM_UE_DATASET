@@ -1,0 +1,132 @@
+service_id: svc-38
+service_name: billing-service
+domain: Collections
+subdomain: Billing & Installments
+owner_team: team-collections
+lifecycle_status: production
+
+summary: >
+  Generates installment schedules from approved disbursements, tracks incoming
+  payments, and flags overdue positions for downstream collection workflows.
+
+business_objective: >
+  Provide an accurate, real-time view of every borrower's payment obligations so
+  that CredityFlow can collect on time, minimize default rates, and feed reliable
+  data into dunning and negotiation processes.
+
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+responsibilities:
+  - Generate installment schedules upon disbursement completion
+  - Record and reconcile incoming payments against open installments
+  - Detect overdue installments and publish events for collection pipelines
+  - Expose billing data to internal services and back-office tooling
+  - Recalculate schedules when negotiation terms are accepted
+
+entities:
+  - name: Installment
+    description: A single payment obligation within a schedule, with amount, due date, and status.
+  - name: PaymentRecord
+    description: An inbound payment event matched to one or more installments.
+  - name: InstallmentSchedule
+    description: The full set of installments derived from a loan proposal.
+
+apis:
+  - method: GET
+    path: /api/v1/billing/{proposal_id}/installments
+    description: Returns the installment schedule for a given proposal.
+    auth: Bearer JWT
+    response_codes: [200, 404]
+  - method: GET
+    path: /api/v1/billing/overdue
+    description: Lists all currently overdue installments with pagination.
+    auth: Bearer JWT
+    response_codes: [200]
+
+events:
+  consumes:
+    - name: disbursement_done
+      source: disbursement-service
+      description: Triggers installment schedule generation.
+    - name: negotiation_accepted
+      source: negotiation-engine-service
+      description: Triggers schedule recalculation with new terms.
+  publishes:
+    - name: installment_created
+      description: Emitted when a new installment schedule is persisted.
+    - name: installment_due
+      description: Emitted on the due date of each installment.
+    - name: overdue_installment
+      description: Emitted when an installment passes its due date without payment.
+
+databases:
+  - name: billing_db
+    engine: PostgreSQL
+    contains_pii: false
+    contains_financial_data: true
+    tables:
+      - installments
+      - payment_records
+      - installment_schedules
+
+dependencies:
+  runtime:
+    - service: kafka
+      purpose: Event consumption and publishing
+    - service: PostgreSQL
+      purpose: Primary data store
+  service:
+    - service_id: svc-disbursement
+      service_name: disbursement-service
+      interaction: event (disbursement_done)
+    - service_id: svc-41
+      service_name: negotiation-engine-service
+      interaction: event (negotiation_accepted)
+
+flows:
+  - name: Schedule Generation
+    trigger: disbursement_done event
+    steps:
+      - Consume disbursement_done from Kafka
+      - Calculate installment dates and amounts using amortization rules
+      - Persist InstallmentSchedule and Installment rows
+      - Publish installment_created event
+  - name: Overdue Detection
+    trigger: Scheduled cron job (daily)
+    steps:
+      - Query installments where due_date < now() and status = OPEN
+      - Mark each as OVERDUE
+      - Publish overdue_installment event per record
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - billing_installments_created_total
+    - billing_overdue_detected_total
+    - billing_payment_matched_total
+    - billing_schedule_generation_duration_seconds
+  logging:
+    format: JSON
+    level: INFO
+  alerts:
+    - name: HighOverdueRate
+      condition: rate(billing_overdue_detected_total[1h]) > 500
+      severity: warning
+    - name: ScheduleGenerationFailures
+      condition: increase(billing_schedule_generation_errors_total[5m]) > 10
+      severity: critical
+
+risks_and_limitations:
+  - Financial calculation precision depends on BigDecimal usage; floating-point drift would corrupt schedules.
+  - High event throughput during bulk disbursement windows may cause consumer lag.
+  - Schedule recalculation on negotiation_accepted assumes idempotent processing; duplicate events must not create duplicate schedules.
+
+related_documents:
+  - title: Collections Domain Overview
+    link: ../docs/collections-domain.md
+  - title: Installment Amortization Rules
+    link: ../docs/amortization-rules.md

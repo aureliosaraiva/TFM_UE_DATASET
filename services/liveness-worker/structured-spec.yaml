@@ -1,0 +1,109 @@
+service_id: svc-11
+service_name: liveness-worker
+domain: CredityFlow
+subdomain: Biometrics
+owner_team: team-identity
+tech_stack:
+  language: Python
+  framework: FastAPI
+  build_tool: pip/Poetry
+
+summary: >
+  Background worker that performs liveness detection (anti-spoofing) on selfie images.
+  Analyzes captured selfies to determine whether the image was taken from a live person
+  rather than a photo, screen, or mask.
+
+business_objective: >
+  Prevent identity spoofing by detecting non-live selfie submissions early in the
+  biometric pipeline. This is a critical fraud prevention layer that protects
+  CredityFlow from granting loans based on stolen or fabricated identities.
+
+responsibilities:
+  - Consume biometrics_captured events and process selfie images
+  - Run liveness detection algorithms (texture analysis, depth estimation, motion cues)
+  - Score anti-spoofing confidence for each submission
+  - Detect common spoofing vectors (printed photos, screen replays, 3D masks)
+  - Cache intermediate results in Redis for performance and deduplication
+  - Publish liveness_verified events with pass/fail and confidence
+
+entities:
+  - name: LivenessResult
+    description: >
+      Outcome of a liveness check for a single selfie image. Contains a boolean
+      is_live flag, confidence score (0.0-1.0), analysis duration, and the model
+      version used for the check.
+  - name: SpoofingSignal
+    description: >
+      Individual signal detected during anti-spoofing analysis. Examples include
+      SCREEN_REFLECTION, PAPER_TEXTURE, DEPTH_ANOMALY, MOIRE_PATTERN.
+      Multiple signals may be associated with a single LivenessResult.
+
+apis: []
+# Worker service — no external HTTP API. Processes work via event consumption.
+
+events:
+  publishes:
+    - event_name: liveness_verified
+      description: >
+        Emitted after liveness analysis completes. Contains session ID, is_live flag,
+        confidence score, and any spoofing signals detected. Consumed by face-match-service.
+  consumes:
+    - event_name: biometrics_captured
+      description: >
+        Triggers liveness analysis for a newly captured selfie. Contains session ID
+        and S3 image reference.
+
+databases:
+  - name: biometrics_cache
+    type: Redis
+    purpose: >
+      Caches liveness results for deduplication (prevents re-processing the same
+      image) and stores intermediate analysis artifacts with a TTL of 1 hour.
+
+dependencies:
+  - service_name: biometrics-capture-service
+    type: event
+    purpose: Receives biometrics_captured events to trigger liveness analysis.
+
+flows:
+  - name: Liveness Detection Flow
+    description: Processes a selfie image for liveness verification.
+    steps:
+      - Receive biometrics_captured event with session ID and image reference
+      - Check Redis cache for existing result (deduplication)
+      - Download selfie image from S3
+      - Run liveness detection model (texture + depth analysis)
+      - Identify any spoofing signals
+      - Compute overall confidence score
+      - Persist LivenessResult to Redis cache
+      - Publish liveness_verified event
+
+observability:
+  metrics:
+    - liveness_checks_total (counter, by result: live/spoof)
+    - liveness_check_duration_seconds (histogram)
+    - liveness_confidence_score (histogram)
+    - spoofing_signals_detected_total (counter, by signal_type)
+    - liveness_cache_hit_total (counter)
+  alerts:
+    - Liveness check error rate exceeds 10% over 5 minutes
+    - Liveness check p99 latency above 8 seconds
+    - Spoof detection rate spikes above 40% (possible coordinated attack)
+    - Redis connection failure
+  dashboards:
+    - Liveness Worker Health (throughput, latency, error rates)
+    - Spoofing Signal Analysis (signal distribution, trends over time)
+
+risks_and_limitations:
+  - Contains PII temporarily — selfie images are downloaded to memory for processing and discarded after analysis
+  - Liveness model accuracy is ~97%; approximately 3% of legitimate selfies may be flagged as spoofing
+  - Processing is CPU/GPU intensive; throughput is limited by compute resources
+  - Redis cache TTL of 1 hour means results are ephemeral; if face-match-service is delayed, data may expire
+  - No built-in dead-letter queue; failed analyses require manual replay from the event log
+  - Model updates require service redeployment; no hot-reload capability
+
+related_documents:
+  - Biometrics Domain Architecture Overview
+  - Liveness Detection Model Documentation
+  - Anti-Spoofing Testing Methodology
+  - PII Handling Policy for Ephemeral Data

@@ -1,0 +1,96 @@
+service_id: svc-01
+service_name: lead-intake-service
+domain: CredityFlow
+subdomain: Onboarding
+owner_team: team-onboarding
+summary: >
+  Captures leads from the website, mobile app, and partner APIs, storing them
+  for downstream processing by eligibility and onboarding workflows.
+business_objective: >
+  Provide a unified entry point for all lead sources so that every potential
+  customer is tracked, de-duplicated, and routed into the onboarding funnel
+  as quickly as possible.
+responsibilities:
+  - Receive and persist new lead submissions from multiple channels
+  - Validate incoming lead payloads (required fields, format, duplicate check)
+  - Authenticate partner API requests via auth-service
+  - Publish lead_created events for downstream consumers
+  - Expose query endpoints for lead status and details
+entities:
+  - name: Lead
+    description: >
+      Core entity representing a potential customer who has expressed interest.
+      Contains contact details, source channel, and current processing status.
+  - name: LeadSource
+    description: >
+      Tracks the originating channel (website, mobile app, partner) and any
+      associated campaign or referral metadata.
+  - name: PartnerChannel
+    description: >
+      Represents an external partner integration, including API credentials
+      reference, rate limits, and SLA configuration.
+apis:
+  - method: POST
+    path: /api/v1/leads
+    description: Submit a new lead from any supported channel.
+  - method: GET
+    path: /api/v1/leads/{id}
+    description: Retrieve details of a specific lead by its unique identifier.
+  - method: GET
+    path: /api/v1/leads?status=X
+    description: List leads filtered by their current processing status.
+events:
+  publishes:
+    - event_name: lead_created
+      description: >
+        Emitted when a new lead is successfully persisted. Contains lead ID,
+        source, and basic contact info for downstream eligibility checks.
+  consumes: []
+databases:
+  - name: lead_intake_db
+    type: PostgreSQL
+    purpose: >
+      Stores lead records, source metadata, and partner channel configuration.
+dependencies:
+  - service_name: auth-service
+    type: sync
+    purpose: Validates partner API tokens on incoming lead submissions.
+flows:
+  - name: Lead Submission
+    description: End-to-end flow for receiving and processing a new lead.
+    steps:
+      - Client sends POST /api/v1/leads with lead payload
+      - If request comes from a partner, auth-service validates the token
+      - Service validates payload fields and checks for duplicates
+      - Lead record is persisted to lead_intake_db
+      - lead_created event is published to the message broker
+      - HTTP 201 response returned with lead ID
+  - name: Lead Status Query
+    description: Allows internal services and the customer portal to check lead status.
+    steps:
+      - Client sends GET /api/v1/leads/{id} or GET /api/v1/leads?status=X
+      - Service queries lead_intake_db
+      - Returns lead details or filtered list
+observability:
+  metrics:
+    - leads_created_total (counter, by source channel)
+    - lead_submission_latency_seconds (histogram)
+    - partner_auth_failures_total (counter)
+    - duplicate_leads_detected_total (counter)
+  alerts:
+    - Lead creation error rate exceeds 5% over 5 minutes
+    - Partner auth failure spike (>10 failures in 1 minute)
+    - lead_intake_db connection pool exhaustion
+  dashboards:
+    - Lead Intake Overview (volume by channel, success/failure rates)
+    - Partner Channel Health (per-partner throughput and errors)
+risks_and_limitations:
+  - Contains PII (name, email, phone, CPF) — requires encryption at rest and strict access controls
+  - Duplicate detection relies on CPF and email matching; edge cases with typos may slip through
+  - Partner API rate limits are enforced at the application level, not infrastructure
+  - No built-in retry for failed event publishing; relies on transactional outbox pattern
+related_documents:
+  - Lead Intake API Contract (Swagger/OpenAPI)
+  - Partner Integration Guide
+  - PII Handling Policy
+  - Onboarding Domain Architecture Overview

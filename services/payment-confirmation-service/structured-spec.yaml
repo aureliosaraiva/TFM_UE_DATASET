@@ -1,0 +1,160 @@
+service_id: svc-37
+service_name: payment-confirmation-service
+domain: Disbursement
+subdomain: Payment Processing
+owner_team: team-disbursement
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Confirms bank transfer completion by receiving webhooks from BancoParceiro
+  and running a polling fallback for transfers that do not receive timely
+  webhook confirmation. Reconciles transfer status and publishes confirmation
+  events for downstream processing.
+
+business_objective: >
+  Ensure every bank transfer initiated by CredityFlow is confirmed as
+  completed or failed, closing the disbursement lifecycle loop and enabling
+  accurate financial reconciliation.
+
+responsibilities:
+  - Receive and validate payment confirmation webhooks from BancoParceiro
+  - Poll BancoParceiro API for transfers that have not received webhook confirmation within the SLA
+  - Reconcile webhook and polling data to determine definitive transfer status
+  - Publish bank_transfer_confirmed events for downstream consumers
+  - Maintain a reconciliation audit trail for compliance
+
+entities:
+  - name: PaymentConfirmation
+    description: Represents the confirmed status of a bank transfer
+    attributes:
+      - id (UUID)
+      - transfer_id (UUID)
+      - confirmation_source (WEBHOOK | POLLING)
+      - bank_protocol (String)
+      - status (CONFIRMED | FAILED | REJECTED)
+      - amount_confirmed (BigDecimal)
+      - confirmed_at (Instant)
+      - raw_payload (JSONB)
+      - created_at (Instant)
+
+  - name: ReconciliationRecord
+    description: Tracks reconciliation between expected and confirmed transfers
+    attributes:
+      - id (UUID)
+      - transfer_id (UUID)
+      - expected_amount (BigDecimal)
+      - confirmed_amount (BigDecimal, nullable)
+      - reconciliation_status (MATCHED | MISMATCHED | PENDING | TIMEOUT)
+      - discrepancy_details (String, nullable)
+      - reconciled_at (Instant, nullable)
+      - created_at (Instant)
+
+apis:
+  - method: POST
+    path: /api/v1/confirmations/webhook
+    description: Receive payment confirmation webhook from BancoParceiro
+    request_body: BancoParceiro webhook payload (signed)
+    response: 200 OK (acknowledgment)
+    auth: Webhook signature verification (HMAC-SHA256)
+
+  - method: GET
+    path: /api/v1/confirmations/{transfer_id}
+    description: Query confirmation status for a specific transfer
+    path_params:
+      - transfer_id (UUID)
+    response: PaymentConfirmation (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: bank_transfer_initiated
+      topic: credityflow.disbursement
+      description: Triggers confirmation tracking for a newly initiated transfer
+      source: bank-transfer-integration
+
+  publishes:
+    - event: bank_transfer_confirmed
+      topic: credityflow.disbursement
+      description: Emitted when a bank transfer is confirmed as completed or failed
+
+databases:
+  - name: disbursement_db
+    type: PostgreSQL
+    schemas:
+      - payment_confirmation
+    tables:
+      - payment_confirmations
+      - reconciliation_records
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: bank-transfer-integration
+      type: event (bank_transfer_initiated)
+  downstream:
+    - service: disbursement-service
+      type: event (bank_transfer_confirmed)
+  external:
+    - name: BancoParceiro
+      type: Webhook + REST API
+      description: Sends payment confirmation webhooks; also exposes a polling endpoint for transfer status
+      auth: HMAC-SHA256 webhook signature + OAuth2 client credentials for polling
+
+flows:
+  - name: Webhook Confirmation
+    steps:
+      - Receive POST webhook from BancoParceiro with transfer confirmation
+      - Validate HMAC-SHA256 signature against shared secret
+      - Parse payload and extract transfer_id, status, and confirmed amount
+      - Persist PaymentConfirmation record
+      - Run reconciliation against expected transfer data
+      - Publish bank_transfer_confirmed event
+
+  - name: Polling Fallback
+    steps:
+      - Scheduled job runs every 5 minutes
+      - Query for transfers in INITIATED status older than 30 minutes without confirmation
+      - Call BancoParceiro status API for each pending transfer
+      - Persist PaymentConfirmation with source=POLLING
+      - Run reconciliation and publish bank_transfer_confirmed event
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - payment_confirmations_total (counter, by source and status)
+    - confirmation_latency_seconds (histogram, time from transfer initiation to confirmation)
+    - reconciliation_status_total (counter, by reconciliation_status)
+    - webhook_validation_failures_total (counter)
+    - polling_fallback_triggers_total (counter)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, transfer_id, confirmation_id
+  alerts:
+    - name: webhook_signature_failures
+      condition: webhook validation failure rate > 10% in 10 min
+      severity: critical
+    - name: confirmation_delay
+      condition: transfers without confirmation > 1 hour
+      severity: warning
+    - name: reconciliation_mismatch
+      condition: any MISMATCHED reconciliation record
+      severity: critical
+
+risks_and_limitations:
+  - BancoParceiro webhook delivery is not guaranteed; polling fallback covers this gap
+  - Webhook endpoint is publicly accessible and must validate HMAC signatures strictly
+  - Polling interval (5 min) introduces latency for transfers that miss the webhook
+  - Amount mismatches between expected and confirmed transfers require manual investigation
+  - BancoParceiro API rate limits may affect polling throughput during high-volume periods
+
+related_documents:
+  - title: BancoParceiro Webhook Integration Guide
+    link: /docs/integrations/banco-parceiro/webhooks.md
+  - title: CredityFlow Disbursement Domain Overview
+    link: /docs/domains/disbursement.md
+  - title: Payment Reconciliation Runbook
+    link: /docs/runbooks/payment-reconciliation.md

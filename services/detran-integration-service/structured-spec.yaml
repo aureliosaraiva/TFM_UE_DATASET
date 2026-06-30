@@ -1,0 +1,154 @@
+service_id: svc-32
+service_name: detran-integration-service
+domain: Registry
+subdomain: Vehicle Lien Registration
+owner_team: team-registry
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Integrates with state-level DETRAN APIs to register vehicle liens (gravames).
+  Handles the variation in API contracts across different Brazilian states and
+  manages the lifecycle of vehicle lien registrations.
+
+business_objective: >
+  Automate vehicle lien registration with DETRAN, replacing manual processes
+  and ensuring liens are recorded promptly to protect the lender's collateral
+  interest in vehicle-backed loans.
+
+responsibilities:
+  - Register vehicle liens with the appropriate state DETRAN
+  - Handle state-specific API variations and authentication
+  - Track registration status with DETRAN
+  - Retry failed registrations with appropriate backoff
+  - Publish completion events for downstream tracking
+
+entities:
+  - name: DetranRegistration
+    description: Represents a vehicle lien registration request to DETRAN
+    attributes:
+      - id (UUID)
+      - registration_request_id (UUID)
+      - state_code (String, e.g., SP, RJ, MG)
+      - status (PENDING | SUBMITTED | REGISTERED | REJECTED | ERROR)
+      - detran_protocol (String, nullable)
+      - submitted_at (Instant, nullable)
+      - completed_at (Instant, nullable)
+      - error_details (String, nullable)
+
+  - name: LienRecord
+    description: The lien details registered with DETRAN
+    attributes:
+      - id (UUID)
+      - detran_registration_id (UUID)
+      - contract_id (UUID)
+      - lien_type (ALIENACAO_FIDUCIARIA)
+      - creditor_cnpj (String)
+      - amount (BigDecimal)
+      - currency (BRL)
+
+  - name: VehicleInfo
+    description: Vehicle identification data used for DETRAN registration
+    attributes:
+      - id (UUID)
+      - renavam (String)
+      - chassis_number (String)
+      - license_plate (String)
+      - state_code (String)
+      - year_model (Int)
+      - brand_model (String)
+
+apis:
+  - method: POST
+    path: /api/v1/detran/register
+    description: Submit a vehicle lien registration to DETRAN
+    request_body: DetranRegistration
+    response: DetranRegistration (202 Accepted)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/detran/status/{id}
+    description: Check the status of a DETRAN registration
+    path_params:
+      - id (UUID)
+    response: DetranRegistration (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: registry_requested
+      topic: credityflow.registry
+      description: Triggers vehicle lien registration when collateral type is VEHICLE
+      source: registry-orchestrator-service
+      filter: header.channel = DETRAN
+
+  publishes:
+    - event: detran_lien_registered
+      topic: credityflow.registry
+      description: Emitted when DETRAN confirms the lien registration
+
+databases:
+  - name: registry_db
+    type: PostgreSQL
+    schemas:
+      - detran_integration
+    tables:
+      - detran_registrations
+      - lien_records
+      - vehicle_info
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: registry-orchestrator-service
+      type: event (registry_requested)
+  downstream:
+    - service: registry-tracker-service
+      type: event (detran_lien_registered)
+  external:
+    - name: DETRAN-API
+      type: REST API
+      description: State-level DETRAN systems for vehicle lien registration
+      auth: mTLS + API key (varies by state)
+
+flows:
+  - name: Vehicle Lien Registration
+    steps:
+      - Receive registry_requested event (filtered for VEHICLE)
+      - Extract vehicle and contract data
+      - Determine target state DETRAN from vehicle state_code
+      - Submit lien registration to DETRAN API
+      - Poll or receive callback for registration confirmation
+      - Publish detran_lien_registered event
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - detran_registrations_total (counter, by state and status)
+    - detran_api_latency_seconds (histogram, by state)
+    - detran_api_errors_total (counter, by state and error_type)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, registration_id, renavam
+  alerts:
+    - name: detran_api_down
+      condition: error rate > 50% for a state in 10 min
+      severity: critical
+    - name: registration_timeout
+      condition: registration PENDING for > 2 hours
+      severity: warning
+
+risks_and_limitations:
+  - DETRAN APIs vary significantly by state; new state integrations require development effort
+  - Some states have maintenance windows that block registration during business hours
+  - DETRAN API rate limits may throttle high-volume registration periods
+  - mTLS certificate renewal must be managed per state
+
+related_documents:
+  - title: DETRAN Integration Specifications (by state)
+    link: /docs/integrations/detran/
+  - title: CredityFlow Registry Domain Overview
+    link: /docs/domains/registry.md

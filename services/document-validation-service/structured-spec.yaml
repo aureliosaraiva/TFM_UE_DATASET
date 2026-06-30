@@ -1,0 +1,110 @@
+service_id: svc-06
+service_name: document-validation-service
+domain: Document Management
+subdomain: Document Verification
+owner_team: team-documents
+summary: >
+  Validates classified documents against configurable business rules covering
+  expiry dates, readability, completeness, and data consistency.
+business_objective: >
+  Ensure that all documents submitted with a loan proposal meet regulatory
+  and business requirements before they proceed to final storage and
+  underwriting review.
+responsibilities:
+  - Apply validation rules to classified documents
+  - Check document expiry dates against configurable thresholds
+  - Verify readability scores from OCR confidence data
+  - Validate completeness (all required fields extracted)
+  - Cross-reference extracted data against customer profile (name, CPF match)
+  - Manage and version validation rule configurations
+
+entities:
+  - name: ValidationRule
+    description: >
+      A configurable rule applied to a document category. Includes rule type
+      (expiry, readability, completeness, cross-reference), parameters, and
+      active/inactive flag.
+  - name: ValidationResult
+    description: >
+      Outcome of applying all applicable rules to a document. Contains
+      document_id, pass/fail status, list of rule results, and failure reasons.
+
+apis:
+  - method: POST
+    path: /api/v1/validate
+    description: >
+      Validate a classified document. Accepts document_id, category, and
+      extracted fields. Returns validation result with per-rule outcomes.
+  - method: GET
+    path: /api/v1/validation-rules
+    description: >
+      List all active validation rules, optionally filtered by document category.
+
+events:
+  publishes:
+    - event_name: documents_validated
+      description: >
+        Emitted when all applicable validation rules have been evaluated.
+        Contains document_id, proposal_id, overall pass/fail, and rule details.
+  consumes:
+    - event_name: documents_classified
+      description: >
+        Triggers validation of a newly classified document. Payload includes
+        document_id, category, and classification confidence.
+
+databases:
+  - name: document_validation_db
+    type: PostgreSQL
+    purpose: >
+      Stores validation rules, validation results, and rule version history.
+      Supports auditing which rules were active when a document was validated.
+
+dependencies:
+  - service_name: document-classifier-service
+    type: async
+    purpose: Receives documents_classified events to trigger validation.
+  - service_name: customer-service
+    type: sync
+    purpose: Fetches customer profile data for cross-reference validation (name, CPF matching).
+
+flows:
+  - name: Document Validation
+    description: Validate a classified document against business rules.
+    steps:
+      - Receive documents_classified event
+      - Load active validation rules for the document category
+      - Execute each rule against the extracted document data
+      - For cross-reference rules, call customer-service to fetch profile
+      - Aggregate rule results into a ValidationResult
+      - Persist result
+      - Publish documents_validated event
+  - name: Rule Management
+    description: Operations team updates validation rules.
+    steps:
+      - Operator calls GET /api/v1/validation-rules to review current rules
+      - Operator updates rules via internal admin tooling
+      - New rule version takes effect for subsequent validations
+
+observability:
+  metrics:
+    - validation_total (counter, by category, result)
+    - validation_rule_failure_total (counter, by rule_type, category)
+    - validation_duration_seconds (histogram)
+    - cross_reference_call_duration_seconds (histogram)
+  alerts:
+    - Validation failure rate > 40% for any document category (possible upstream issue)
+    - customer-service call failure rate > 5%
+    - Processing backlog (SQS queue age > 10 min)
+  dashboards:
+    - Validation Results (pass/fail rates by category and rule)
+    - Rule Effectiveness (which rules fail most, false positive rates)
+
+risks_and_limitations:
+  - Cross-reference validation depends synchronously on customer-service availability
+  - Validation rules are configured manually; no self-tuning mechanism
+  - Rule changes are not versioned in the API; managed through direct DB updates
+  - Does not validate document authenticity (forgery detection is out of scope)
+
+related_documents:
+  - README.md
+  - architecture.md

@@ -1,0 +1,113 @@
+service_id: svc-28
+service_name: compliance-check-service
+domain: Contract
+subdomain: Regulatory Compliance
+owner_team: team-contracts
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Validates loan contracts against BACEN regulations and consumer protection laws before
+  they proceed to the digital signature phase. Acts as a regulatory gatekeeper ensuring
+  all contracts meet current legal requirements.
+
+business_objective: >
+  Prevent non-compliant contracts from being signed and executed, reducing legal risk,
+  avoiding regulatory fines, and ensuring borrower protection as mandated by Brazilian
+  financial regulation.
+
+responsibilities:
+  - Validate contract terms against BACEN regulatory rules
+  - Enforce consumer protection requirements (CDC)
+  - Maintain an up-to-date rule engine for compliance checks
+  - Produce compliance verdicts (pass/fail with detailed reasons)
+  - Expose current regulatory rules for upstream services
+
+entities:
+  - name: ComplianceRule
+    description: >
+      A regulatory rule derived from BACEN resolutions or consumer protection law.
+      Contains rule code, description, severity, applicable product types, and effective date range.
+  - name: ComplianceResult
+    description: >
+      The outcome of running a contract through the compliance engine. Includes overall
+      verdict (PASS/FAIL), list of violated rules, and timestamp.
+  - name: RegulatoryRequirement
+    description: >
+      A high-level regulatory requirement that groups related ComplianceRules.
+      Tracks the originating regulation (e.g., BACEN Resolution 4.893) and version history.
+
+apis:
+  - method: POST
+    path: /api/v1/compliance/check
+    description: >
+      Receives a contract payload and runs it through the full compliance rule engine.
+      Returns a ComplianceResult with pass/fail verdict and any violations.
+  - method: GET
+    path: /api/v1/compliance/rules
+    description: >
+      Lists all active compliance rules, optionally filtered by product type or regulation source.
+
+events:
+  consumes:
+    - name: contract_generated
+      source: contract-generation-service
+      description: Triggers compliance validation for a newly generated contract.
+  publishes:
+    - name: compliance_checked
+      description: >
+        Emitted after compliance validation completes. Contains contract ID,
+        verdict, and violation details if any.
+
+databases:
+  - name: contract_db
+    type: PostgreSQL
+    purpose: >
+      Stores compliance rules, regulatory requirements, and audit trail of
+      all compliance check results.
+
+dependencies:
+  - service_name: contract-generation-service
+    type: event
+    purpose: Receives contract_generated events to trigger checks.
+
+flows:
+  - name: Contract Compliance Validation
+    description: End-to-end flow from receiving a contract to emitting a compliance verdict.
+    steps:
+      - Receive contract_generated event from Kafka
+      - Deserialize contract payload and identify product type
+      - Load applicable ComplianceRules for the product type
+      - Execute each rule against the contract terms
+      - Aggregate results into a ComplianceResult
+      - Persist the result to contract_db for audit
+      - Publish compliance_checked event with the verdict
+
+observability:
+  metrics:
+    - compliance_checks_total (counter, by verdict)
+    - compliance_check_duration_seconds (histogram)
+    - compliance_rules_active (gauge)
+    - compliance_violations_total (counter, by rule_code)
+  alerts:
+    - name: HighComplianceFailureRate
+      condition: compliance failure rate > 30% over 15 min
+      severity: warning
+    - name: ComplianceCheckLatencyHigh
+      condition: p99 latency > 5s
+      severity: warning
+  dashboards:
+    - Compliance Check Overview (pass/fail rates, latency, top violations)
+    - Rule Engine Health (active rules, rule evaluation times)
+
+risks_and_limitations:
+  - Regulatory rules require manual updates when BACEN publishes new resolutions; lag between publication and rule update is a risk.
+  - Rule engine is synchronous; very large contracts with many clauses may increase latency.
+  - No real-time integration with BACEN systems; rules are maintained internally.
+
+related_documents:
+  - BACEN Resolution 4.893 — Interest rate caps and disclosure requirements
+  - CDC (Código de Defesa do Consumidor) — Consumer credit protections
+  - Internal Compliance Playbook — team-contracts wiki

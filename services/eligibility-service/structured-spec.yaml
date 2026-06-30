@@ -1,0 +1,107 @@
+service_id: svc-02
+service_name: eligibility-service
+domain: CredityFlow
+subdomain: Onboarding
+owner_team: team-onboarding
+summary: >
+  Evaluates basic eligibility criteria for incoming leads, applying rules around
+  age, geographic location, minimum income, and product-specific requirements.
+business_objective: >
+  Filter out ineligible leads early in the onboarding funnel to avoid wasting
+  downstream resources (document collection, credit checks) on applicants who
+  do not meet minimum requirements.
+responsibilities:
+  - Consume lead_created events and trigger automatic eligibility checks
+  - Evaluate leads against a configurable set of eligibility rules
+  - Persist eligibility results for audit and reporting
+  - Publish lead_qualified events for leads that pass all rules
+  - Expose endpoints for on-demand eligibility checks and rule inspection
+entities:
+  - name: EligibilityRule
+    description: >
+      A configurable business rule that defines a single eligibility criterion
+      (e.g., minimum age of 18, income above R$1,500, valid geographic region).
+      Rules can be enabled/disabled and have effective date ranges.
+  - name: EligibilityResult
+    description: >
+      The outcome of evaluating a lead against all applicable eligibility rules.
+      Stores pass/fail status, which rules were applied, and failure reasons.
+apis:
+  - method: POST
+    path: /api/v1/eligibility/check
+    description: >
+      Perform an on-demand eligibility check for a given lead or set of
+      parameters. Returns the eligibility result synchronously.
+  - method: GET
+    path: /api/v1/eligibility/rules
+    description: >
+      List all currently active eligibility rules. Used by operations teams
+      and the customer-portal-bff for displaying requirements.
+events:
+  publishes:
+    - event_name: lead_qualified
+      description: >
+        Emitted when a lead passes all eligibility rules. Triggers downstream
+        customer profile creation and proposal initiation.
+  consumes:
+    - event_name: lead_created
+      description: >
+        Consumed from the lead-intake-service. Triggers an automatic eligibility
+        check for the newly created lead.
+databases:
+  - name: eligibility_db
+    type: PostgreSQL
+    purpose: >
+      Stores eligibility rules configuration and historical eligibility check
+      results for audit and analytics.
+dependencies:
+  - service_name: lead-intake-service
+    type: sync
+    purpose: >
+      Fetches full lead details via REST API when processing a lead_created
+      event (the event contains only the lead ID and minimal metadata).
+  - service_name: customer-service
+    type: sync
+    purpose: >
+      Queries existing customer records to check for returning applicants
+      and retrieve previously verified data.
+flows:
+  - name: Automatic Eligibility Check
+    description: Triggered by a lead_created event from lead-intake-service.
+    steps:
+      - Consume lead_created event from Kafka
+      - Fetch full lead details from lead-intake-service REST API
+      - Optionally check customer-service for existing customer data
+      - Load active eligibility rules from eligibility_db
+      - Evaluate lead against each rule in priority order
+      - Persist EligibilityResult to eligibility_db
+      - If all rules pass, publish lead_qualified event
+      - If any rule fails, mark lead as disqualified (no event published)
+  - name: On-Demand Eligibility Check
+    description: Synchronous check via REST API, used by customer-portal-bff.
+    steps:
+      - Receive POST /api/v1/eligibility/check with lead data
+      - Load active eligibility rules
+      - Evaluate and return result synchronously
+observability:
+  metrics:
+    - eligibility_checks_total (counter, by result: qualified/disqualified)
+    - eligibility_check_duration_seconds (histogram)
+    - rule_failure_total (counter, by rule_name)
+    - lead_created_events_consumed_total (counter)
+  alerts:
+    - Eligibility check failure rate exceeds 95% for more than 10 minutes (may indicate a misconfigured rule)
+    - Consumer lag on lead_created topic exceeds 1000 messages
+    - eligibility_db connection failures
+  dashboards:
+    - Eligibility Funnel (qualified vs disqualified rates over time)
+    - Rule Performance (which rules disqualify the most leads)
+risks_and_limitations:
+  - Rules are evaluated in-process; a very large rule set could increase check latency
+  - No support for complex rule chaining or dependencies between rules (each rule is independent)
+  - The service trusts lead data as provided; it does not independently verify income or age claims at this stage
+  - Returning applicant detection depends on customer-service availability
+related_documents:
+  - Eligibility Rules Configuration Guide
+  - Onboarding Funnel Metrics Dashboard
+  - Lead Qualification SLA Definition

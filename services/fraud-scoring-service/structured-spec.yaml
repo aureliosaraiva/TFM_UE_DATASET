@@ -1,0 +1,146 @@
+service_id: svc-16
+service_name: fraud-scoring-service
+domain: CredityFlow
+subdomain: Fraud Prevention
+owner_team: team-fraud
+tech_stack:
+  language: Python
+  framework: FastAPI
+  build_tool: pip/Poetry
+
+summary: >
+  Aggregates fraud signals from multiple upstream sources (device fingerprint, watchlist,
+  fraud bureau, biometrics) and computes a unified fraud risk score using a machine
+  learning model (scikit-learn). The score feeds into the fraud-decision-service for
+  final approve/deny/review determination.
+
+business_objective: >
+  Produce a reliable, explainable fraud risk score for every loan proposal by combining
+  all available fraud signals into a single assessment. Enable data-driven fraud
+  decisions that balance fraud prevention with customer conversion.
+
+responsibilities:
+  - Collect and aggregate fraud signals from all upstream fraud checks
+  - Wait for all required signals before computing a score (signal barrier)
+  - Run the ML scoring model (scikit-learn gradient boosting) on aggregated signals
+  - Produce a fraud risk score (0-1000) with risk level classification
+  - Persist scores and signal breakdowns for audit and model retraining
+  - Publish fraud score events for downstream decision-making
+
+entities:
+  - name: FraudScore
+    description: >
+      The computed fraud risk score for a proposal. Contains the numerical score
+      (0-1000), risk level (LOW/MEDIUM/HIGH/CRITICAL), model version, scoring
+      timestamp, and a feature vector snapshot.
+  - name: FraudSignalAggregate
+    description: >
+      Collection of all fraud signals received for a proposal, organized by source
+      (device, watchlist, bureau, biometrics). Tracks which signals have arrived
+      and which are still pending.
+  - name: RiskLevel
+    description: >
+      Enumeration of risk tiers derived from the numerical score. Thresholds are
+      configurable: LOW (0-250), MEDIUM (251-500), HIGH (501-750), CRITICAL (751-1000).
+
+apis:
+  - method: GET
+    path: /api/v1/fraud-scores/{proposal_id}
+    description: >
+      Retrieve the fraud score for a given proposal. Returns the score, risk level,
+      signal breakdown, and model version. Returns 404 if scoring is not yet complete.
+
+events:
+  publishes:
+    - event_name: fraud_check_started
+      description: >
+        Emitted when the first signal arrives for a proposal, indicating that
+        fraud scoring is in progress.
+    - event_name: fraud_scored
+      description: >
+        Emitted when scoring completes. Contains proposal ID, score, risk level,
+        and signal summary. Consumed by fraud-decision-service.
+  consumes:
+    - event_name: device_fingerprint_checked
+      description: Receives device-level fraud signals from device-fingerprint-service.
+    - event_name: watchlist_checked
+      description: Receives watchlist match results from watchlist-service.
+    - event_name: fraud_bureau_checked
+      description: Receives external fraud bureau signals from fraud-bureau-integration.
+    - event_name: biometrics_validated
+      description: Receives biometric verification outcome as an input signal.
+
+databases:
+  - name: fraud_scores_db
+    type: PostgreSQL
+    purpose: >
+      Stores fraud scores, signal aggregates, feature vectors, and scoring audit
+      trail. Used for score retrieval, model retraining data extraction, and
+      compliance auditing.
+
+dependencies:
+  - service_name: device-fingerprint-service
+    type: event
+    purpose: Provides device-level fraud signals.
+  - service_name: watchlist-service
+    type: event
+    purpose: Provides watchlist match signals.
+  - service_name: fraud-bureau-integration
+    type: event
+    purpose: Provides external fraud bureau signals.
+  - service_name: biometrics-capture-service
+    type: event
+    purpose: Provides biometric verification outcome.
+
+flows:
+  - name: Fraud Scoring Flow
+    description: Aggregate signals and compute a fraud risk score.
+    steps:
+      - Receive first fraud signal event for a proposal
+      - Create FraudSignalAggregate record if not exists
+      - Publish fraud_check_started event
+      - Accumulate signals as they arrive (device, watchlist, bureau, biometrics)
+      - Once all required signals are present (or timeout after 60 seconds), trigger scoring
+      - Extract feature vector from aggregated signals
+      - Run scikit-learn model to produce numerical score (0-1000)
+      - Classify into risk level based on configurable thresholds
+      - Persist FraudScore to fraud_scores_db
+      - Publish fraud_scored event
+  - name: Score Query
+    description: Retrieve an existing fraud score.
+    steps:
+      - Receive GET /api/v1/fraud-scores/{proposal_id}
+      - Query fraud_scores_db for the proposal
+      - Return score, risk level, and signal breakdown
+
+observability:
+  metrics:
+    - fraud_scores_computed_total (counter, by risk_level)
+    - fraud_score_value (histogram, buckets by 100)
+    - fraud_scoring_duration_seconds (histogram)
+    - fraud_signals_received_total (counter, by signal_source)
+    - fraud_signal_timeout_total (counter, when not all signals arrive in time)
+  alerts:
+    - Scoring error rate exceeds 5% over 5 minutes
+    - Signal timeout rate above 10% (upstream service may be down)
+    - Average fraud score drifts more than 15% from 30-day baseline (model drift)
+    - fraud_scores_db connection pool exhaustion
+  dashboards:
+    - Fraud Scoring Overview (score distribution, risk level breakdown, throughput)
+    - Signal Aggregation Health (signal arrival rates by source, timeout rates)
+    - Model Performance (score drift, feature importance trends)
+
+risks_and_limitations:
+  - ML model is a serialized scikit-learn artifact; updates require redeployment
+  - Signal barrier timeout (60s) means proposals may be scored with incomplete data
+  - Model was trained on historical Brazilian secured lending data; may not generalize to new products
+  - Feature vector includes derived metrics that depend on upstream signal schemas; breaking changes upstream can silently degrade model accuracy
+  - No A/B testing or shadow scoring infrastructure for evaluating new model versions
+  - Score thresholds for risk levels are global; no per-product or per-segment tuning
+
+related_documents:
+  - Fraud Prevention Domain Architecture
+  - Fraud Scoring Model Documentation (scikit-learn)
+  - Fraud Signal Taxonomy
+  - Model Retraining Runbook
+  - Fraud Score Threshold Calibration Report

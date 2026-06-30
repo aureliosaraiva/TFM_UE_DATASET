@@ -1,0 +1,778 @@
+[
+  {
+    "id": "Q081",
+    "question": "Trace the full sequence of services a secured vehicle loan passes through from lead capture to disbursement.",
+    "expected_answer": "A vehicle loan flows through: lead-intake-service → eligibility-service → proposal-service → document-service → biometrics-service → fraud-scoring-service → credit-scoring-engine → vehicle-appraisal-service → contract-service → registry-service → disbursement-service. Each service hands off to the next via domain events, and audit-service logs each transition for compliance.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "relational",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "lead-intake-service",
+      "eligibility-service",
+      "proposal-service",
+      "document-store-service",
+      "biometrics-capture-service",
+      "fraud-scoring-service",
+      "credit-scoring-engine",
+      "vehicle-appraisal-service",
+      "contract-generation-service",
+      "registry-orchestrator-service",
+      "disbursement-service"
+    ],
+    "rationale": "Tests understanding of the complete end-to-end lending pipeline, requiring multi-hop graph traversal across 11+ services.",
+    "best_suited_approach": "both",
+    "justification": "Graph edges in structured data reveal the event chain, while unstructured docs explain the business rationale for each step."
+  },
+  {
+    "id": "Q082",
+    "question": "Which services handle PII data, and what is the flow of personally identifiable information across the platform?",
+    "expected_answer": "PII flows through lead-intake-service (initial capture), customer-service (master record), proposal-service (application details), document-service (ID documents), biometrics-service (facial/fingerprint data), contract-service (signed agreements), and notification-service (contact details for messaging). This chain represents the core PII pipeline, and each service must comply with data protection regulations.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "lead-intake-service",
+      "customer-service",
+      "proposal-service",
+      "document-store-service",
+      "biometrics-capture-service",
+      "contract-generation-service",
+      "notification-service"
+    ],
+    "rationale": "Requires understanding data governance across the ecosystem and identifying which services touch sensitive personal data.",
+    "best_suited_approach": "both",
+    "justification": "Unstructured READMEs describe data handled by each service, while structured graph edges confirm the data flow path."
+  },
+  {
+    "id": "Q083",
+    "question": "What happens when the registry-service fails to register a collateral lien?",
+    "expected_answer": "When registry-service fails, it emits a registry_failed event. The case-management-service consumes this event and creates a manual case for human review. This prevents the disbursement from proceeding since the Saga pattern requires registry_completed before emitting disbursement_requested. The backoffice-bff exposes a review queue where operations staff can investigate and resolve the failure.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "registry-orchestrator-service",
+      "case-management-service",
+      "backoffice-bff",
+      "disbursement-service"
+    ],
+    "rationale": "Tests failure cascade analysis: understanding what downstream effects a registry failure triggers.",
+    "best_suited_approach": "both",
+    "justification": "The Saga pattern and event flow are documented in structured data, while failure handling behavior is described in unstructured docs."
+  },
+  {
+    "id": "Q084",
+    "question": "How many services does the audit-service consume events from?",
+    "expected_answer": "The audit-service consumes events from almost every domain in the platform for compliance logging purposes. Given that CredityFlow has 15 domains and 64 events, audit-service acts as a cross-cutting concern that subscribes to events across the lending pipeline, fraud detection, collections, and other domains to maintain a complete audit trail.",
+    "official_supporting_sources": [
+      "structured/events.json"
+    ],
+    "category": "factual",
+    "difficulty": "medium",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "audit-service"
+    ],
+    "rationale": "Tests knowledge of the audit-service's broad event consumption pattern, which is a key architectural characteristic.",
+    "best_suited_approach": "structured",
+    "justification": "The events.json file directly lists which events audit-service consumes, making structured data the primary source."
+  },
+  {
+    "id": "Q085",
+    "question": "What is the role of the backoffice-bff in the CredityFlow architecture?",
+    "expected_answer": "The backoffice-bff (Backend for Frontend) serves as the aggregation layer for internal operations staff. It provides review queues for manual steps across multiple domains, including fraud review, document verification, registry failure cases, and credit decision overrides. It depends on auth-service for authentication and authorization, and aggregates data from various domain services to present unified operational dashboards.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "easy",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "backoffice-bff",
+      "auth-service"
+    ],
+    "rationale": "Tests understanding of the BFF pattern and its role in supporting internal operations.",
+    "best_suited_approach": "unstructured",
+    "justification": "The BFF's purpose and integration points are best described in documentation rather than raw graph data."
+  },
+  {
+    "id": "Q086",
+    "question": "Which external API does vehicle-appraisal-service use for pricing reference?",
+    "expected_answer": "The vehicle-appraisal-service integrates with the FIPE-API (Fundacao Instituto de Pesquisas Economicas) for vehicle pricing reference. FIPE is the standard reference table for vehicle valuations in the Brazilian market, providing base prices that the appraisal service uses to assess collateral value for secured vehicle loans.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "vehicle-appraisal-service"
+    ],
+    "rationale": "Direct factual question about a specific external integration.",
+    "best_suited_approach": "unstructured",
+    "justification": "External partner integrations are documented in service READMEs and company overview."
+  },
+  {
+    "id": "Q087",
+    "question": "If the credit-scoring-engine goes down, which services and flows are directly impacted?",
+    "expected_answer": "If the credit-scoring-engine goes down, the lending pipeline stalls after the fraud check stage. No new credit decisions can be made, blocking proposal progression to appraisal, contract, and disbursement. The credit-scoring-engine uses CQRS, so read-side queries for existing scores may still work if the read replica is separate, but no new scoring writes will succeed. Downstream services like vehicle-appraisal-service and property-appraisal-service cannot proceed without a credit decision.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "credit-scoring-engine",
+      "vehicle-appraisal-service",
+      "property-appraisal-service",
+      "contract-generation-service"
+    ],
+    "rationale": "Tests failure cascade analysis requiring understanding of service dependencies and the CQRS pattern.",
+    "best_suited_approach": "both",
+    "justification": "Graph edges show downstream dependencies, while docs explain the CQRS architecture and its resilience implications."
+  },
+  {
+    "id": "Q088",
+    "question": "What database technology does the audit-service use and why might this choice have been made?",
+    "expected_answer": "The audit-service uses Elasticsearch, and it is the only service in the platform that uses this technology. This choice is likely driven by the need for high-volume log ingestion and full-text search capabilities across audit records. Since audit-service consumes events from almost every domain, it needs a database optimized for write-heavy workloads and flexible querying across diverse event schemas.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "docs/teams/databases.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "audit-service"
+    ],
+    "rationale": "Tests both factual knowledge (Elasticsearch usage) and reasoning about technology choices.",
+    "best_suited_approach": "unstructured",
+    "justification": "Database technology choices and their rationale are documented in service descriptions and database documentation."
+  },
+  {
+    "id": "Q089",
+    "question": "Which team manages the most services, and how many people are on that team?",
+    "expected_answer": "Team-collections is the largest team with 9 people managing 7 services. This makes sense given that the collections domain covers a complex flow including overdue detection, dunning, customer contact, negotiation, and legal proceedings, each potentially requiring its own service.",
+    "official_supporting_sources": [
+      "docs/teams/teams.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [],
+    "rationale": "Direct factual question about team structure that can be answered from team documentation.",
+    "best_suited_approach": "unstructured",
+    "justification": "Team composition is documented in unstructured team descriptions."
+  },
+  {
+    "id": "Q090",
+    "question": "Describe the Saga pattern used in the contract-to-disbursement flow.",
+    "expected_answer": "The Saga pattern coordinates the post-contract steps: contract-service emits contract_signed, which triggers registry-service to emit registry_requested. Upon successful registration, registry_completed is emitted, which triggers disbursement-service to emit disbursement_requested. If registry fails, a registry_failed event is emitted instead, and case-management-service creates a manual case, effectively halting the saga until human intervention resolves the issue.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "contract-generation-service",
+      "registry-orchestrator-service",
+      "disbursement-service",
+      "case-management-service"
+    ],
+    "rationale": "Tests understanding of distributed transaction patterns and compensating actions in the lending pipeline.",
+    "best_suited_approach": "both",
+    "justification": "Event sequence is in structured data, while the Saga pattern semantics are explained in documentation."
+  },
+  {
+    "id": "Q091",
+    "question": "What is the notification delivery architecture at CredityFlow?",
+    "expected_answer": "Notification-service is called by many services across the platform to send notifications to customers. It depends on notification-template-service for message templates and customer-service for customer contact information (email, phone). This separation of concerns allows templates to be managed independently from the delivery mechanism and customer data, following a clean domain boundary design.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "easy",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "notification-service",
+      "notification-template-service",
+      "customer-service"
+    ],
+    "rationale": "Tests understanding of the notification subsystem and its dependencies.",
+    "best_suited_approach": "unstructured",
+    "justification": "Service descriptions in documentation explain the notification architecture and its dependencies."
+  },
+  {
+    "id": "Q092",
+    "question": "How does fraud-scoring-service determine a fraud score?",
+    "expected_answer": "The fraud-scoring-service aggregates signals from three sources: device-fingerprint service (device and session analysis), watchlist service (sanctions and PEP lists), and fraud-bureau (external bureau data). By combining these signals, it produces a composite fraud score that determines whether a proposal can proceed, needs manual review, or should be rejected. This multi-signal approach reduces false positives compared to relying on any single source.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "device-fingerprint-service",
+      "watchlist-service",
+      "fraud-bureau-integration"
+    ],
+    "rationale": "Tests understanding of the fraud detection subsystem and its aggregation pattern.",
+    "best_suited_approach": "unstructured",
+    "justification": "The fraud scoring approach and signal sources are described in service documentation."
+  },
+  {
+    "id": "Q093",
+    "question": "What services does the customer-portal-bff aggregate data from?",
+    "expected_answer": "The customer-portal-bff aggregates data from proposal-service (application status and details), customer-service (profile and personal data), and billing-service (payment history and upcoming installments). It also depends on auth-service for customer authentication. This BFF pattern provides a tailored API for the customer-facing portal without exposing internal service boundaries.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "customer-portal-bff",
+      "proposal-service",
+      "customer-service",
+      "billing-service",
+      "auth-service"
+    ],
+    "rationale": "Tests knowledge of the customer-facing BFF's integration points.",
+    "best_suited_approach": "unstructured",
+    "justification": "BFF aggregation patterns are described in service documentation."
+  },
+  {
+    "id": "Q094",
+    "question": "Which service is the only one written in Go, and what might that imply about its requirements?",
+    "expected_answer": "Feature-flag-service is the only Go service in the CredityFlow platform. This technology choice might imply the service has high-performance requirements with low latency needs, as feature flags are evaluated on nearly every request across the platform. Go's lightweight concurrency model and fast startup times make it suitable for a service that must handle high throughput with minimal overhead.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "discovery",
+    "difficulty": "medium",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "feature-flag-service"
+    ],
+    "rationale": "Tests discovery of technology heterogeneity and reasoning about technology selection.",
+    "best_suited_approach": "unstructured",
+    "justification": "Technology stack details are in service documentation; reasoning requires understanding Go's characteristics."
+  },
+  {
+    "id": "Q095",
+    "question": "If notification-service goes down, which business processes are affected?",
+    "expected_answer": "Since notification-service is called by many services across the platform, its failure would impact customer communication at every stage of the lending pipeline: lead confirmation, proposal updates, document requests, biometrics prompts, credit decision notifications, contract signing reminders, disbursement confirmations, billing reminders, and collections dunning messages. While the core business logic in each domain service would continue processing, customers would not receive any communications about their loan status.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "notification-service",
+      "notification-template-service",
+      "customer-service"
+    ],
+    "rationale": "Tests understanding of cross-cutting service failure impact across the entire platform.",
+    "best_suited_approach": "both",
+    "justification": "Graph data shows which services call notification-service, while docs explain the business impact."
+  },
+  {
+    "id": "Q096",
+    "question": "How does the collections flow work end-to-end?",
+    "expected_answer": "The collections flow begins when an overdue_installment event is detected. This triggers the dunning process, which sends automated payment reminders to the customer. If dunning is unsuccessful, the flow escalates to direct customer contact attempts. If contact fails or the customer cannot resolve the debt, the case moves to negotiation, where new payment terms may be offered. As a last resort, the case is escalated to legal proceedings. Renegotiation at any point feeds back into the contract flow to formalize new terms.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "relational",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "billing-service",
+      "collections-contact-service"
+    ],
+    "rationale": "Tests understanding of the complete collections pipeline and its escalation stages.",
+    "best_suited_approach": "both",
+    "justification": "Event sequence data combined with business process documentation gives the full picture."
+  },
+  {
+    "id": "Q097",
+    "question": "What is the most critical single point of failure in the CredityFlow platform?",
+    "expected_answer": "Auth-service is arguably the most critical single point of failure because both BFFs (backoffice-bff and customer-portal-bff) depend on it for authentication. If auth-service goes down, neither internal operations staff nor customers can access the platform. Additionally, notification-service is another critical dependency since it is called by many services and its failure silently breaks customer communication across all flows, though business processing would continue.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "auth-service",
+      "backoffice-bff",
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "rationale": "Requires analyzing the dependency graph to identify services with the highest fan-in that would cause the most disruption.",
+    "best_suited_approach": "both",
+    "justification": "Structured graph data reveals dependency fan-in counts, while docs contextualize business criticality."
+  },
+  {
+    "id": "Q098",
+    "question": "How many domains does CredityFlow have?",
+    "expected_answer": "CredityFlow has 15 domains organized across 52 services, 15 teams, and 64 events. The domains cover the full secured lending lifecycle including lead management, eligibility, proposals, documents, biometrics, fraud, credit, appraisal, contracts, registry, disbursement, billing, collections, and cross-cutting concerns like notifications and audit.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [],
+    "rationale": "Direct factual question about the platform's domain structure.",
+    "best_suited_approach": "unstructured",
+    "justification": "Domain count is stated in the company overview documentation."
+  },
+  {
+    "id": "Q099",
+    "question": "What security concerns exist around the biometrics-service?",
+    "expected_answer": "Biometrics-service handles extremely sensitive PII data including facial recognition and fingerprint data. It sits in the PII flow chain between document-service and fraud-scoring-service. Security concerns include: secure storage and encryption of biometric templates, data retention policies (biometric data often has stricter retention requirements), access control to prevent unauthorized access, secure transmission to downstream services, and compliance with biometric-specific regulations like LGPD requirements for explicit consent.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "biometrics-capture-service",
+      "document-store-service",
+      "fraud-scoring-service"
+    ],
+    "rationale": "Requires reasoning about security implications that may not be explicitly documented but can be inferred from the service's role.",
+    "best_suited_approach": "unstructured",
+    "justification": "Security concerns require interpretation of service documentation and domain knowledge about biometric data handling."
+  },
+  {
+    "id": "Q100",
+    "question": "Which services would need to be coordinated if CredityFlow wanted to add a new loan product?",
+    "expected_answer": "Adding a new loan product would require coordination across the full pipeline: eligibility-service (new eligibility rules), proposal-service (new product configuration), credit-scoring-engine (product-specific scoring models), a potential new appraisal service if the collateral type is different, contract-service (new contract templates), billing-service (new payment schedules), and feature-flag-service (gradual rollout). Additionally, notification-template-service would need new templates, and backoffice-bff review queues might need updates.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "eligibility-service",
+      "proposal-service",
+      "credit-scoring-engine",
+      "contract-generation-service",
+      "billing-service",
+      "feature-flag-service",
+      "notification-template-service"
+    ],
+    "rationale": "Requires understanding the end-to-end architecture to reason about cross-service impact of a new product.",
+    "best_suited_approach": "both",
+    "justification": "Graph data shows service connections, while documentation provides context about each service's product-specific logic."
+  },
+  {
+    "id": "Q101",
+    "question": "What does team-data do if they have no application services?",
+    "expected_answer": "Team-data manages data pipelines rather than application services. Despite having no customer-facing or domain-specific services, they are responsible for data infrastructure including ETL pipelines, data warehousing, analytics data flows, and potentially the data platform that supports reporting and business intelligence. This is a common pattern in organizations where the data engineering team focuses on data movement and transformation rather than business logic.",
+    "official_supporting_sources": [
+      "docs/teams/teams.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [],
+    "rationale": "Tests understanding of team roles that don't map directly to application services.",
+    "best_suited_approach": "unstructured",
+    "justification": "Team responsibilities are described in team documentation."
+  },
+  {
+    "id": "Q102",
+    "question": "How many external partners does CredityFlow integrate with, and which services use them?",
+    "expected_answer": "CredityFlow integrates with 8 external partners. Known integrations include: vehicle-appraisal-service with FIPE-API for vehicle pricing, property-appraisal-service with InspecaoExpress for property inspections, and fraud-scoring-service with fraud-bureau for external fraud data. Other external partners likely include credit bureaus for credit-scoring-engine, identity verification providers for biometrics-service, and registry authorities for registry-service.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "vehicle-appraisal-service",
+      "property-appraisal-service",
+      "fraud-scoring-service"
+    ],
+    "rationale": "Tests knowledge of external integration points across the platform.",
+    "best_suited_approach": "unstructured",
+    "justification": "External partner integrations are documented in service descriptions."
+  },
+  {
+    "id": "Q103",
+    "question": "What is the relationship between renegotiation and the contract flow?",
+    "expected_answer": "When a customer in collections enters renegotiation, the new terms must be formalized through a new contract. The renegotiation process feeds back into the contract flow, meaning contract-service creates a new contract with the renegotiated terms, which then goes through registry-service for collateral lien updates if needed, and disbursement-service or billing-service for updated payment schedules. This circular dependency between collections and contracts is a key architectural consideration.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "relational",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "contract-generation-service",
+      "registry-orchestrator-service",
+      "billing-service"
+    ],
+    "rationale": "Tests understanding of circular flows in the architecture where collections feeds back into contracting.",
+    "best_suited_approach": "both",
+    "justification": "Event data shows the renegotiation-to-contract event chain, while docs explain the business rationale."
+  },
+  {
+    "id": "Q104",
+    "question": "How would you monitor the health of the lending pipeline end-to-end?",
+    "expected_answer": "End-to-end pipeline monitoring would involve tracking event flow rates between each stage (lead → eligibility → proposal → documents → biometrics → fraud → credit → appraisal → contract → registry → disbursement). Key metrics include conversion rates between stages, processing time per stage, error rates at each service, and queue depths for manual review steps in backoffice-bff. The audit-service, which consumes events from almost every domain, could serve as a natural observability point for pipeline health dashboards.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "audit-service",
+      "backoffice-bff"
+    ],
+    "rationale": "Open-ended operational question requiring reasoning about observability across the distributed system.",
+    "best_suited_approach": "both",
+    "justification": "Understanding the event flow from structured data plus operational context from docs is needed."
+  },
+  {
+    "id": "Q105",
+    "question": "Which services in the lending pipeline could operate asynchronously versus which require synchronous responses?",
+    "expected_answer": "Services like fraud-scoring-service, credit-scoring-engine, and appraisal services (vehicle/property) can operate asynchronously since they involve external API calls and complex processing that may take time. Lead-intake-service and eligibility-service likely need synchronous responses for real-time customer feedback. Notification-service is inherently asynchronous (fire-and-forget). The Saga pattern in the contract-registry-disbursement flow is designed for asynchronous coordination via events.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "credit-scoring-engine",
+      "vehicle-appraisal-service",
+      "lead-intake-service",
+      "eligibility-service"
+    ],
+    "rationale": "Requires analyzing each service's characteristics to determine suitable communication patterns.",
+    "best_suited_approach": "both",
+    "justification": "Event data shows async patterns, while service docs describe response time requirements."
+  },
+  {
+    "id": "Q106",
+    "question": "What are the products offered by CredityFlow?",
+    "expected_answer": "CredityFlow offers 6 products in the secured lending space. Based on the service architecture, these likely include vehicle-backed loans (supported by vehicle-appraisal-service and FIPE-API integration) and property-backed loans (supported by property-appraisal-service and InspecaoExpress integration). The specific product names and configurations would be managed through proposal-service and eligibility-service.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "proposal-service",
+      "eligibility-service"
+    ],
+    "rationale": "Tests knowledge of the company's product portfolio.",
+    "best_suited_approach": "unstructured",
+    "justification": "Product information is in the company overview documentation."
+  },
+  {
+    "id": "Q107",
+    "question": "If customer-service has a data corruption issue, which other services are impacted?",
+    "expected_answer": "Customer-service data corruption would have widespread impact since it is a core dependency. Notification-service depends on it for contact information, so all notifications would fail or go to wrong addresses. Customer-portal-bff aggregates customer data, so the customer portal would show corrupted information. Proposal-service, document-service, and contract-service reference customer records. The PII flow chain would propagate corrupted data downstream. Additionally, collections services would have incorrect customer contact details, impacting debt recovery.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "customer-service",
+      "notification-service",
+      "customer-portal-bff",
+      "proposal-service",
+      "contract-generation-service"
+    ],
+    "rationale": "Tests understanding of customer-service as a central data source and the blast radius of data corruption.",
+    "best_suited_approach": "both",
+    "justification": "Dependency graph shows which services reference customer data, while docs explain the nature of those dependencies."
+  },
+  {
+    "id": "Q108",
+    "question": "How many databases are used across CredityFlow?",
+    "expected_answer": "CredityFlow uses 41 databases across its 52 services. This roughly one-database-per-service ratio suggests adherence to the database-per-service pattern common in microservice architectures, where each service owns its data store. Notable exceptions include audit-service which uses Elasticsearch while most other services likely use relational databases, and credit-scoring-engine which uses CQRS with separate read and write data stores.",
+    "official_supporting_sources": [
+      "docs/teams/databases.md",
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [],
+    "rationale": "Direct factual question about the database infrastructure.",
+    "best_suited_approach": "unstructured",
+    "justification": "Database count is documented in the databases documentation."
+  },
+  {
+    "id": "Q109",
+    "question": "What challenges would arise if CredityFlow needed to implement GDPR-style right to deletion?",
+    "expected_answer": "Implementing right to deletion would be complex because PII is distributed across 7+ services: lead-intake, customer, proposal, document, biometrics, contract, and notification services. Each service owns its database, so deletion must be coordinated across all of them. Audit-service presents a particular challenge since it logs events containing PII for compliance, creating a tension between audit requirements and deletion rights. Biometrics data may need special handling. The notification-template-service and collections services may also contain PII references that need cleanup.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "customer-service",
+      "lead-intake-service",
+      "document-store-service",
+      "biometrics-capture-service",
+      "audit-service",
+      "contract-generation-service"
+    ],
+    "rationale": "Requires reasoning about data governance implications across the distributed PII flow.",
+    "best_suited_approach": "both",
+    "justification": "PII flow mapping from graph data combined with documentation about each service's data storage is needed."
+  },
+  {
+    "id": "Q110",
+    "question": "How does the CQRS pattern benefit credit-scoring-engine?",
+    "expected_answer": "The CQRS (Command Query Responsibility Segregation) pattern in credit-scoring-engine separates write operations (computing and storing new credit scores) from read operations (querying existing scores). This is beneficial because scoring computations are resource-intensive and involve external data sources, while score lookups need to be fast for downstream services like appraisal and contract. The read model can be optimized for query patterns independently of the write model, improving overall system performance and scalability.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "explanatory",
+    "difficulty": "medium",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "credit-scoring-engine"
+    ],
+    "rationale": "Tests understanding of the CQRS pattern and why it was chosen for this specific service.",
+    "best_suited_approach": "unstructured",
+    "justification": "CQRS pattern rationale is explained in service documentation."
+  },
+  {
+    "id": "Q111",
+    "question": "Which teams would need to coordinate for a change to the proposal data model?",
+    "expected_answer": "A change to the proposal data model would require coordination between the team owning proposal-service and teams owning downstream consumers. This includes: the team managing document-service (which receives proposal data for document requirements), the credit team managing credit-scoring-engine (which scores based on proposal data), the team managing contract-service (which uses proposal data for contract creation), and the team managing customer-portal-bff (which displays proposal information to customers). Given 15 teams, this could easily span 4-6 teams depending on domain boundaries.",
+    "official_supporting_sources": [
+      "docs/teams/teams.md",
+      "structured/events.json"
+    ],
+    "category": "relational",
+    "difficulty": "medium",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "proposal-service",
+      "document-store-service",
+      "credit-scoring-engine",
+      "contract-generation-service",
+      "customer-portal-bff"
+    ],
+    "rationale": "Tests understanding of team-service ownership and cross-team coordination requirements.",
+    "best_suited_approach": "both",
+    "justification": "Team-service mapping from docs combined with event dependency graph identifies all affected teams."
+  },
+  {
+    "id": "Q112",
+    "question": "What is the financial data flow across CredityFlow services?",
+    "expected_answer": "Financial data flows through: credit-scoring-engine (income and debt assessment) → appraisal services (collateral valuation) → contract-service (loan terms, rates, amounts) → disbursement-service (fund transfer details) → billing-service (installment schedules, payment tracking) → collections services (overdue amounts, penalties). This chain represents the financial lifecycle of a loan from risk assessment through ongoing servicing, and each service adds or transforms financial data points.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "relational",
+    "difficulty": "medium",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "credit-scoring-engine",
+      "vehicle-appraisal-service",
+      "contract-generation-service",
+      "disbursement-service",
+      "billing-service"
+    ],
+    "rationale": "Tests understanding of how financial data moves and transforms across the service mesh.",
+    "best_suited_approach": "both",
+    "justification": "Event flow data shows the chain, while documentation explains what financial data each service handles."
+  },
+  {
+    "id": "Q113",
+    "question": "Can you identify services that might be candidates for merging or splitting?",
+    "expected_answer": "Potential merge candidates: notification-service and notification-template-service could be merged if templates are tightly coupled with delivery logic, reducing inter-service calls. Potential split candidates: if team-collections manages 7 services, some collections services might benefit from further decomposition. Credit-scoring-engine with its CQRS pattern could potentially be split into separate read and write services. Conversely, very small services in the pipeline that always change together might benefit from consolidation to reduce operational overhead.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "docs/teams/teams.md"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [
+      "notification-service",
+      "notification-template-service",
+      "credit-scoring-engine"
+    ],
+    "rationale": "Requires analyzing coupling patterns and team boundaries to identify optimization opportunities.",
+    "best_suited_approach": "both",
+    "justification": "Graph data reveals coupling patterns, while team docs show ownership boundaries and change frequency."
+  },
+  {
+    "id": "Q114",
+    "question": "What happens to a loan application that fails at the fraud check stage?",
+    "expected_answer": "When fraud-scoring-service detects a high-risk application, the proposal is likely flagged and may be automatically rejected or routed to manual review via backoffice-bff. The fraud score is an aggregation of signals from device-fingerprint, watchlist, and fraud-bureau. A failed fraud check prevents the application from proceeding to credit-scoring-engine and subsequent stages. The case-management-service may create a case for investigation, and audit-service logs the fraud detection event for compliance purposes.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "impact",
+    "difficulty": "medium",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "backoffice-bff",
+      "case-management-service",
+      "audit-service"
+    ],
+    "rationale": "Tests understanding of fraud detection outcomes and their impact on the lending pipeline.",
+    "best_suited_approach": "both",
+    "justification": "Event flow shows the pipeline halt, while docs describe fraud handling business rules."
+  },
+  {
+    "id": "Q115",
+    "question": "How does property-appraisal-service differ from vehicle-appraisal-service?",
+    "expected_answer": "While both services assess collateral value, they integrate with different external partners: vehicle-appraisal-service uses FIPE-API for standardized vehicle pricing reference, while property-appraisal-service integrates with InspecaoExpress for physical property inspections. Property appraisals are typically more complex, requiring on-site inspections and longer processing times, while vehicle appraisals can be more automated using standardized pricing tables. Both feed into the lending pipeline at the same stage, after credit scoring.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "relational",
+    "difficulty": "easy",
+    "required_knowledge_type": "relational",
+    "primary_target_services": [
+      "property-appraisal-service",
+      "vehicle-appraisal-service"
+    ],
+    "rationale": "Tests comparison between two similar services and understanding of their distinct integration patterns.",
+    "best_suited_approach": "unstructured",
+    "justification": "Service documentation describes each service's external integrations and operational characteristics."
+  },
+  {
+    "id": "Q116",
+    "question": "Which service handles customer authentication for the self-service portal?",
+    "expected_answer": "Auth-service handles customer authentication for the customer-portal-bff, which is the self-service portal. Auth-service is a shared dependency for both BFFs (customer-portal-bff and backoffice-bff), meaning it serves both customer-facing and internal authentication needs. This centralized authentication approach ensures consistent security policies across all access points.",
+    "official_supporting_sources": [
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [
+      "auth-service",
+      "customer-portal-bff"
+    ],
+    "rationale": "Direct factual question about authentication architecture.",
+    "best_suited_approach": "unstructured",
+    "justification": "Authentication dependencies are documented in service descriptions."
+  },
+  {
+    "id": "Q117",
+    "question": "If you needed to implement real-time fraud monitoring, which existing services and events would you leverage?",
+    "expected_answer": "Real-time fraud monitoring would leverage fraud-scoring-service as the central scoring point, consuming signals from device-fingerprint (session anomalies), watchlist (real-time PEP/sanctions checks), and fraud-bureau (external signals). The existing event system could be extended to publish fraud_alert events that audit-service already consumes. Backoffice-bff's review queues could display real-time fraud dashboards. The 64 existing events in the system provide a foundation for event-driven monitoring, and Elasticsearch in audit-service is well-suited for real-time analytics on fraud patterns.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "ambiguous",
+    "difficulty": "hard",
+    "required_knowledge_type": "mixed",
+    "primary_target_services": [
+      "fraud-scoring-service",
+      "audit-service",
+      "backoffice-bff"
+    ],
+    "rationale": "Open-ended question requiring synthesis of existing architecture to propose a solution.",
+    "best_suited_approach": "both",
+    "justification": "Existing event infrastructure from structured data plus service capabilities from docs inform the answer."
+  },
+  {
+    "id": "Q118",
+    "question": "How many events does the CredityFlow platform have in total?",
+    "expected_answer": "CredityFlow has 64 events across its 15 domains and 52 services. These events drive the asynchronous communication between services, including the lending pipeline stages, the Saga pattern for contract-to-disbursement, collections escalation flow, and cross-cutting concerns like audit logging and notifications.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "factual",
+    "difficulty": "easy",
+    "required_knowledge_type": "factual",
+    "primary_target_services": [],
+    "rationale": "Direct factual question about the event count in the platform.",
+    "best_suited_approach": "structured",
+    "justification": "Event count can be directly obtained from the structured events.json file."
+  },
+  {
+    "id": "Q119",
+    "question": "What patterns suggest CredityFlow follows domain-driven design principles?",
+    "expected_answer": "Several patterns indicate DDD adoption: the platform is organized into 15 distinct domains with clear bounded contexts, each domain has dedicated services and databases (database-per-service pattern aligning with aggregate boundaries), events use domain-specific naming (contract_signed, registry_completed), teams are aligned to domains (Conway's Law), and BFF services act as anti-corruption layers between external interfaces and domain services. The Saga pattern for cross-domain coordination respects domain boundaries by using events rather than direct coupling.",
+    "official_supporting_sources": [
+      "docs/company-overview.md",
+      "structured/events.json"
+    ],
+    "category": "discovery",
+    "difficulty": "hard",
+    "required_knowledge_type": "architectural",
+    "primary_target_services": [],
+    "rationale": "Tests ability to identify design patterns and principles from architectural evidence.",
+    "best_suited_approach": "both",
+    "justification": "Structural patterns from graph data combined with naming conventions and organization from docs reveal DDD principles."
+  },
+  {
+    "id": "Q120",
+    "question": "What would be the impact on the platform if the event bus infrastructure experienced a prolonged outage?",
+    "expected_answer": "An event bus outage would be catastrophic for CredityFlow since the architecture is heavily event-driven with 64 events connecting 52 services. The entire lending pipeline would stall because services communicate via events between stages. The Saga pattern (contract → registry → disbursement) would break completely. Audit-service would stop receiving compliance events, creating a regulatory gap. Collections escalation flow would halt. The only services that might partially function are those with synchronous API dependencies, such as customer-portal-bff reading from downstream services and auth-service handling authentication. This scenario highlights the need for event bus high availability and potentially event sourcing for recovery.",
+    "official_supporting_sources": [
+      "structured/events.json",
+      "docs/company-overview.md"
+    ],
+    "category": "impact",
+    "difficulty": "hard",
+    "required_knowledge_type": "operational",
+    "primary_target_services": [
+      "audit-service",
+      "contract-generation-service",
+      "registry-orchestrator-service",
+      "disbursement-service"
+    ],
+    "rationale": "Tests understanding of the platform's dependence on event-driven architecture and the blast radius of infrastructure failure.",
+    "best_suited_approach": "both",
+    "justification": "Event dependency mapping from structured data plus architectural understanding from docs are both needed."
+  }
+]

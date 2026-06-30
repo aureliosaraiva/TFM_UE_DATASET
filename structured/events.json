@@ -1,0 +1,1454 @@
+[
+  {
+    "event_name": "lead_created",
+    "producer": "lead-intake-service",
+    "consumers": [
+      "audit-service",
+      "eligibility-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a new lead is submitted through the website, mobile app, or partner API. Triggers eligibility checks and initial notifications.",
+    "payload_fields": [
+      "lead_id",
+      "customer_name",
+      "email",
+      "phone_number",
+      "cpf",
+      "source_channel",
+      "partner_id",
+      "timestamp"
+    ],
+    "domain": "Onboarding",
+    "trigger": "New lead submitted via website, app, or partner API",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "lead_qualified",
+    "producer": "eligibility-service",
+    "consumers": [
+      "customer-service",
+      "notification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when a lead passes basic eligibility criteria such as age, location, and minimum income threshold.",
+    "payload_fields": [
+      "lead_id",
+      "customer_id",
+      "eligibility_score",
+      "qualification_reason",
+      "qualified_at",
+      "timestamp"
+    ],
+    "domain": "Onboarding",
+    "trigger": "Lead passes basic eligibility criteria",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "proposal_started",
+    "producer": "proposal-service",
+    "consumers": [
+      "audit-service",
+      "document-upload-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a customer initiates a new loan proposal. Kicks off the document collection process.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "loan_type",
+      "requested_amount",
+      "requested_term_months",
+      "collateral_type",
+      "created_at",
+      "timestamp"
+    ],
+    "domain": "Onboarding",
+    "trigger": "Customer creates a loan proposal",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "proposal_updated",
+    "producer": "proposal-service",
+    "consumers": [
+      "notification-service"
+    ],
+    "description": "Emitted when proposal details such as loan amount, term, or collateral information are modified by the customer or an operator.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "updated_fields",
+      "previous_values",
+      "new_values",
+      "updated_by",
+      "timestamp"
+    ],
+    "domain": "Onboarding",
+    "trigger": "Proposal details are modified",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "documents_requested",
+    "producer": "document-upload-service",
+    "consumers": [
+      "customer-portal-bff",
+      "document-upload-service",
+      "notification-service"
+    ],
+    "description": "Emitted when the system determines which documents are required and requests them from the customer.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "required_documents",
+      "document_types",
+      "deadline",
+      "timestamp"
+    ],
+    "domain": "Document Management",
+    "trigger": "System requests required documents from customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "documents_uploaded",
+    "producer": "document-upload-service",
+    "consumers": [
+      "audit-service",
+      "document-classifier-service",
+      "ocr-worker"
+    ],
+    "description": "Emitted when a customer uploads one or more document files. Triggers OCR processing pipeline.",
+    "payload_fields": [
+      "document_id",
+      "proposal_id",
+      "customer_id",
+      "file_key",
+      "file_type",
+      "file_size_bytes",
+      "uploaded_at",
+      "timestamp"
+    ],
+    "domain": "Document Management",
+    "trigger": "Customer uploads document files",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "documents_classified",
+    "producer": "document-classifier-service",
+    "consumers": [
+      "document-validation-service"
+    ],
+    "description": "Emitted after OCR output is analyzed and classified into a specific document type such as ID, proof of income, or address proof.",
+    "payload_fields": [
+      "document_id",
+      "proposal_id",
+      "classified_type",
+      "confidence_score",
+      "ocr_extracted_fields",
+      "timestamp"
+    ],
+    "domain": "Document Management",
+    "trigger": "OCR output is classified into document type",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "documents_validated",
+    "producer": "document-validation-service",
+    "consumers": [
+      "audit-service",
+      "document-store-service",
+      "income-verification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when a document passes all validation rules including format checks, expiry verification, and data consistency.",
+    "payload_fields": [
+      "document_id",
+      "proposal_id",
+      "document_type",
+      "validation_status",
+      "validation_rules_passed",
+      "validated_at",
+      "timestamp"
+    ],
+    "domain": "Document Management",
+    "trigger": "Document passes validation rules",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "documents_submitted",
+    "producer": "document-store-service",
+    "consumers": [
+      "biometrics-capture-service",
+      "notification-service"
+    ],
+    "description": "Emitted when all required documents for a proposal have been validated and securely stored. Advances the proposal to biometrics collection.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "document_ids",
+      "document_count",
+      "storage_location",
+      "submitted_at",
+      "timestamp"
+    ],
+    "domain": "Document Management",
+    "trigger": "All required documents are validated and stored",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "biometrics_requested",
+    "producer": "biometrics-capture-service",
+    "consumers": [
+      "biometrics-capture-service",
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "description": "Emitted when the system requests biometric capture from the customer, typically a selfie for liveness and face matching.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "biometric_type",
+      "capture_instructions",
+      "deadline",
+      "timestamp"
+    ],
+    "domain": "Biometrics",
+    "trigger": "System requests biometric capture from customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "biometrics_captured",
+    "producer": "biometrics-capture-service",
+    "consumers": [
+      "liveness-worker"
+    ],
+    "description": "Emitted when the customer submits selfie or biometric data through the app or portal.",
+    "payload_fields": [
+      "biometric_id",
+      "proposal_id",
+      "customer_id",
+      "capture_type",
+      "image_key",
+      "device_metadata",
+      "captured_at",
+      "timestamp"
+    ],
+    "domain": "Biometrics",
+    "trigger": "Customer submits selfie/biometric data",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "liveness_verified",
+    "producer": "liveness-worker",
+    "consumers": [
+      "face-match-service"
+    ],
+    "description": "Emitted when liveness detection confirms the biometric submission is from a real, present person and not a spoofing attempt.",
+    "payload_fields": [
+      "biometric_id",
+      "proposal_id",
+      "liveness_score",
+      "liveness_result",
+      "provider_reference",
+      "verified_at",
+      "timestamp"
+    ],
+    "domain": "Biometrics",
+    "trigger": "Liveness detection confirms real person",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "face_match_completed",
+    "producer": "face-match-service",
+    "consumers": [
+      "biometrics-capture-service"
+    ],
+    "description": "Emitted when face matching against the ID document photo completes, regardless of match or mismatch result.",
+    "payload_fields": [
+      "biometric_id",
+      "proposal_id",
+      "match_score",
+      "match_result",
+      "document_id",
+      "provider_reference",
+      "timestamp"
+    ],
+    "domain": "Biometrics",
+    "trigger": "Face matching against ID document completes",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "biometrics_validated",
+    "producer": "biometrics-capture-service",
+    "consumers": [
+      "audit-service",
+      "device-fingerprint-service",
+      "fraud-scoring-service",
+      "notification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when all biometric checks (liveness, face match) pass successfully. Advances the proposal to fraud analysis.",
+    "payload_fields": [
+      "biometric_id",
+      "proposal_id",
+      "customer_id",
+      "liveness_score",
+      "face_match_score",
+      "overall_result",
+      "validated_at",
+      "timestamp"
+    ],
+    "domain": "Biometrics",
+    "trigger": "All biometric checks pass",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "fraud_check_started",
+    "producer": "fraud-scoring-service",
+    "consumers": [
+      "audit-service",
+      "device-fingerprint-service",
+      "fraud-bureau-integration",
+      "watchlist-service"
+    ],
+    "description": "Emitted when the fraud analysis pipeline is initiated for a proposal. Signals the beginning of multi-source fraud evaluation.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "fraud_check_id",
+      "checks_requested",
+      "started_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Fraud analysis pipeline initiated",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "device_fingerprint_checked",
+    "producer": "device-fingerprint-service",
+    "consumers": [
+      "fraud-scoring-service"
+    ],
+    "description": "Emitted when device fingerprint analysis completes, including device reputation and anomaly detection results.",
+    "payload_fields": [
+      "proposal_id",
+      "device_id",
+      "fingerprint_hash",
+      "risk_level",
+      "anomalies_detected",
+      "device_trust_score",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Device fingerprint analysis completes",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "watchlist_checked",
+    "producer": "watchlist-service",
+    "consumers": [
+      "fraud-scoring-service"
+    ],
+    "description": "Emitted when the customer has been checked against sanctions lists, PEP databases, and other regulatory watchlists.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "cpf",
+      "watchlist_sources",
+      "match_found",
+      "match_details",
+      "checked_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Customer checked against sanctions/PEP watchlists",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "fraud_bureau_checked",
+    "producer": "fraud-bureau-integration",
+    "consumers": [
+      "fraud-scoring-service"
+    ],
+    "description": "Emitted when external fraud bureau data is retrieved, providing historical fraud indicators for the customer.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "bureau_name",
+      "fraud_indicators",
+      "bureau_score",
+      "query_reference",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "External fraud bureau data retrieved",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "fraud_scored",
+    "producer": "fraud-scoring-service",
+    "consumers": [
+      "fraud-decision-service"
+    ],
+    "description": "Emitted when the composite fraud risk score is computed from all fraud data sources including device, watchlist, and bureau checks.",
+    "payload_fields": [
+      "proposal_id",
+      "fraud_check_id",
+      "fraud_score",
+      "risk_category",
+      "contributing_factors",
+      "model_version",
+      "scored_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Fraud risk score computed",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "fraud_decision_made",
+    "producer": "fraud-decision-service",
+    "consumers": [
+      "audit-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when the final fraud decision is rendered, determining whether to clear, flag, or reject the proposal based on fraud risk.",
+    "payload_fields": [
+      "proposal_id",
+      "fraud_check_id",
+      "decision",
+      "decision_reason",
+      "fraud_score",
+      "decided_by",
+      "decided_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Final fraud decision rendered",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "fraud_cleared",
+    "producer": "fraud-decision-service",
+    "consumers": [
+      "credit-bureau-integration",
+      "credit-scoring-engine",
+      "notification-service"
+    ],
+    "description": "Emitted when a proposal is cleared of fraud risk, allowing it to proceed to credit analysis.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "fraud_check_id",
+      "fraud_score",
+      "cleared_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Proposal cleared of fraud risk",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "fraud_flagged",
+    "producer": "fraud-decision-service",
+    "consumers": [
+      "audit-service",
+      "case-management-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a proposal is flagged as potential fraud, requiring manual review by the fraud operations team.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "fraud_check_id",
+      "fraud_score",
+      "flag_reasons",
+      "severity",
+      "flagged_at",
+      "timestamp"
+    ],
+    "domain": "Fraud Prevention",
+    "trigger": "Proposal flagged as potential fraud",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "credit_check_started",
+    "producer": "credit-scoring-engine",
+    "consumers": [
+      "audit-service",
+      "credit-bureau-integration"
+    ],
+    "description": "Emitted when the credit analysis pipeline is initiated, signaling the start of bureau data retrieval and scoring.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "credit_check_id",
+      "loan_type",
+      "requested_amount",
+      "started_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Credit analysis pipeline initiated",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "bureau_data_fetched",
+    "producer": "credit-bureau-integration",
+    "consumers": [
+      "credit-scoring-engine",
+      "income-verification-service"
+    ],
+    "description": "Emitted when credit bureau data is successfully retrieved, including credit history, outstanding debts, and payment behavior.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "bureau_name",
+      "bureau_score",
+      "open_accounts",
+      "total_debt",
+      "query_reference",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Credit bureau data successfully retrieved",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "income_verified",
+    "producer": "income-verification-service",
+    "consumers": [
+      "credit-scoring-engine"
+    ],
+    "description": "Emitted when customer income verification completes using bank statements, payslips, or tax returns data.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "verified_income",
+      "income_source",
+      "verification_method",
+      "confidence_level",
+      "verified_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Customer income verification completes",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "credit_scored",
+    "producer": "credit-scoring-engine",
+    "consumers": [
+      "credit-policy-service"
+    ],
+    "description": "Emitted when the internal credit risk score is computed using bureau data, income, and behavioral signals.",
+    "payload_fields": [
+      "proposal_id",
+      "credit_check_id",
+      "credit_score",
+      "risk_band",
+      "debt_to_income_ratio",
+      "model_version",
+      "scored_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Credit risk score computed",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "credit_policy_evaluated",
+    "producer": "credit-policy-service",
+    "consumers": [
+      "credit-decision-service"
+    ],
+    "description": "Emitted when credit policy rules are evaluated against the credit data, producing approval conditions or denial reasons.",
+    "payload_fields": [
+      "proposal_id",
+      "credit_check_id",
+      "policy_version",
+      "rules_evaluated",
+      "rules_passed",
+      "rules_failed",
+      "max_approved_amount",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Policy rules evaluated against credit data",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "credit_decision_made",
+    "producer": "credit-decision-service",
+    "consumers": [
+      "audit-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when the final credit decision is rendered, including approved amount, interest rate, and term conditions.",
+    "payload_fields": [
+      "proposal_id",
+      "credit_check_id",
+      "decision",
+      "approved_amount",
+      "interest_rate",
+      "approved_term_months",
+      "decided_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Final credit decision rendered",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "credit_approved",
+    "producer": "credit-decision-service",
+    "consumers": [
+      "appraisal-orchestrator-service",
+      "notification-service"
+    ],
+    "description": "Emitted when credit is approved for a proposal, triggering the collateral appraisal process.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "approved_amount",
+      "interest_rate",
+      "approved_term_months",
+      "collateral_type",
+      "approved_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Credit approved for the proposal",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "credit_denied",
+    "producer": "credit-decision-service",
+    "consumers": [
+      "audit-service",
+      "notification-service"
+    ],
+    "description": "Emitted when credit is denied for a proposal, including the denial reasons and cooldown period before reapplication.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "denial_reasons",
+      "credit_score",
+      "cooldown_days",
+      "denied_at",
+      "timestamp"
+    ],
+    "domain": "Credit Analysis",
+    "trigger": "Credit denied for the proposal",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "appraisal_requested",
+    "producer": "appraisal-orchestrator-service",
+    "consumers": [
+      "appraisal-orchestrator-service",
+      "property-appraisal-service",
+      "vehicle-appraisal-service"
+    ],
+    "description": "Emitted when the appraisal process is initiated after credit approval. Routes to the appropriate appraisal service based on collateral type.",
+    "payload_fields": [
+      "proposal_id",
+      "appraisal_id",
+      "collateral_type",
+      "collateral_details",
+      "requested_by",
+      "requested_at",
+      "timestamp"
+    ],
+    "domain": "Appraisal",
+    "trigger": "Appraisal process initiated after credit approval",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "vehicle_appraised",
+    "producer": "vehicle-appraisal-service",
+    "consumers": [
+      "appraisal-orchestrator-service",
+      "appraisal-report-service"
+    ],
+    "description": "Emitted when a vehicle valuation is completed using market data, FIPE table, and condition assessment.",
+    "payload_fields": [
+      "appraisal_id",
+      "proposal_id",
+      "vehicle_plate",
+      "vehicle_year",
+      "fipe_value",
+      "appraised_value",
+      "condition_grade",
+      "timestamp"
+    ],
+    "domain": "Appraisal",
+    "trigger": "Vehicle valuation completed",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "property_appraised",
+    "producer": "property-appraisal-service",
+    "consumers": [
+      "appraisal-orchestrator-service",
+      "appraisal-report-service"
+    ],
+    "description": "Emitted when a property valuation is completed using comparable sales, location data, and condition assessment.",
+    "payload_fields": [
+      "appraisal_id",
+      "proposal_id",
+      "property_registration",
+      "property_type",
+      "area_sqm",
+      "appraised_value",
+      "location_score",
+      "timestamp"
+    ],
+    "domain": "Appraisal",
+    "trigger": "Property valuation completed",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "appraisal_completed",
+    "producer": "appraisal-report-service",
+    "consumers": [
+      "contract-generation-service",
+      "notification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when the appraisal report is finalized, confirming the collateral value and loan-to-value ratio.",
+    "payload_fields": [
+      "appraisal_id",
+      "proposal_id",
+      "collateral_type",
+      "appraised_value",
+      "loan_to_value_ratio",
+      "report_url",
+      "completed_at",
+      "timestamp"
+    ],
+    "domain": "Appraisal",
+    "trigger": "Appraisal report finalized",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "contract_generation_requested",
+    "producer": "contract-generation-service",
+    "consumers": [
+      "audit-service",
+      "contract-generation-service"
+    ],
+    "description": "Emitted when contract generation is initiated, selecting the appropriate template based on loan type and collateral.",
+    "payload_fields": [
+      "proposal_id",
+      "contract_id",
+      "template_id",
+      "loan_type",
+      "collateral_type",
+      "requested_at",
+      "timestamp"
+    ],
+    "domain": "Contract",
+    "trigger": "Contract generation initiated",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "contract_generated",
+    "producer": "contract-generation-service",
+    "consumers": [
+      "compliance-check-service"
+    ],
+    "description": "Emitted when the contract document is generated from the template with all proposal-specific terms populated.",
+    "payload_fields": [
+      "contract_id",
+      "proposal_id",
+      "template_version",
+      "document_key",
+      "total_amount",
+      "interest_rate",
+      "term_months",
+      "timestamp"
+    ],
+    "domain": "Contract",
+    "trigger": "Contract document generated from template",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "compliance_checked",
+    "producer": "compliance-check-service",
+    "consumers": [
+      "audit-service",
+      "digital-signature-service"
+    ],
+    "description": "Emitted when the contract passes compliance validation including regulatory requirements, rate caps, and disclosure rules.",
+    "payload_fields": [
+      "contract_id",
+      "proposal_id",
+      "compliance_status",
+      "rules_checked",
+      "rules_passed",
+      "compliance_version",
+      "checked_at",
+      "timestamp"
+    ],
+    "domain": "Contract",
+    "trigger": "Contract passes compliance validation",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "signature_requested",
+    "producer": "digital-signature-service",
+    "consumers": [
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "description": "Emitted when a digital signature is requested from the customer, providing a signing link and deadline.",
+    "payload_fields": [
+      "contract_id",
+      "proposal_id",
+      "customer_id",
+      "signing_url",
+      "signature_provider",
+      "deadline",
+      "requested_at",
+      "timestamp"
+    ],
+    "domain": "Contract",
+    "trigger": "Digital signature requested from customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "contract_signed",
+    "producer": "digital-signature-service",
+    "consumers": [
+      "audit-service",
+      "contract-store-service",
+      "notification-service",
+      "proposal-service",
+      "registry-orchestrator-service"
+    ],
+    "description": "Emitted when the customer digitally signs the contract, completing the contractual agreement.",
+    "payload_fields": [
+      "contract_id",
+      "proposal_id",
+      "customer_id",
+      "signature_hash",
+      "signer_ip",
+      "signed_at",
+      "certificate_id",
+      "timestamp"
+    ],
+    "domain": "Contract",
+    "trigger": "Customer digitally signs the contract",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "registry_requested",
+    "producer": "registry-orchestrator-service",
+    "consumers": [
+      "audit-service",
+      "cartorio-integration-service",
+      "detran-integration-service",
+      "registry-orchestrator-service"
+    ],
+    "description": "Emitted when the lien registration process is initiated, routing to the appropriate registry based on collateral type.",
+    "payload_fields": [
+      "proposal_id",
+      "contract_id",
+      "registry_id",
+      "collateral_type",
+      "collateral_reference",
+      "registry_type",
+      "requested_at",
+      "timestamp"
+    ],
+    "domain": "Registry",
+    "trigger": "Lien registration process initiated",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "detran_lien_registered",
+    "producer": "detran-integration-service",
+    "consumers": [
+      "registry-orchestrator-service",
+      "registry-tracker-service"
+    ],
+    "description": "Emitted when a vehicle lien is successfully registered with DETRAN, confirming the encumbrance on the vehicle.",
+    "payload_fields": [
+      "registry_id",
+      "proposal_id",
+      "vehicle_plate",
+      "renavam",
+      "lien_protocol",
+      "registered_at",
+      "timestamp"
+    ],
+    "domain": "Registry",
+    "trigger": "Vehicle lien registered with DETRAN",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "cartorio_lien_registered",
+    "producer": "cartorio-integration-service",
+    "consumers": [
+      "registry-orchestrator-service",
+      "registry-tracker-service"
+    ],
+    "description": "Emitted when a property lien is successfully registered with the cartorio, confirming the encumbrance on the property.",
+    "payload_fields": [
+      "registry_id",
+      "proposal_id",
+      "property_registration",
+      "cartorio_name",
+      "lien_protocol",
+      "matricula",
+      "registered_at",
+      "timestamp"
+    ],
+    "domain": "Registry",
+    "trigger": "Property lien registered with cartório",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "registry_completed",
+    "producer": "registry-tracker-service",
+    "consumers": [
+      "audit-service",
+      "disbursement-service",
+      "notification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when all required lien registrations are confirmed, clearing the proposal for disbursement.",
+    "payload_fields": [
+      "registry_id",
+      "proposal_id",
+      "contract_id",
+      "collateral_type",
+      "registry_protocols",
+      "completed_at",
+      "timestamp"
+    ],
+    "domain": "Registry",
+    "trigger": "All required lien registrations confirmed",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "registry_failed",
+    "producer": "registry-tracker-service",
+    "consumers": [
+      "case-management-service",
+      "notification-service"
+    ],
+    "description": "Emitted when lien registration fails after exhausting all retry attempts, requiring manual intervention.",
+    "payload_fields": [
+      "registry_id",
+      "proposal_id",
+      "collateral_type",
+      "failure_reason",
+      "retry_count",
+      "last_attempt_at",
+      "timestamp"
+    ],
+    "domain": "Registry",
+    "trigger": "Lien registration fails after retries",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "disbursement_requested",
+    "producer": "disbursement-service",
+    "consumers": [
+      "audit-service",
+      "bank-transfer-integration",
+      "disbursement-service"
+    ],
+    "description": "Emitted when a disbursement order is created after successful lien registration, initiating the fund transfer.",
+    "payload_fields": [
+      "disbursement_id",
+      "proposal_id",
+      "customer_id",
+      "amount",
+      "bank_code",
+      "account_number",
+      "pix_key",
+      "timestamp"
+    ],
+    "domain": "Disbursement",
+    "trigger": "Disbursement order created after registry",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "bank_transfer_initiated",
+    "producer": "bank-transfer-integration",
+    "consumers": [
+      "payment-confirmation-service"
+    ],
+    "description": "Emitted when the bank transfer API is called to initiate the fund transfer to the customer account.",
+    "payload_fields": [
+      "disbursement_id",
+      "proposal_id",
+      "transfer_id",
+      "amount",
+      "destination_bank",
+      "transfer_method",
+      "initiated_at",
+      "timestamp"
+    ],
+    "domain": "Disbursement",
+    "trigger": "Bank transfer API called",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "bank_transfer_confirmed",
+    "producer": "payment-confirmation-service",
+    "consumers": [
+      "disbursement-service"
+    ],
+    "description": "Emitted when the bank confirms the transfer has been completed and funds are available in the customer account.",
+    "payload_fields": [
+      "disbursement_id",
+      "transfer_id",
+      "confirmation_code",
+      "confirmed_amount",
+      "confirmed_at",
+      "timestamp"
+    ],
+    "domain": "Disbursement",
+    "trigger": "Bank confirms transfer completion",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "disbursement_done",
+    "producer": "disbursement-service",
+    "consumers": [
+      "audit-service",
+      "billing-service",
+      "notification-service",
+      "proposal-service"
+    ],
+    "description": "Emitted when funds are successfully disbursed to the customer, marking the loan as active.",
+    "payload_fields": [
+      "disbursement_id",
+      "proposal_id",
+      "customer_id",
+      "disbursed_amount",
+      "transfer_confirmation",
+      "disbursed_at",
+      "timestamp"
+    ],
+    "domain": "Disbursement",
+    "trigger": "Funds successfully disbursed to customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "installment_created",
+    "producer": "billing-service",
+    "consumers": [
+      "notification-service"
+    ],
+    "description": "Emitted when the loan installment schedule is generated, defining all payment dates and amounts.",
+    "payload_fields": [
+      "proposal_id",
+      "customer_id",
+      "loan_id",
+      "total_installments",
+      "installment_amount",
+      "first_due_date",
+      "last_due_date",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Loan installment schedule generated",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "installment_due",
+    "producer": "billing-service",
+    "consumers": [
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "description": "Emitted when an installment payment date is approaching, triggering reminder notifications to the customer.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "installment_number",
+      "due_date",
+      "amount_due",
+      "payment_methods",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Installment payment date approaching",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "overdue_installment",
+    "producer": "billing-service",
+    "consumers": [
+      "audit-service",
+      "collections-contact-service",
+      "dunning-service",
+      "legal-collections-service",
+      "notification-service"
+    ],
+    "description": "Emitted when an installment payment is not received by the due date, initiating the collections process.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "installment_number",
+      "due_date",
+      "amount_due",
+      "days_overdue",
+      "penalty_amount",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Installment payment not received by due date",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "dunning_started",
+    "producer": "dunning-service",
+    "consumers": [
+      "audit-service",
+      "collections-contact-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a dunning campaign is initiated for an overdue customer, defining the escalation schedule.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "dunning_id",
+      "dunning_level",
+      "channels",
+      "escalation_schedule",
+      "started_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Dunning campaign initiated for overdue customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "collections_contact_attempted",
+    "producer": "collections-contact-service",
+    "consumers": [
+      "audit-service",
+      "case-management-service",
+      "negotiation-engine-service"
+    ],
+    "description": "Emitted when a contact attempt is made to an overdue customer via phone, email, SMS, or WhatsApp.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "contact_id",
+      "channel",
+      "contact_result",
+      "agent_id",
+      "attempted_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Contact attempt made to overdue customer",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "negotiation_offered",
+    "producer": "negotiation-engine-service",
+    "consumers": [
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "description": "Emitted when a negotiation proposal with revised terms is sent to a delinquent customer.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "negotiation_id",
+      "original_balance",
+      "proposed_discount",
+      "proposed_installments",
+      "offer_expiry",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Negotiation proposal sent to customer",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "negotiation_accepted",
+    "producer": "negotiation-engine-service",
+    "consumers": [
+      "audit-service",
+      "billing-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a customer accepts the renegotiation terms, updating the billing schedule accordingly.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "negotiation_id",
+      "accepted_discount",
+      "new_installment_count",
+      "new_installment_amount",
+      "accepted_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Customer accepts renegotiation terms",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "legal_action_started",
+    "producer": "legal-collections-service",
+    "consumers": [
+      "audit-service",
+      "case-management-service",
+      "notification-service"
+    ],
+    "description": "Emitted when legal proceedings are initiated for a defaulted loan after all collection attempts are exhausted.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "legal_case_id",
+      "action_type",
+      "outstanding_balance",
+      "law_firm",
+      "filed_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Legal proceedings initiated for defaulted loan",
+    "is_pii": true,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "renegotiation_requested",
+    "producer": "renegotiation-eligibility-service",
+    "consumers": [
+      "audit-service",
+      "renegotiation-eligibility-service",
+      "renegotiation-simulation-service"
+    ],
+    "description": "Emitted when a customer or the system requests a renegotiation of existing loan terms.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "renegotiation_id",
+      "request_source",
+      "current_balance",
+      "days_overdue",
+      "requested_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Customer or system requests renegotiation",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "renegotiation_eligible",
+    "producer": "renegotiation-eligibility-service",
+    "consumers": [
+      "notification-service",
+      "renegotiation-simulation-service"
+    ],
+    "description": "Emitted when a customer is determined eligible for renegotiation based on account standing and policy rules.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "renegotiation_id",
+      "eligibility_criteria_met",
+      "max_discount_pct",
+      "available_terms",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Customer eligible for renegotiation",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "renegotiation_simulated",
+    "producer": "renegotiation-simulation-service",
+    "consumers": [
+      "customer-portal-bff",
+      "notification-service"
+    ],
+    "description": "Emitted when renegotiation terms are simulated and ready for the customer to review and accept.",
+    "payload_fields": [
+      "loan_id",
+      "customer_id",
+      "renegotiation_id",
+      "simulation_options",
+      "best_offer_discount",
+      "new_total_amount",
+      "simulated_at",
+      "timestamp"
+    ],
+    "domain": "Collections",
+    "trigger": "Renegotiation terms simulated and ready for review",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "notification_requested",
+    "producer": "notification-service",
+    "consumers": [
+      "notification-service"
+    ],
+    "description": "Emitted internally when any service requests a notification to be sent to a customer or operator.",
+    "payload_fields": [
+      "notification_id",
+      "recipient_id",
+      "channel",
+      "template_id",
+      "template_params",
+      "priority",
+      "timestamp"
+    ],
+    "domain": "Notifications",
+    "trigger": "Any service requests a notification",
+    "is_pii": true,
+    "async_pattern": "sqs-direct"
+  },
+  {
+    "event_name": "notification_sent",
+    "producer": "notification-service",
+    "consumers": [
+      "audit-service"
+    ],
+    "description": "Emitted when a notification is successfully delivered to the customer via the selected channel (email, SMS, push, WhatsApp).",
+    "payload_fields": [
+      "notification_id",
+      "recipient_id",
+      "channel",
+      "delivery_status",
+      "provider_message_id",
+      "sent_at",
+      "timestamp"
+    ],
+    "domain": "Notifications",
+    "trigger": "Notification delivered to customer via channel",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "case_created",
+    "producer": "case-management-service",
+    "consumers": [
+      "audit-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a manual review case is created for issues requiring human intervention such as fraud flags or registry failures.",
+    "payload_fields": [
+      "case_id",
+      "proposal_id",
+      "customer_id",
+      "case_type",
+      "priority",
+      "assigned_team",
+      "created_at",
+      "timestamp"
+    ],
+    "domain": "Backoffice",
+    "trigger": "Manual review case created for an issue",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "case_resolved",
+    "producer": "case-management-service",
+    "consumers": [
+      "audit-service",
+      "notification-service"
+    ],
+    "description": "Emitted when a manual review case is resolved by a backoffice operator, including the resolution outcome.",
+    "payload_fields": [
+      "case_id",
+      "proposal_id",
+      "resolution",
+      "resolution_notes",
+      "resolved_by",
+      "resolved_at",
+      "timestamp"
+    ],
+    "domain": "Backoffice",
+    "trigger": "Manual review case resolved by operator",
+    "is_pii": false,
+    "async_pattern": "sns-sqs"
+  },
+  {
+    "event_name": "audit_event_logged",
+    "producer": "audit-service",
+    "consumers": [],
+    "description": "Emitted when any auditable action is logged, providing an immutable record for compliance and traceability.",
+    "payload_fields": [
+      "audit_id",
+      "source_event",
+      "actor_id",
+      "actor_type",
+      "action",
+      "resource_id",
+      "metadata",
+      "timestamp"
+    ],
+    "domain": "Platform",
+    "trigger": "Any auditable action occurs in the system",
+    "is_pii": false,
+    "async_pattern": "sqs-direct"
+  }
+]

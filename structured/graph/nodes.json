@@ -1,0 +1,1987 @@
+[
+  {
+    "id": "svc-lead-intake-service",
+    "type": "Service",
+    "properties": {
+      "name": "lead-intake-service",
+      "domain": "Onboarding",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-eligibility-service",
+    "type": "Service",
+    "properties": {
+      "name": "eligibility-service",
+      "domain": "Onboarding",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-customer-service",
+    "type": "Service",
+    "properties": {
+      "name": "customer-service",
+      "domain": "Onboarding",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-proposal-service",
+    "type": "Service",
+    "properties": {
+      "name": "proposal-service",
+      "domain": "Onboarding",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-document-upload-service",
+    "type": "Service",
+    "properties": {
+      "name": "document-upload-service",
+      "domain": "Document Management",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-ocr-worker",
+    "type": "Service",
+    "properties": {
+      "name": "ocr-worker",
+      "domain": "Document Management",
+      "service_type": "Worker",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-document-classifier-service",
+    "type": "Service",
+    "properties": {
+      "name": "document-classifier-service",
+      "domain": "Document Management",
+      "service_type": "Worker",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-document-validation-service",
+    "type": "Service",
+    "properties": {
+      "name": "document-validation-service",
+      "domain": "Document Management",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-document-store-service",
+    "type": "Service",
+    "properties": {
+      "name": "document-store-service",
+      "domain": "Document Management",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-biometrics-capture-service",
+    "type": "Service",
+    "properties": {
+      "name": "biometrics-capture-service",
+      "domain": "Biometrics",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-liveness-worker",
+    "type": "Service",
+    "properties": {
+      "name": "liveness-worker",
+      "domain": "Biometrics",
+      "service_type": "Worker",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-face-match-service",
+    "type": "Service",
+    "properties": {
+      "name": "face-match-service",
+      "domain": "Biometrics",
+      "service_type": "REST API",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-device-fingerprint-service",
+    "type": "Service",
+    "properties": {
+      "name": "device-fingerprint-service",
+      "domain": "Biometrics",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "medium",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-watchlist-service",
+    "type": "Service",
+    "properties": {
+      "name": "watchlist-service",
+      "domain": "Fraud Prevention",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-fraud-bureau-integration",
+    "type": "Service",
+    "properties": {
+      "name": "fraud-bureau-integration",
+      "domain": "Fraud Prevention",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-fraud-scoring-service",
+    "type": "Service",
+    "properties": {
+      "name": "fraud-scoring-service",
+      "domain": "Fraud Prevention",
+      "service_type": "REST API",
+      "language": "Python",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-fraud-decision-service",
+    "type": "Service",
+    "properties": {
+      "name": "fraud-decision-service",
+      "domain": "Fraud Prevention",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-credit-bureau-integration",
+    "type": "Service",
+    "properties": {
+      "name": "credit-bureau-integration",
+      "domain": "Credit Analysis",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-income-verification-service",
+    "type": "Service",
+    "properties": {
+      "name": "income-verification-service",
+      "domain": "Credit Analysis",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-credit-scoring-engine",
+    "type": "Service",
+    "properties": {
+      "name": "credit-scoring-engine",
+      "domain": "Credit Analysis",
+      "service_type": "REST API",
+      "language": "Python",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-credit-policy-service",
+    "type": "Service",
+    "properties": {
+      "name": "credit-policy-service",
+      "domain": "Credit Analysis",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-credit-decision-service",
+    "type": "Service",
+    "properties": {
+      "name": "credit-decision-service",
+      "domain": "Credit Analysis",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-appraisal-orchestrator-service",
+    "type": "Service",
+    "properties": {
+      "name": "appraisal-orchestrator-service",
+      "domain": "Appraisal",
+      "service_type": "Orchestrator",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-vehicle-appraisal-service",
+    "type": "Service",
+    "properties": {
+      "name": "vehicle-appraisal-service",
+      "domain": "Appraisal",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-property-appraisal-service",
+    "type": "Service",
+    "properties": {
+      "name": "property-appraisal-service",
+      "domain": "Appraisal",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-appraisal-report-service",
+    "type": "Service",
+    "properties": {
+      "name": "appraisal-report-service",
+      "domain": "Appraisal",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-contract-generation-service",
+    "type": "Service",
+    "properties": {
+      "name": "contract-generation-service",
+      "domain": "Contract",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-compliance-check-service",
+    "type": "Service",
+    "properties": {
+      "name": "compliance-check-service",
+      "domain": "Contract",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-digital-signature-service",
+    "type": "Service",
+    "properties": {
+      "name": "digital-signature-service",
+      "domain": "Contract",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-contract-store-service",
+    "type": "Service",
+    "properties": {
+      "name": "contract-store-service",
+      "domain": "Contract",
+      "service_type": "REST API",
+      "language": "Kotlin",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-registry-orchestrator-service",
+    "type": "Service",
+    "properties": {
+      "name": "registry-orchestrator-service",
+      "domain": "Registry",
+      "service_type": "Orchestrator",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-detran-integration-service",
+    "type": "Service",
+    "properties": {
+      "name": "detran-integration-service",
+      "domain": "Registry",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-cartorio-integration-service",
+    "type": "Service",
+    "properties": {
+      "name": "cartorio-integration-service",
+      "domain": "Registry",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-registry-tracker-service",
+    "type": "Service",
+    "properties": {
+      "name": "registry-tracker-service",
+      "domain": "Registry",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-disbursement-service",
+    "type": "Service",
+    "properties": {
+      "name": "disbursement-service",
+      "domain": "Disbursement",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-bank-transfer-integration",
+    "type": "Service",
+    "properties": {
+      "name": "bank-transfer-integration",
+      "domain": "Disbursement",
+      "service_type": "Integration",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-payment-confirmation-service",
+    "type": "Service",
+    "properties": {
+      "name": "payment-confirmation-service",
+      "domain": "Disbursement",
+      "service_type": "Worker",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-billing-service",
+    "type": "Service",
+    "properties": {
+      "name": "billing-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-dunning-service",
+    "type": "Service",
+    "properties": {
+      "name": "dunning-service",
+      "domain": "Collections",
+      "service_type": "Worker",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-collections-contact-service",
+    "type": "Service",
+    "properties": {
+      "name": "collections-contact-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-negotiation-engine-service",
+    "type": "Service",
+    "properties": {
+      "name": "negotiation-engine-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-legal-collections-service",
+    "type": "Service",
+    "properties": {
+      "name": "legal-collections-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-renegotiation-eligibility-service",
+    "type": "Service",
+    "properties": {
+      "name": "renegotiation-eligibility-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-renegotiation-simulation-service",
+    "type": "Service",
+    "properties": {
+      "name": "renegotiation-simulation-service",
+      "domain": "Collections",
+      "service_type": "REST API",
+      "language": "Python",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-customer-portal-bff",
+    "type": "Service",
+    "properties": {
+      "name": "customer-portal-bff",
+      "domain": "Customer Portal",
+      "service_type": "BFF",
+      "language": "TypeScript",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-backoffice-bff",
+    "type": "Service",
+    "properties": {
+      "name": "backoffice-bff",
+      "domain": "Backoffice",
+      "service_type": "BFF",
+      "language": "TypeScript",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-case-management-service",
+    "type": "Service",
+    "properties": {
+      "name": "case-management-service",
+      "domain": "Backoffice",
+      "service_type": "REST API",
+      "language": "Java",
+      "criticality": "medium",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-audit-service",
+    "type": "Service",
+    "properties": {
+      "name": "audit-service",
+      "domain": "Backoffice",
+      "service_type": "Worker",
+      "language": "Go",
+      "criticality": "high",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-notification-service",
+    "type": "Service",
+    "properties": {
+      "name": "notification-service",
+      "domain": "Notifications",
+      "service_type": "Worker",
+      "language": "Go",
+      "criticality": "medium",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-notification-template-service",
+    "type": "Service",
+    "properties": {
+      "name": "notification-template-service",
+      "domain": "Notifications",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "low",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-auth-service",
+    "type": "Service",
+    "properties": {
+      "name": "auth-service",
+      "domain": "Platform",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "critical",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "svc-feature-flag-service",
+    "type": "Service",
+    "properties": {
+      "name": "feature-flag-service",
+      "domain": "Platform",
+      "service_type": "REST API",
+      "language": "Go",
+      "criticality": "medium",
+      "lifecycle_status": "GA"
+    }
+  },
+  {
+    "id": "domain-onboarding",
+    "type": "Domain",
+    "properties": {
+      "name": "Onboarding",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-document-management",
+    "type": "Domain",
+    "properties": {
+      "name": "Document Management",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-biometrics",
+    "type": "Domain",
+    "properties": {
+      "name": "Biometrics",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-credit-analysis",
+    "type": "Domain",
+    "properties": {
+      "name": "Credit Analysis",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-fraud-prevention",
+    "type": "Domain",
+    "properties": {
+      "name": "Fraud Prevention",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-appraisal",
+    "type": "Domain",
+    "properties": {
+      "name": "Appraisal",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-contract",
+    "type": "Domain",
+    "properties": {
+      "name": "Contract",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-registry",
+    "type": "Domain",
+    "properties": {
+      "name": "Registry",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-disbursement",
+    "type": "Domain",
+    "properties": {
+      "name": "Disbursement",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-collections",
+    "type": "Domain",
+    "properties": {
+      "name": "Collections",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "domain-customer-portal",
+    "type": "Domain",
+    "properties": {
+      "name": "Customer Portal",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-backoffice",
+    "type": "Domain",
+    "properties": {
+      "name": "Backoffice",
+      "criticality": "high"
+    }
+  },
+  {
+    "id": "domain-notifications",
+    "type": "Domain",
+    "properties": {
+      "name": "Notifications",
+      "criticality": "medium"
+    }
+  },
+  {
+    "id": "domain-analytics",
+    "type": "Domain",
+    "properties": {
+      "name": "Analytics",
+      "criticality": "medium"
+    }
+  },
+  {
+    "id": "domain-platform",
+    "type": "Domain",
+    "properties": {
+      "name": "Platform",
+      "criticality": "critical"
+    }
+  },
+  {
+    "id": "team-team-onboarding",
+    "type": "Team",
+    "properties": {
+      "name": "team-onboarding",
+      "team_id": "team-onboarding",
+      "team_size": 8
+    }
+  },
+  {
+    "id": "team-team-documents",
+    "type": "Team",
+    "properties": {
+      "name": "team-documents",
+      "team_id": "team-documents",
+      "team_size": 7
+    }
+  },
+  {
+    "id": "team-team-identity",
+    "type": "Team",
+    "properties": {
+      "name": "team-identity",
+      "team_id": "team-identity",
+      "team_size": 5
+    }
+  },
+  {
+    "id": "team-team-fraud",
+    "type": "Team",
+    "properties": {
+      "name": "team-fraud",
+      "team_id": "team-fraud",
+      "team_size": 6
+    }
+  },
+  {
+    "id": "team-team-credit",
+    "type": "Team",
+    "properties": {
+      "name": "team-credit",
+      "team_id": "team-credit",
+      "team_size": 8
+    }
+  },
+  {
+    "id": "team-team-appraisal",
+    "type": "Team",
+    "properties": {
+      "name": "team-appraisal",
+      "team_id": "team-appraisal",
+      "team_size": 6
+    }
+  },
+  {
+    "id": "team-team-contracts",
+    "type": "Team",
+    "properties": {
+      "name": "team-contracts",
+      "team_id": "team-contracts",
+      "team_size": 7
+    }
+  },
+  {
+    "id": "team-team-registry",
+    "type": "Team",
+    "properties": {
+      "name": "team-registry",
+      "team_id": "team-registry",
+      "team_size": 5
+    }
+  },
+  {
+    "id": "team-team-disbursement",
+    "type": "Team",
+    "properties": {
+      "name": "team-disbursement",
+      "team_id": "team-disbursement",
+      "team_size": 5
+    }
+  },
+  {
+    "id": "team-team-collections",
+    "type": "Team",
+    "properties": {
+      "name": "team-collections",
+      "team_id": "team-collections",
+      "team_size": 9
+    }
+  },
+  {
+    "id": "team-team-portal",
+    "type": "Team",
+    "properties": {
+      "name": "team-portal",
+      "team_id": "team-portal",
+      "team_size": 4
+    }
+  },
+  {
+    "id": "team-team-backoffice",
+    "type": "Team",
+    "properties": {
+      "name": "team-backoffice",
+      "team_id": "team-backoffice",
+      "team_size": 5
+    }
+  },
+  {
+    "id": "team-team-notifications",
+    "type": "Team",
+    "properties": {
+      "name": "team-notifications",
+      "team_id": "team-notifications",
+      "team_size": 4
+    }
+  },
+  {
+    "id": "team-team-data",
+    "type": "Team",
+    "properties": {
+      "name": "team-data",
+      "team_id": "team-data",
+      "team_size": 6
+    }
+  },
+  {
+    "id": "team-team-platform",
+    "type": "Team",
+    "properties": {
+      "name": "team-platform",
+      "team_id": "team-platform",
+      "team_size": 7
+    }
+  },
+  {
+    "id": "db-lead_intake_db",
+    "type": "Database",
+    "properties": {
+      "name": "lead_intake_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-eligibility_db",
+    "type": "Database",
+    "properties": {
+      "name": "eligibility_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-customer_db",
+    "type": "Database",
+    "properties": {
+      "name": "customer_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-proposal_db",
+    "type": "Database",
+    "properties": {
+      "name": "proposal_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-document_meta_db",
+    "type": "Database",
+    "properties": {
+      "name": "document_meta_db",
+      "db_type": "MongoDB",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-document_files",
+    "type": "Database",
+    "properties": {
+      "name": "document_files",
+      "db_type": "S3",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-document_classification_db",
+    "type": "Database",
+    "properties": {
+      "name": "document_classification_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-document_validation_db",
+    "type": "Database",
+    "properties": {
+      "name": "document_validation_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-biometrics_db",
+    "type": "Database",
+    "properties": {
+      "name": "biometrics_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-biometrics_cache",
+    "type": "Database",
+    "properties": {
+      "name": "biometrics_cache",
+      "db_type": "Redis",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-device_fingerprint_cache",
+    "type": "Database",
+    "properties": {
+      "name": "device_fingerprint_cache",
+      "db_type": "Redis",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-watchlist_db",
+    "type": "Database",
+    "properties": {
+      "name": "watchlist_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-fraud_scores_db",
+    "type": "Database",
+    "properties": {
+      "name": "fraud_scores_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-fraud_decisions_db",
+    "type": "Database",
+    "properties": {
+      "name": "fraud_decisions_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-credit_bureau_cache",
+    "type": "Database",
+    "properties": {
+      "name": "credit_bureau_cache",
+      "db_type": "Redis",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-income_db",
+    "type": "Database",
+    "properties": {
+      "name": "income_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-credit_scores_db",
+    "type": "Database",
+    "properties": {
+      "name": "credit_scores_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-credit_policy_db",
+    "type": "Database",
+    "properties": {
+      "name": "credit_policy_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-credit_decisions_db",
+    "type": "Database",
+    "properties": {
+      "name": "credit_decisions_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-appraisal_db",
+    "type": "Database",
+    "properties": {
+      "name": "appraisal_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-appraisal_reports",
+    "type": "Database",
+    "properties": {
+      "name": "appraisal_reports",
+      "db_type": "S3",
+      "contains_pii": false,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-appraisal_report_db",
+    "type": "Database",
+    "properties": {
+      "name": "appraisal_report_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-contract_db",
+    "type": "Database",
+    "properties": {
+      "name": "contract_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-contract_files",
+    "type": "Database",
+    "properties": {
+      "name": "contract_files",
+      "db_type": "MongoDB+S3",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-signature_db",
+    "type": "Database",
+    "properties": {
+      "name": "signature_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-registry_db",
+    "type": "Database",
+    "properties": {
+      "name": "registry_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-disbursement_db",
+    "type": "Database",
+    "properties": {
+      "name": "disbursement_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-billing_db",
+    "type": "Database",
+    "properties": {
+      "name": "billing_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-dunning_db",
+    "type": "Database",
+    "properties": {
+      "name": "dunning_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-collections_db",
+    "type": "Database",
+    "properties": {
+      "name": "collections_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-legal_collections_db",
+    "type": "Database",
+    "properties": {
+      "name": "legal_collections_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-renegotiation_db",
+    "type": "Database",
+    "properties": {
+      "name": "renegotiation_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": true
+    }
+  },
+  {
+    "id": "db-portal_session_cache",
+    "type": "Database",
+    "properties": {
+      "name": "portal_session_cache",
+      "db_type": "Redis",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-backoffice_session_cache",
+    "type": "Database",
+    "properties": {
+      "name": "backoffice_session_cache",
+      "db_type": "Redis",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-case_management_db",
+    "type": "Database",
+    "properties": {
+      "name": "case_management_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-audit_log_store",
+    "type": "Database",
+    "properties": {
+      "name": "audit_log_store",
+      "db_type": "Elasticsearch",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-notification_db",
+    "type": "Database",
+    "properties": {
+      "name": "notification_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-notification_templates_db",
+    "type": "Database",
+    "properties": {
+      "name": "notification_templates_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-auth_db",
+    "type": "Database",
+    "properties": {
+      "name": "auth_db",
+      "db_type": "PostgreSQL",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-auth_session_cache",
+    "type": "Database",
+    "properties": {
+      "name": "auth_session_cache",
+      "db_type": "Redis",
+      "contains_pii": true,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "db-feature_flags_cache",
+    "type": "Database",
+    "properties": {
+      "name": "feature_flags_cache",
+      "db_type": "Redis",
+      "contains_pii": false,
+      "contains_financial_data": false
+    }
+  },
+  {
+    "id": "prod-autocredit",
+    "type": "Product",
+    "properties": {
+      "name": "AutoCredit",
+      "collateral_type": "Vehicle"
+    }
+  },
+  {
+    "id": "prod-homeequity",
+    "type": "Product",
+    "properties": {
+      "name": "HomeEquity",
+      "collateral_type": "Real estate"
+    }
+  },
+  {
+    "id": "prod-autorefi",
+    "type": "Product",
+    "properties": {
+      "name": "AutoRefi",
+      "collateral_type": "Vehicle"
+    }
+  },
+  {
+    "id": "prod-homerefi",
+    "type": "Product",
+    "properties": {
+      "name": "HomeRefi",
+      "collateral_type": "Real estate"
+    }
+  },
+  {
+    "id": "prod-topup",
+    "type": "Product",
+    "properties": {
+      "name": "TopUp",
+      "collateral_type": "Vehicle or Real estate"
+    }
+  },
+  {
+    "id": "prod-renegotiation",
+    "type": "Product",
+    "properties": {
+      "name": "Renegotiation",
+      "collateral_type": "Vehicle or Real estate"
+    }
+  },
+  {
+    "id": "partner-servicosbureau",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "ServiçosBureau",
+      "partner_type": "credit bureau",
+      "integration_description": "Provides credit history and score data for Brazilian consumers"
+    }
+  },
+  {
+    "id": "partner-clearcheck",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "ClearCheck",
+      "partner_type": "fraud bureau",
+      "integration_description": "Real-time fraud signals and device intelligence"
+    }
+  },
+  {
+    "id": "partner-docusign-br",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "DocuSign-BR",
+      "partner_type": "digital signature provider",
+      "integration_description": "Digital signature and document authentication compliant with ICP-Brasil"
+    }
+  },
+  {
+    "id": "partner-detran-api",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "DETRAN-API",
+      "partner_type": "government vehicle registry",
+      "integration_description": "Vehicle lien registration with state transit departments"
+    }
+  },
+  {
+    "id": "partner-cartorio-digital",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "Cartório-Digital",
+      "partner_type": "government property registry",
+      "integration_description": "Digital property lien registration with notary offices"
+    }
+  },
+  {
+    "id": "partner-bancoparceiro",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "BancoParceiro",
+      "partner_type": "banking partner",
+      "integration_description": "Bank transfer and payment processing via SPB/PIX"
+    }
+  },
+  {
+    "id": "partner-fipe-api",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "FIPE-API",
+      "partner_type": "vehicle pricing reference",
+      "integration_description": "Official Brazilian vehicle pricing table for appraisals"
+    }
+  },
+  {
+    "id": "partner-inspecaoexpress",
+    "type": "ExternalPartner",
+    "properties": {
+      "name": "InspecaoExpress",
+      "partner_type": "property inspection provider",
+      "integration_description": "On-site property inspection and valuation services"
+    }
+  },
+  {
+    "id": "evt-lead_created",
+    "type": "Event",
+    "properties": {
+      "name": "lead_created",
+      "domain": "Onboarding",
+      "description": "A new lead has been created in the system"
+    }
+  },
+  {
+    "id": "evt-lead_qualified",
+    "type": "Event",
+    "properties": {
+      "name": "lead_qualified",
+      "domain": "Onboarding",
+      "description": "A lead has passed initial qualification criteria"
+    }
+  },
+  {
+    "id": "evt-proposal_started",
+    "type": "Event",
+    "properties": {
+      "name": "proposal_started",
+      "domain": "Onboarding",
+      "description": "A credit proposal has been initiated"
+    }
+  },
+  {
+    "id": "evt-proposal_updated",
+    "type": "Event",
+    "properties": {
+      "name": "proposal_updated",
+      "domain": "Onboarding",
+      "description": "An existing proposal has been updated with new information"
+    }
+  },
+  {
+    "id": "evt-documents_requested",
+    "type": "Event",
+    "properties": {
+      "name": "documents_requested",
+      "domain": "Document Management",
+      "description": "Documents have been requested from the applicant"
+    }
+  },
+  {
+    "id": "evt-documents_uploaded",
+    "type": "Event",
+    "properties": {
+      "name": "documents_uploaded",
+      "domain": "Document Management",
+      "description": "Documents have been uploaded by the applicant"
+    }
+  },
+  {
+    "id": "evt-documents_classified",
+    "type": "Event",
+    "properties": {
+      "name": "documents_classified",
+      "domain": "Document Management",
+      "description": "Uploaded documents have been classified by type"
+    }
+  },
+  {
+    "id": "evt-documents_validated",
+    "type": "Event",
+    "properties": {
+      "name": "documents_validated",
+      "domain": "Document Management",
+      "description": "Documents have passed validation checks"
+    }
+  },
+  {
+    "id": "evt-documents_submitted",
+    "type": "Event",
+    "properties": {
+      "name": "documents_submitted",
+      "domain": "Document Management",
+      "description": "All required documents have been submitted and validated"
+    }
+  },
+  {
+    "id": "evt-biometrics_requested",
+    "type": "Event",
+    "properties": {
+      "name": "biometrics_requested",
+      "domain": "Biometrics",
+      "description": "Biometric capture has been requested"
+    }
+  },
+  {
+    "id": "evt-biometrics_captured",
+    "type": "Event",
+    "properties": {
+      "name": "biometrics_captured",
+      "domain": "Biometrics",
+      "description": "Biometric data has been successfully captured"
+    }
+  },
+  {
+    "id": "evt-liveness_verified",
+    "type": "Event",
+    "properties": {
+      "name": "liveness_verified",
+      "domain": "Biometrics",
+      "description": "Liveness check has been completed successfully"
+    }
+  },
+  {
+    "id": "evt-face_match_completed",
+    "type": "Event",
+    "properties": {
+      "name": "face_match_completed",
+      "domain": "Biometrics",
+      "description": "Face match against document photo has been completed"
+    }
+  },
+  {
+    "id": "evt-biometrics_validated",
+    "type": "Event",
+    "properties": {
+      "name": "biometrics_validated",
+      "domain": "Biometrics",
+      "description": "All biometric checks have passed validation"
+    }
+  },
+  {
+    "id": "evt-fraud_check_started",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_check_started",
+      "domain": "Fraud Prevention",
+      "description": "Fraud prevention analysis has been initiated"
+    }
+  },
+  {
+    "id": "evt-device_fingerprint_checked",
+    "type": "Event",
+    "properties": {
+      "name": "device_fingerprint_checked",
+      "domain": "Fraud Prevention",
+      "description": "Device fingerprint analysis completed"
+    }
+  },
+  {
+    "id": "evt-watchlist_checked",
+    "type": "Event",
+    "properties": {
+      "name": "watchlist_checked",
+      "domain": "Fraud Prevention",
+      "description": "Customer checked against watchlists and sanctions lists"
+    }
+  },
+  {
+    "id": "evt-fraud_bureau_checked",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_bureau_checked",
+      "domain": "Fraud Prevention",
+      "description": "Fraud bureau data has been fetched and analyzed"
+    }
+  },
+  {
+    "id": "evt-fraud_scored",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_scored",
+      "domain": "Fraud Prevention",
+      "description": "Fraud risk score has been calculated"
+    }
+  },
+  {
+    "id": "evt-fraud_decision_made",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_decision_made",
+      "domain": "Fraud Prevention",
+      "description": "Final fraud prevention decision has been rendered"
+    }
+  },
+  {
+    "id": "evt-fraud_cleared",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_cleared",
+      "domain": "Fraud Prevention",
+      "description": "Application cleared of fraud concerns"
+    }
+  },
+  {
+    "id": "evt-fraud_flagged",
+    "type": "Event",
+    "properties": {
+      "name": "fraud_flagged",
+      "domain": "Fraud Prevention",
+      "description": "Application flagged for potential fraud"
+    }
+  },
+  {
+    "id": "evt-credit_check_started",
+    "type": "Event",
+    "properties": {
+      "name": "credit_check_started",
+      "domain": "Credit Analysis",
+      "description": "Credit analysis process has been initiated"
+    }
+  },
+  {
+    "id": "evt-bureau_data_fetched",
+    "type": "Event",
+    "properties": {
+      "name": "bureau_data_fetched",
+      "domain": "Credit Analysis",
+      "description": "Credit bureau data has been retrieved"
+    }
+  },
+  {
+    "id": "evt-income_verified",
+    "type": "Event",
+    "properties": {
+      "name": "income_verified",
+      "domain": "Credit Analysis",
+      "description": "Applicant income has been verified"
+    }
+  },
+  {
+    "id": "evt-credit_scored",
+    "type": "Event",
+    "properties": {
+      "name": "credit_scored",
+      "domain": "Credit Analysis",
+      "description": "Credit score has been calculated"
+    }
+  },
+  {
+    "id": "evt-credit_policy_evaluated",
+    "type": "Event",
+    "properties": {
+      "name": "credit_policy_evaluated",
+      "domain": "Credit Analysis",
+      "description": "Credit policy rules have been evaluated"
+    }
+  },
+  {
+    "id": "evt-credit_decision_made",
+    "type": "Event",
+    "properties": {
+      "name": "credit_decision_made",
+      "domain": "Credit Analysis",
+      "description": "Final credit decision has been rendered"
+    }
+  },
+  {
+    "id": "evt-credit_approved",
+    "type": "Event",
+    "properties": {
+      "name": "credit_approved",
+      "domain": "Credit Analysis",
+      "description": "Credit application has been approved"
+    }
+  },
+  {
+    "id": "evt-credit_denied",
+    "type": "Event",
+    "properties": {
+      "name": "credit_denied",
+      "domain": "Credit Analysis",
+      "description": "Credit application has been denied"
+    }
+  },
+  {
+    "id": "evt-appraisal_requested",
+    "type": "Event",
+    "properties": {
+      "name": "appraisal_requested",
+      "domain": "Appraisal",
+      "description": "Collateral appraisal has been requested"
+    }
+  },
+  {
+    "id": "evt-vehicle_appraised",
+    "type": "Event",
+    "properties": {
+      "name": "vehicle_appraised",
+      "domain": "Appraisal",
+      "description": "Vehicle appraisal has been completed"
+    }
+  },
+  {
+    "id": "evt-property_appraised",
+    "type": "Event",
+    "properties": {
+      "name": "property_appraised",
+      "domain": "Appraisal",
+      "description": "Property appraisal has been completed"
+    }
+  },
+  {
+    "id": "evt-appraisal_completed",
+    "type": "Event",
+    "properties": {
+      "name": "appraisal_completed",
+      "domain": "Appraisal",
+      "description": "All appraisal processes have been completed"
+    }
+  },
+  {
+    "id": "evt-contract_generation_requested",
+    "type": "Event",
+    "properties": {
+      "name": "contract_generation_requested",
+      "domain": "Contract",
+      "description": "Contract generation has been requested"
+    }
+  },
+  {
+    "id": "evt-contract_generated",
+    "type": "Event",
+    "properties": {
+      "name": "contract_generated",
+      "domain": "Contract",
+      "description": "Contract document has been generated"
+    }
+  },
+  {
+    "id": "evt-compliance_checked",
+    "type": "Event",
+    "properties": {
+      "name": "compliance_checked",
+      "domain": "Contract",
+      "description": "Compliance checks on contract have been completed"
+    }
+  },
+  {
+    "id": "evt-signature_requested",
+    "type": "Event",
+    "properties": {
+      "name": "signature_requested",
+      "domain": "Contract",
+      "description": "Digital signature has been requested"
+    }
+  },
+  {
+    "id": "evt-contract_signed",
+    "type": "Event",
+    "properties": {
+      "name": "contract_signed",
+      "domain": "Contract",
+      "description": "Contract has been digitally signed by all parties"
+    }
+  },
+  {
+    "id": "evt-registry_requested",
+    "type": "Event",
+    "properties": {
+      "name": "registry_requested",
+      "domain": "Registry",
+      "description": "Lien registration has been requested"
+    }
+  },
+  {
+    "id": "evt-detran_lien_registered",
+    "type": "Event",
+    "properties": {
+      "name": "detran_lien_registered",
+      "domain": "Registry",
+      "description": "Vehicle lien has been registered with DETRAN"
+    }
+  },
+  {
+    "id": "evt-cartorio_lien_registered",
+    "type": "Event",
+    "properties": {
+      "name": "cartorio_lien_registered",
+      "domain": "Registry",
+      "description": "Property lien has been registered with Cartório"
+    }
+  },
+  {
+    "id": "evt-registry_completed",
+    "type": "Event",
+    "properties": {
+      "name": "registry_completed",
+      "domain": "Registry",
+      "description": "All lien registrations have been completed"
+    }
+  },
+  {
+    "id": "evt-registry_failed",
+    "type": "Event",
+    "properties": {
+      "name": "registry_failed",
+      "domain": "Registry",
+      "description": "Lien registration has failed"
+    }
+  },
+  {
+    "id": "evt-disbursement_requested",
+    "type": "Event",
+    "properties": {
+      "name": "disbursement_requested",
+      "domain": "Disbursement",
+      "description": "Fund disbursement has been requested"
+    }
+  },
+  {
+    "id": "evt-bank_transfer_initiated",
+    "type": "Event",
+    "properties": {
+      "name": "bank_transfer_initiated",
+      "domain": "Disbursement",
+      "description": "Bank transfer has been initiated"
+    }
+  },
+  {
+    "id": "evt-bank_transfer_confirmed",
+    "type": "Event",
+    "properties": {
+      "name": "bank_transfer_confirmed",
+      "domain": "Disbursement",
+      "description": "Bank transfer has been confirmed"
+    }
+  },
+  {
+    "id": "evt-disbursement_done",
+    "type": "Event",
+    "properties": {
+      "name": "disbursement_done",
+      "domain": "Disbursement",
+      "description": "Disbursement has been completed successfully"
+    }
+  },
+  {
+    "id": "evt-installment_created",
+    "type": "Event",
+    "properties": {
+      "name": "installment_created",
+      "domain": "Collections",
+      "description": "A new installment has been created"
+    }
+  },
+  {
+    "id": "evt-installment_due",
+    "type": "Event",
+    "properties": {
+      "name": "installment_due",
+      "domain": "Collections",
+      "description": "An installment is due for payment"
+    }
+  },
+  {
+    "id": "evt-overdue_installment",
+    "type": "Event",
+    "properties": {
+      "name": "overdue_installment",
+      "domain": "Collections",
+      "description": "An installment is overdue"
+    }
+  },
+  {
+    "id": "evt-dunning_started",
+    "type": "Event",
+    "properties": {
+      "name": "dunning_started",
+      "domain": "Collections",
+      "description": "Dunning process has been initiated for overdue payment"
+    }
+  },
+  {
+    "id": "evt-collections_contact_attempted",
+    "type": "Event",
+    "properties": {
+      "name": "collections_contact_attempted",
+      "domain": "Collections",
+      "description": "A collections contact attempt has been made"
+    }
+  },
+  {
+    "id": "evt-negotiation_offered",
+    "type": "Event",
+    "properties": {
+      "name": "negotiation_offered",
+      "domain": "Collections",
+      "description": "A negotiation offer has been made to the customer"
+    }
+  },
+  {
+    "id": "evt-negotiation_accepted",
+    "type": "Event",
+    "properties": {
+      "name": "negotiation_accepted",
+      "domain": "Collections",
+      "description": "Customer has accepted a negotiation offer"
+    }
+  },
+  {
+    "id": "evt-legal_action_started",
+    "type": "Event",
+    "properties": {
+      "name": "legal_action_started",
+      "domain": "Collections",
+      "description": "Legal collections action has been initiated"
+    }
+  },
+  {
+    "id": "evt-renegotiation_requested",
+    "type": "Event",
+    "properties": {
+      "name": "renegotiation_requested",
+      "domain": "Collections",
+      "description": "Customer has requested loan renegotiation"
+    }
+  },
+  {
+    "id": "evt-renegotiation_eligible",
+    "type": "Event",
+    "properties": {
+      "name": "renegotiation_eligible",
+      "domain": "Collections",
+      "description": "Customer is eligible for renegotiation"
+    }
+  },
+  {
+    "id": "evt-renegotiation_simulated",
+    "type": "Event",
+    "properties": {
+      "name": "renegotiation_simulated",
+      "domain": "Collections",
+      "description": "Renegotiation terms have been simulated"
+    }
+  },
+  {
+    "id": "evt-notification_requested",
+    "type": "Event",
+    "properties": {
+      "name": "notification_requested",
+      "domain": "Notifications",
+      "description": "A notification has been requested"
+    }
+  },
+  {
+    "id": "evt-notification_sent",
+    "type": "Event",
+    "properties": {
+      "name": "notification_sent",
+      "domain": "Notifications",
+      "description": "A notification has been sent"
+    }
+  },
+  {
+    "id": "evt-case_created",
+    "type": "Event",
+    "properties": {
+      "name": "case_created",
+      "domain": "Backoffice",
+      "description": "A backoffice case has been created"
+    }
+  },
+  {
+    "id": "evt-case_resolved",
+    "type": "Event",
+    "properties": {
+      "name": "case_resolved",
+      "domain": "Backoffice",
+      "description": "A backoffice case has been resolved"
+    }
+  },
+  {
+    "id": "evt-audit_event_logged",
+    "type": "Event",
+    "properties": {
+      "name": "audit_event_logged",
+      "domain": "Analytics",
+      "description": "An audit event has been logged"
+    }
+  }
+]

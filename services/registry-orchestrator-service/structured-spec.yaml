@@ -1,0 +1,142 @@
+service_id: svc-31
+service_name: registry-orchestrator-service
+domain: Registry
+subdomain: Lien Registration Orchestration
+owner_team: team-registry
+tech_stack:
+  language: Kotlin
+  framework: Spring Boot
+  build_tool: Gradle
+
+summary: >
+  Orchestrates lien registration workflows by routing registration requests
+  to the appropriate registry channel (DETRAN for vehicles, cartório for properties).
+  Implements the Saga pattern to coordinate multi-step registration processes
+  and ensure consistency across distributed registry integrations.
+
+business_objective: >
+  Provide a unified entry point for lien registration, abstracting the complexity
+  of different registry types and ensuring reliable, traceable registration
+  workflows as part of the secured lending process.
+
+responsibilities:
+  - Receive lien registration requests after contract signing
+  - Determine the appropriate registry channel based on collateral type
+  - Route registration to DETRAN or cartório integration services
+  - Manage Saga state for multi-step registration workflows
+  - Track and expose registration request status
+
+entities:
+  - name: RegistrationRequest
+    description: Represents a request to register a lien on a collateral asset
+    attributes:
+      - id (UUID)
+      - contract_id (UUID)
+      - collateral_type (VEHICLE | PROPERTY)
+      - registration_type (RegistrationType)
+      - status (PENDING | ROUTING | ROUTED | COMPLETED | FAILED)
+      - created_at (Instant)
+      - updated_at (Instant)
+
+  - name: RegistrationType
+    description: Enum defining the type of registry channel
+    values:
+      - DETRAN
+      - CARTORIO
+
+  - name: SagaState
+    description: Tracks the state of the registration Saga across services
+    attributes:
+      - id (UUID)
+      - registration_request_id (UUID)
+      - current_step (String)
+      - status (STARTED | IN_PROGRESS | COMPLETED | COMPENSATING | FAILED)
+      - payload (JSONB)
+      - created_at (Instant)
+      - updated_at (Instant)
+
+apis:
+  - method: POST
+    path: /api/v1/registrations
+    description: Create a new lien registration request
+    request_body: RegistrationRequest
+    response: RegistrationRequest (201 Created)
+    auth: Bearer token
+
+  - method: GET
+    path: /api/v1/registrations/{id}
+    description: Retrieve a registration request by ID
+    path_params:
+      - id (UUID)
+    response: RegistrationRequest (200 OK)
+    auth: Bearer token
+
+events:
+  consumes:
+    - event: contract_signed
+      topic: credityflow.contracts
+      description: Triggers a new registration workflow when a contract is signed
+      source: contract-generation-service
+
+  publishes:
+    - event: registry_requested
+      topic: credityflow.registry
+      description: Emitted after routing decision is made, consumed by DETRAN or cartório integration
+
+databases:
+  - name: registry_db
+    type: PostgreSQL
+    schemas:
+      - registry_orchestrator
+    tables:
+      - registration_requests
+      - saga_states
+    migrations: Flyway
+
+dependencies:
+  upstream:
+    - service: contract-generation-service
+      type: event (contract_signed)
+  downstream:
+    - service: detran-integration-service
+      type: event (registry_requested)
+    - service: cartorio-integration-service
+      type: event (registry_requested)
+
+flows:
+  - name: Lien Registration Orchestration
+    steps:
+      - Receive contract_signed event
+      - Create RegistrationRequest and initialize SagaState
+      - Determine collateral type from contract data
+      - Route to DETRAN or cartório by publishing registry_requested
+      - Update SagaState as downstream events are received
+
+observability:
+  health_check: /actuator/health
+  metrics_endpoint: /actuator/prometheus
+  key_metrics:
+    - registration_requests_total (counter, by type and status)
+    - saga_duration_seconds (histogram)
+    - routing_decisions_total (counter, by channel)
+  logging:
+    format: JSON (structured)
+    correlation: trace_id, span_id, registration_id
+  alerts:
+    - name: saga_stuck
+      condition: SagaState IN_PROGRESS for > 30 minutes
+      severity: warning
+    - name: high_failure_rate
+      condition: registration failure rate > 5% in 15 min
+      severity: critical
+
+risks_and_limitations:
+  - Saga compensation logic must be carefully tested to avoid inconsistent states
+  - Routing logic depends on accurate collateral type data from upstream
+  - If downstream services are unavailable, registrations will queue in Kafka
+
+related_documents:
+  - title: CredityFlow Registry Domain Overview
+    link: /docs/domains/registry.md
+  - title: Saga Pattern Design Decision
+    link: /docs/adrs/adr-registry-saga.md

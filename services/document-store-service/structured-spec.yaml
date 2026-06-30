@@ -1,0 +1,119 @@
+service_id: svc-07
+service_name: document-store-service
+domain: Document Management
+subdomain: Document Storage
+owner_team: team-documents
+summary: >
+  Final storage layer for validated documents. Manages document lifecycle,
+  versioning, and provides read access to validated documents for downstream
+  services and underwriters.
+business_objective: >
+  Maintain an authoritative, auditable repository of all validated documents
+  associated with loan proposals, supporting regulatory retention requirements
+  and efficient retrieval during underwriting and post-origination reviews.
+responsibilities:
+  - Receive validated documents and persist final versions
+  - Manage document versioning when re-uploads occur
+  - Provide read APIs for fetching individual documents or all validated documents for a proposal
+  - Enforce retention policies aligned with regulatory requirements
+  - Publish events when documents are submitted to the proposal workflow
+
+entities:
+  - name: StoredDocument
+    description: >
+      Represents a validated document in its final form. Contains references
+      to the S3 object, proposal_id, document category, validation result ID,
+      and version number.
+  - name: DocumentVersion
+    description: >
+      Tracks version history for a document within a proposal. Each re-upload
+      creates a new version while preserving previous versions for audit.
+
+apis:
+  - method: GET
+    path: /api/v1/documents/{id}
+    description: >
+      Retrieve a stored document by ID, including metadata and a pre-signed
+      S3 URL for file download.
+  - method: GET
+    path: /api/v1/proposals/{id}/documents/validated
+    description: >
+      List all validated documents for a given proposal. Returns metadata
+      for each document with download URLs.
+
+events:
+  publishes:
+    - event_name: documents_submitted
+      description: >
+        Emitted when all required validated documents for a proposal are
+        stored and ready for underwriting review.
+  consumes:
+    - event_name: documents_validated
+      description: >
+        Triggers final storage of a validated document. Payload includes
+        document_id, validation result, and proposal_id.
+
+databases:
+  - name: document_meta_db
+    type: MongoDB
+    purpose: >
+      Stores document metadata, version history, and retention status.
+      Shared logical database with document-upload-service but uses
+      separate collections.
+  - name: document_files
+    type: S3
+    purpose: >
+      Final storage bucket for validated documents. Separate from upload
+      bucket with stricter access policies. Versioning and lifecycle
+      policies enforce 10-year retention.
+
+dependencies:
+  - service_name: document-validation-service
+    type: async
+    purpose: Receives documents_validated events to trigger final storage.
+  - service_name: document-upload-service
+    type: sync
+    purpose: Reads original file from upload S3 bucket to copy into final storage.
+
+flows:
+  - name: Document Final Storage
+    description: Store a validated document in its final form.
+    steps:
+      - Receive documents_validated event
+      - Fetch document metadata from document-upload-service
+      - Copy file from upload S3 bucket to final storage bucket
+      - Create StoredDocument record with version tracking
+      - Check if all required documents for the proposal are now stored
+      - If complete, publish documents_submitted event
+  - name: Document Retrieval
+    description: Downstream service or underwriter fetches validated documents.
+    steps:
+      - Receive GET request with document ID or proposal ID
+      - Query MongoDB for metadata
+      - Generate pre-signed S3 URL (15 min expiry)
+      - Return metadata and download URL
+
+observability:
+  metrics:
+    - documents_stored_total (counter, by category)
+    - document_retrieval_total (counter, by caller_service)
+    - s3_copy_duration_seconds (histogram)
+    - proposal_document_completeness_ratio (gauge)
+  alerts:
+    - S3 copy failure rate > 1%
+    - Document retrieval latency p99 > 5 seconds
+    - Proposals with incomplete documents for > 72 hours
+  dashboards:
+    - Document Store Overview (volume, completeness, retrieval patterns)
+    - Retention and Lifecycle (document age distribution, upcoming expirations)
+
+risks_and_limitations:
+  - Contains PII (identity documents with photos and personal data)
+  - S3 cross-bucket copy adds latency and potential failure point
+  - Shared MongoDB instance with document-upload-service could cause contention
+  - No full-text search capability on stored document content
+  - Retention policy enforcement is based on S3 lifecycle rules, not application logic
+
+related_documents:
+  - README.md
+  - architecture.md

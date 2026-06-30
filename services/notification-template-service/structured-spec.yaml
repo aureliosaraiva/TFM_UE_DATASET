@@ -1,0 +1,102 @@
+service_id: svc-50
+service_name: notification-template-service
+domain: Notifications
+subdomain: Template Management
+owner_team: team-notifications
+tech_stack: Kotlin / Spring Boot
+summary: >
+  Manages the lifecycle of notification templates used across all channels.
+  Supports versioning, variable substitution, and on-demand rendering so that
+  notification content can be updated independently of application deployments.
+business_objective: >
+  Decouple notification content from delivery logic, enabling product and
+  compliance teams to iterate on messaging without code changes or deployments.
+
+responsibilities:
+  - Store and version notification templates for all channels
+  - Define and validate template variables and their data types
+  - Render templates with provided variable maps, producing channel-ready content
+  - Support draft/published lifecycle for safe content rollouts
+  - Expose CRUD and render APIs consumed by notification-service
+
+entities:
+  - name: NotificationTemplate
+    description: >
+      A template definition containing the channel, subject (for email), body
+      with placeholder syntax, and metadata such as locale and category.
+  - name: TemplateVariable
+    description: >
+      Declares a variable placeholder within a template (e.g., {{customer_name}}),
+      including its data type, default value, and whether it is required.
+  - name: TemplateVersion
+    description: >
+      Immutable snapshot of a template at a point in time.  Supports rollback
+      and audit of content changes.
+
+apis:
+  - method: GET
+    path: /api/v1/templates
+    description: Lists all templates, filterable by channel, category, and status.
+  - method: GET
+    path: /api/v1/templates/{id}
+    description: Returns the latest published version of a specific template.
+  - method: PUT
+    path: /api/v1/templates/{id}
+    description: Updates a template, creating a new TemplateVersion.
+  - method: POST
+    path: /api/v1/templates/{id}/render
+    description: >
+      Renders a template with the supplied variable map and returns the
+      channel-ready output (HTML for email, plain text for SMS, etc.).
+
+events:
+  publishes: []
+  consumes: []
+
+databases:
+  - name: notification_templates_db
+    type: PostgreSQL
+    purpose: >
+      Stores templates, variables, and version history.  Supports full-text
+      search on template body for content discovery.
+
+dependencies: []
+
+flows:
+  - name: Template Rendering
+    description: The notification-service requests a rendered template.
+    steps:
+      - notification-service calls POST /api/v1/templates/{id}/render with a variable map.
+      - The service loads the latest published TemplateVersion.
+      - Variables are validated and substituted into the template body.
+      - The rendered output is returned (HTML, plain text, or structured payload depending on channel).
+  - name: Template Update
+    description: A content editor updates a notification template.
+    steps:
+      - Editor calls PUT /api/v1/templates/{id} with the new body and variables.
+      - A new TemplateVersion is created; the previous version is retained.
+      - The new version is set to draft status until explicitly published.
+      - On publish, the template becomes the active version served by render calls.
+
+observability:
+  metrics:
+    - template_render_duration_ms (histogram, by template ID)
+    - template_render_errors_total (counter, by error type)
+    - template_versions_created_total (counter)
+    - templates_active_count (gauge)
+  alerts:
+    - "Render error rate > 2 % for 5 min"
+    - "Render P95 latency > 200 ms for 5 min"
+  dashboards:
+    - Template Service Health (render throughput, latency, error rate)
+    - Template Inventory (active templates by channel and category)
+
+risks_and_limitations:
+  - No PII or financial data stored; templates contain only placeholders.
+  - Template rendering is synchronous and on the critical path for notification delivery.
+  - No built-in A/B testing support; variant selection must happen upstream.
+  - Large templates with many variables can increase render latency.
+
+related_documents:
+  - "ADR-050: Template versioning strategy"
+  - "OPS-013: Template promotion workflow (draft -> published)"
