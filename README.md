@@ -1,59 +1,61 @@
-# CredityFlow — Dataset sintético para comparação de RAG vs GraphRAG
+# CredityFlow — Dataset sintético para comparación de RAG vs GraphRAG
 
-Dataset sintético que simula uma fintech brasileira de crédito com garantia (**CredityFlow**), construído para o Trabajo Fin de Máster (TFM) de Aurelio Saraiva, no contexto da Universidad Europea de Madrid (UE).
+> **Versiones / Versions:** [Español](README.md) · [English](README.en.md) · [Português](README.pt.md)
 
-O dataset suporta a comparação experimental entre duas abordagens de especialização de assistentes de chat técnicos sobre uma base de conhecimento empresarial:
+Dataset sintético que simula una fintech brasileña de crédito con garantía (**CredityFlow**), construido para el Trabajo Fin de Máster (TFM) de Aurelio Saraiva, en el contexto de la Universidad Europea de Madrid (UE).
 
-- **Approach unstructured** — RAG (Retrieval-Augmented Generation) sobre documentação textual.
-- **Approach structured** — Knowledge Graph + queries estruturadas.
+El dataset soporta la comparación experimental entre dos enfoques de especialización de asistentes de chat técnicos sobre una base de conocimiento empresarial:
 
-> Este repositório contém **somente o dataset**. O código experimental (ingestão, retrieval, benchmark, relatórios) está no repositório irmão `~/projects/TFM` (não distribuído publicamente).
+- **Enfoque no estructurado** — RAG (Retrieval-Augmented Generation) sobre documentación textual.
+- **Enfoque estructurado** — Knowledge Graph + consultas estructuradas.
 
-## Estrutura
+> Este repositorio contiene **únicamente el dataset**. El código experimental (ingestión, retrieval, benchmark, informes) está en el repositorio hermano `~/projects/TFM` (no distribuido públicamente).
+
+## Estructura
 
 ```
 TFM_EU_DATASET/
-├── structured/                  # Camada estruturada (base do approach structured)
-│   ├── services.json            # 52 microsserviços com ownership, eventos, dependências
-│   ├── events.json              # 64 eventos de domínio (publishers/subscribers/payload)
+├── structured/                  # Capa estructurada (base del enfoque estructurado)
+│   ├── services.json            # 52 microservicios con ownership, eventos, dependencias
+│   ├── events.json              # 64 eventos de dominio (publishers/subscribers/payload)
 │   └── graph/
-│       ├── nodes.json           # 201 nós: serviços, times, DBs, eventos, domínios, produtos, parceiros
-│       └── edges.json           # 669 arestas tipadas (OWNS, USES_DATABASE, PUBLISHES, ...)
+│       ├── nodes.json           # 201 nodos: servicios, equipos, BDs, eventos, dominios, productos, socios
+│       └── edges.json           # 669 aristas tipadas (OWNS, USES_DATABASE, PUBLISHES, ...)
 │
-├── services/                    # Documentação por serviço (base do approach unstructured)
-│   └── <service-name>/          # 52 diretórios, um por serviço
-│       ├── README.md            # Visão geral, ownership, responsabilidades, integrações
-│       ├── architecture.md      # Arquitetura técnica detalhada
-│       └── structured-spec.yaml # Espelho YAML do registro em services.json
+├── services/                    # Documentación por servicio (base del enfoque no estructurado)
+│   └── <service-name>/          # 52 directorios, uno por servicio
+│       ├── README.md            # Visión general, ownership, responsabilidades, integraciones
+│       ├── architecture.md      # Arquitectura técnica detallada
+│       └── structured-spec.yaml # Espejo YAML del registro en services.json
 │
-├── docs/                        # Documentação cross-cutting do domínio
-│   ├── company-overview.md      # Apresentação da empresa CredityFlow
-│   ├── dataset-summary.md       # Sumário consolidado do dataset
-│   ├── qa-report.md             # Auditoria de qualidade e consistência
-│   ├── stack_guide.md           # Stack tecnológica e padrões arquiteturais
+├── docs/                        # Documentación transversal del dominio
+│   ├── company-overview.md      # Presentación de la empresa CredityFlow
+│   ├── dataset-summary.md       # Resumen consolidado del dataset
+│   ├── qa-report.md             # Auditoría de calidad y consistencia
+│   ├── stack_guide.md           # Stack tecnológico y patrones arquitectónicos
 │   ├── events/catalog.md        # Catálogo de eventos
-│   ├── teams/teams.md           # Times e responsabilidades
-│   ├── teams/databases.md       # Bases de dados e ownership
+│   ├── teams/teams.md           # Equipos y responsabilidades
+│   ├── teams/databases.md       # Bases de datos y ownership
 │   └── questions/
-│       └── benchmark.json       # 120 perguntas anotadas para o benchmark
+│       └── benchmark.json       # 120 preguntas anotadas para el benchmark
 │
-└── _internal/                   # Artefatos de processo (não fazem parte do dataset publicado)
-                                 # Mantidos para auditoria de geração; podem ser ignorados pela banca.
+└── _internal/                   # Artefactos de proceso (no forman parte del dataset publicado)
+                                 # Mantenidos para auditoría de generación; pueden ser ignorados por el tribunal.
 ```
 
-## Domínio modelado
+## Dominio modelado
 
-CredityFlow é uma fintech sintética inspirada em empresas brasileiras de empréstimo com garantia (auto e imobiliário). O pipeline de concessão de crédito modela a cadeia:
+CredityFlow es una fintech sintética inspirada en empresas brasileñas de préstamo con garantía (auto e inmobiliario). El pipeline de concesión de crédito modela la cadena:
 
 > **lead → eligibility → proposal → documents → biometrics → fraud → credit → appraisal → contract → registry → disbursement → billing/collections**
 
-Serviços comunicam-se via mensageria assíncrona (SNS/SQS) e REST síncrona. O dataset cobre 15 domínios, 15 times, 52 microsserviços, 64 eventos e 201 entidades no grafo (incluindo bancos de dados, parceiros externos e produtos).
+Los servicios se comunican mediante mensajería asíncrona (SNS/SQS) y REST síncrona. El dataset cubre 15 dominios, 15 equipos, 52 microservicios, 64 eventos y 201 entidades en el grafo (incluyendo bases de datos, socios externos y productos).
 
-## Estatísticas do benchmark
+## Estadísticas del benchmark
 
-As **120 perguntas** em `docs/questions/benchmark.json` cobrem:
+Las **120 preguntas** en `docs/questions/benchmark.json` cubren:
 
-| Categoria | n | Knowledge type | n | Dificuldade | n |
+| Categoría | n | Tipo de conocimiento | n | Dificultad | n |
 |---|---|---|---|---|---|
 | factual | 24 | architectural | 35 | easy | 36 |
 | explanatory | 22 | factual | 26 | medium | 40 |
@@ -62,13 +64,13 @@ As **120 perguntas** em `docs/questions/benchmark.json` cobrem:
 | discovery | 18 | relational | 17 | | |
 | ambiguous | 15 | | | | |
 
-Cada pergunta inclui: enunciado, resposta esperada, categoria, dificuldade, `required_knowledge_type`, `primary_target_services` (serviços de referência para grounding) e `sources` esperados.
+Cada pregunta incluye: enunciado, respuesta esperada, categoría, dificultad, `required_knowledge_type`, `primary_target_services` (servicios de referencia para grounding) y `sources` esperados.
 
-## Schema de cada artefato
+## Esquema de cada artefacto
 
 ### `structured/services.json`
 
-Lista de objetos com schema:
+Lista de objetos con esquema:
 
 ```jsonc
 {
@@ -101,17 +103,17 @@ Lista de objetos com schema:
 
 ### `structured/graph/{nodes,edges}.json`
 
-Grafo direcionado tipado. Convenção de IDs:
+Grafo dirigido tipado. Convención de IDs:
 
-- `svc-<service-name>` — serviço
-- `team-<team-id>` — time
-- `db-<database-name>` — banco de dados
+- `svc-<service-name>` — servicio
+- `team-<team-id>` — equipo
+- `db-<database-name>` — base de datos
 - `evt-<event-name>` — evento
-- `domain-<domain-name>` — domínio
-- `prod-<product-name>` — produto
-- `partner-<partner-name>` — parceiro externo
+- `domain-<domain-name>` — dominio
+- `prod-<product-name>` — producto
+- `partner-<partner-name>` — socio externo
 
-Relações principais: `OWNS`, `USES_DATABASE`, `PUBLISHES`, `SUBSCRIBES_TO`, `DEPENDS_ON`, `BELONGS_TO_DOMAIN`, `INTEGRATES_WITH`.
+Relaciones principales: `OWNS`, `USES_DATABASE`, `PUBLISHES`, `SUBSCRIBES_TO`, `DEPENDS_ON`, `BELONGS_TO_DOMAIN`, `INTEGRATES_WITH`.
 
 ### `docs/questions/benchmark.json`
 
@@ -128,15 +130,15 @@ Relações principais: `OWNS`, `USES_DATABASE`, `PUBLISHES`, `SUBSCRIBES_TO`, `D
 }
 ```
 
-## Regras de consistência interna
+## Reglas de consistencia interna
 
-1. **`services.json` é autoritativo** para nomes, ownership, eventos publicados e dependências.
-2. **Nomes de serviço são exatos** — e.g., `contract-generation-service`, não `contract-service`.
-3. **Eventos têm equivalência bilateral** — publishers em `services.json` ↔ producers em `events.json`.
-4. **IDs do grafo** seguem prefixos `svc-`, `team-`, `db-`, `evt-`, `domain-`, `prod-`, `partner-`.
-5. **`primary_target_services` no benchmark** referencia somente serviços existentes em `services.json`.
+1. **`services.json` es autoritativo** para nombres, ownership, eventos publicados y dependencias.
+2. **Los nombres de servicio son exactos** — e.g., `contract-generation-service`, no `contract-service`.
+3. **Los eventos tienen equivalencia bilateral** — publishers en `services.json` ↔ producers en `events.json`.
+4. **Los IDs del grafo** siguen los prefijos `svc-`, `team-`, `db-`, `evt-`, `domain-`, `prod-`, `partner-`.
+5. **`primary_target_services` en el benchmark** referencia únicamente servicios existentes en `services.json`.
 
-Comando rápido de validação (Python ≥ 3.10):
+Comando rápido de validación (Python ≥ 3.10):
 
 ```bash
 python3 -c "
@@ -151,32 +153,32 @@ bad = [(q['id'], svc) for q in questions
 print(f'Services: {len(services)}, Events: {len(events)}, Questions: {len(questions)}, Bad refs: {len(bad)}')"
 ```
 
-Saída esperada: `Services: 52, Events: 64, Questions: 120, Bad refs: 0`.
+Salida esperada: `Services: 52, Events: 64, Questions: 120, Bad refs: 0`.
 
-## Reprodutibilidade
+## Reproducibilidad
 
-O experimento original do TFM avaliou cada pergunta sob **3 generators × 2 approaches × 3 repetições = 2.160 chamadas por approach**:
+El experimento original del TFM evaluó cada pregunta bajo **3 generators × 2 enfoques × 3 repeticiones = 2.160 llamadas por enfoque**:
 
 - Generators: `claude-sonnet-4-6`, `gpt-5.5`, `grok-build-0.1`
-- Avaliação dupla: métrica heurística (rapidfuzz) + painel LLM-as-judge (3 juízes, 4 dimensões)
-- Temperatura fixa em 0 para reprodutibilidade
+- Evaluación doble: métrica heurística (rapidfuzz) + panel LLM-as-judge (3 jueces, 4 dimensiones)
+- Temperatura fija en 0 para reproducibilidad
 
-Os resultados consolidados (matriz com IC 95% bootstrap e teste McNemar pareado) acompanham o documento principal do TFM.
+Los resultados consolidados (matriz con IC 95% bootstrap y test McNemar pareado) acompañan el documento principal del TFM.
 
-## Como esse dataset foi gerado
+## Cómo fue generado este dataset
 
-O dataset é **sintético**, gerado a partir de uma especificação de domínio (fintech de crédito com garantia) usando LLMs como auxiliares de geração e revisão. Todas as entidades, nomes de serviço, times, eventos, bancos de dados e parceiros são fictícios — qualquer semelhança com sistemas reais é incidental.
+El dataset es **sintético**, generado a partir de una especificación de dominio (fintech de crédito con garantía) usando LLMs como auxiliares de generación y revisión. Todas las entidades, nombres de servicio, equipos, eventos, bases de datos y socios son ficticios — cualquier semejanza con sistemas reales es incidental.
 
-A geração foi auditada para consistência cruzada via `qa-report.md` e validada pelo script de consistência acima.
+La generación fue auditada para consistencia cruzada mediante `qa-report.md` y validada con el script de consistencia anterior.
 
-## Licença e uso
+## Licencia y uso
 
-Dataset desenvolvido como parte do Trabajo Fin de Máster de Aurelio Saraiva (Universidad Europea, 2026). Disponibilizado à banca avaliadora para fins de validação e reprodução experimental.
+Dataset desarrollado como parte del Trabajo Fin de Máster de Aurelio Saraiva (Universidad Europea, 2026). Puesto a disposición del tribunal evaluador para fines de validación y reproducción experimental.
 
-Citação sugerida:
+Cita sugerida:
 
-> Saraiva, A. (2026). *CredityFlow: dataset sintético para comparação de RAG e GraphRAG em assistentes técnicos de chat empresarial*. Trabajo Fin de Máster, Universidad Europea de Madrid.
+> Saraiva, A. (2026). *CredityFlow: dataset sintético para comparación de RAG y GraphRAG en asistentes técnicos de chat empresarial*. Trabajo Fin de Máster, Universidad Europea de Madrid.
 
-## Contato
+## Contacto
 
 Aurelio Saraiva — aurelio.saraiva@creditas.com.br

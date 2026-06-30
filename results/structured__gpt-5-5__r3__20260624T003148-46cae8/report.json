@@ -1,0 +1,246 @@
+{
+  "run_id": "structured__gpt-5-5__r3__20260624T003148-46cae8",
+  "approach": "structured",
+  "model": "gpt-5.5",
+  "total_questions": 120,
+  "correct": 47,
+  "partial": 63,
+  "incorrect": 10,
+  "errors": 0,
+  "success_rate": 0.6542,
+  "avg_latency_ms": 5542.55,
+  "total_cost": 1.079855,
+  "by_category": {
+    "ambiguous": {
+      "partial": 4,
+      "correct": 11
+    },
+    "discovery": {
+      "correct": 7,
+      "partial": 10,
+      "incorrect": 1
+    },
+    "explanatory": {
+      "correct": 6,
+      "partial": 15,
+      "incorrect": 1
+    },
+    "factual": {
+      "correct": 7,
+      "partial": 14,
+      "incorrect": 3
+    },
+    "impact": {
+      "correct": 8,
+      "partial": 13
+    },
+    "relational": {
+      "partial": 7,
+      "correct": 8,
+      "incorrect": 5
+    }
+  },
+  "by_difficulty": {
+    "easy": {
+      "correct": 15,
+      "partial": 16,
+      "incorrect": 5
+    },
+    "hard": {
+      "correct": 18,
+      "partial": 23,
+      "incorrect": 3
+    },
+    "medium": {
+      "partial": 24,
+      "correct": 14,
+      "incorrect": 2
+    }
+  },
+  "by_knowledge_type": {
+    "architectural": {
+      "partial": 21,
+      "correct": 11,
+      "incorrect": 3
+    },
+    "factual": {
+      "correct": 9,
+      "partial": 14,
+      "incorrect": 3
+    },
+    "mixed": {
+      "partial": 11,
+      "correct": 12,
+      "incorrect": 2
+    },
+    "operational": {
+      "correct": 8,
+      "partial": 9
+    },
+    "relational": {
+      "partial": 8,
+      "correct": 7,
+      "incorrect": 2
+    }
+  },
+  "judge": {
+    "n": 120,
+    "judges": [
+      "claude-sonnet-4-6",
+      "gpt-5.5",
+      "grok-build-0.1"
+    ],
+    "per_judge": {
+      "claude-sonnet-4-6": {
+        "n": 120,
+        "avg_correctness": 1.7833,
+        "avg_completeness": 1.4333,
+        "avg_groundedness": 2.775,
+        "avg_clarity": 2.7833,
+        "avg_average": 2.1938
+      },
+      "gpt-5.5": {
+        "n": 120,
+        "avg_correctness": 1.5083,
+        "avg_completeness": 0.8667,
+        "avg_groundedness": 2.425,
+        "avg_clarity": 2.9667,
+        "avg_average": 1.9417
+      },
+      "grok-build-0.1": {
+        "n": 120,
+        "avg_correctness": 2.0833,
+        "avg_completeness": 1.325,
+        "avg_groundedness": 2.7167,
+        "avg_clarity": 2.9583,
+        "avg_average": 2.2708
+      }
+    },
+    "panel": {
+      "n": 120,
+      "n_observations": 360,
+      "n_results": 120,
+      "judges": [
+        "claude-sonnet-4-6",
+        "gpt-5.5",
+        "grok-build-0.1"
+      ],
+      "avg_correctness": 1.7917,
+      "avg_completeness": 1.2083,
+      "avg_groundedness": 2.6389,
+      "avg_clarity": 2.9028,
+      "avg_average": 2.1354
+    },
+    "avg_correctness": 1.7917,
+    "avg_completeness": 1.2083,
+    "avg_groundedness": 2.6389,
+    "avg_clarity": 2.9028,
+    "avg_average": 2.1354,
+    "cross_family": null,
+    "agreement": {
+      "n": 120,
+      "kappa_correctness": {
+        "claude-sonnet-4-6__vs__gpt-5.5": 0.5367,
+        "claude-sonnet-4-6__vs__grok-build-0.1": 0.5274,
+        "gpt-5.5__vs__grok-build-0.1": 0.3963
+      },
+      "pearson_average": {
+        "claude-sonnet-4-6__vs__gpt-5.5": 0.6053,
+        "claude-sonnet-4-6__vs__grok-build-0.1": 0.5806,
+        "gpt-5.5__vs__grok-build-0.1": 0.6298
+      }
+    },
+    "by_category": {
+      "ambiguous": {
+        "n": 15,
+        "n_observations": 45,
+        "n_results": 15,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 1.7778,
+        "avg_completeness": 1.0889,
+        "avg_groundedness": 2.6222,
+        "avg_clarity": 2.8,
+        "avg_average": 2.0722
+      },
+      "discovery": {
+        "n": 18,
+        "n_observations": 54,
+        "n_results": 18,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 1.6111,
+        "avg_completeness": 1.1111,
+        "avg_groundedness": 2.7037,
+        "avg_clarity": 2.9074,
+        "avg_average": 2.0833
+      },
+      "explanatory": {
+        "n": 22,
+        "n_observations": 66,
+        "n_results": 22,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 2.1212,
+        "avg_completeness": 1.3636,
+        "avg_groundedness": 2.7727,
+        "avg_clarity": 2.9697,
+        "avg_average": 2.3068
+      },
+      "factual": {
+        "n": 24,
+        "n_observations": 72,
+        "n_results": 24,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 1.6667,
+        "avg_completeness": 1.2083,
+        "avg_groundedness": 2.5556,
+        "avg_clarity": 2.8611,
+        "avg_average": 2.0729
+      },
+      "impact": {
+        "n": 21,
+        "n_observations": 63,
+        "n_results": 21,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 1.7619,
+        "avg_completeness": 1.1111,
+        "avg_groundedness": 2.746,
+        "avg_clarity": 2.9206,
+        "avg_average": 2.1349
+      },
+      "relational": {
+        "n": 20,
+        "n_observations": 60,
+        "n_results": 20,
+        "judges": [
+          "claude-sonnet-4-6",
+          "gpt-5.5",
+          "grok-build-0.1"
+        ],
+        "avg_correctness": 1.7833,
+        "avg_completeness": 1.3167,
+        "avg_groundedness": 2.4333,
+        "avg_clarity": 2.9333,
+        "avg_average": 2.1167
+      }
+    }
+  }
+}

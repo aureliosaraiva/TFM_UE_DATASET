@@ -1,0 +1,214 @@
+{
+  "cells": [
+    {
+      "approach": "structured",
+      "generator": "claude-sonnet-4-6",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.2,
+      "success_rate_ci_low": 0.161111,
+      "success_rate_ci_high": 0.241667,
+      "latency_ms_mean": 8651.624,
+      "latency_ms_ci_low": 8263.857,
+      "latency_ms_ci_high": 9036.468,
+      "similarity_mean": 0.376413,
+      "similarity_ci_low": 0.36911,
+      "similarity_ci_high": 0.383712,
+      "cost_usd_mean": 0.00668537,
+      "cost_usd_ci_low": 0.00637079,
+      "cost_usd_ci_high": 0.00699597
+    },
+    {
+      "approach": "structured",
+      "generator": "gpt-5.5",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.361111,
+      "success_rate_ci_low": 0.313889,
+      "success_rate_ci_high": 0.411111,
+      "latency_ms_mean": 6358.008,
+      "latency_ms_ci_low": 6014.446,
+      "latency_ms_ci_high": 6703.665,
+      "similarity_mean": 0.434926,
+      "similarity_ci_low": 0.428709,
+      "similarity_ci_high": 0.4411,
+      "cost_usd_mean": 0.00892233,
+      "cost_usd_ci_low": 0.00845429,
+      "cost_usd_ci_high": 0.00939405
+    },
+    {
+      "approach": "structured",
+      "generator": "grok-build-0.1",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.411111,
+      "success_rate_ci_low": 0.361111,
+      "success_rate_ci_high": 0.461111,
+      "latency_ms_mean": 7919.545,
+      "latency_ms_ci_low": 7429.721,
+      "latency_ms_ci_high": 8447.087,
+      "similarity_mean": 0.43774,
+      "similarity_ci_low": 0.430999,
+      "similarity_ci_high": 0.444484,
+      "cost_usd_mean": 0.00392342,
+      "cost_usd_ci_low": 0.00375104,
+      "cost_usd_ci_high": 0.00409951
+    },
+    {
+      "approach": "unstructured",
+      "generator": "claude-sonnet-4-6",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.225,
+      "success_rate_ci_low": 0.183333,
+      "success_rate_ci_high": 0.266667,
+      "latency_ms_mean": 7576.883,
+      "latency_ms_ci_low": 7120.361,
+      "latency_ms_ci_high": 8129.195,
+      "similarity_mean": 0.411603,
+      "similarity_ci_low": 0.405221,
+      "similarity_ci_high": 0.418202,
+      "cost_usd_mean": 0.00455657,
+      "cost_usd_ci_low": 0.00434192,
+      "cost_usd_ci_high": 0.00477107
+    },
+    {
+      "approach": "unstructured",
+      "generator": "gpt-5.5",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.416667,
+      "success_rate_ci_low": 0.366667,
+      "success_rate_ci_high": 0.469444,
+      "latency_ms_mean": 5360.346,
+      "latency_ms_ci_low": 5096.242,
+      "latency_ms_ci_high": 5630.526,
+      "similarity_mean": 0.480062,
+      "similarity_ci_low": 0.475467,
+      "similarity_ci_high": 0.484626,
+      "cost_usd_mean": 0.01404742,
+      "cost_usd_ci_low": 0.01371354,
+      "cost_usd_ci_high": 0.014358
+    },
+    {
+      "approach": "unstructured",
+      "generator": "grok-build-0.1",
+      "n_repeats": 3,
+      "n_results_total": 360,
+      "success_definition": "strict",
+      "success_rate_mean": 0.294444,
+      "success_rate_ci_low": 0.25,
+      "success_rate_ci_high": 0.344444,
+      "latency_ms_mean": 6373.983,
+      "latency_ms_ci_low": 6040.303,
+      "latency_ms_ci_high": 6716.258,
+      "similarity_mean": 0.445553,
+      "similarity_ci_low": 0.44015,
+      "similarity_ci_high": 0.450999,
+      "cost_usd_mean": 0.0062236,
+      "cost_usd_ci_low": 0.00607683,
+      "cost_usd_ci_high": 0.00636482
+    }
+  ],
+  "comparisons": {
+    "strict": [
+      {
+        "generator": "claude-sonnet-4-6",
+        "success_definition": "strict",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 83,
+          "b": 46,
+          "c": 37,
+          "statistic": 0.7710843373493976,
+          "p_value": 0.37988181279906974,
+          "method": "chi2"
+        }
+      },
+      {
+        "generator": "gpt-5.5",
+        "success_definition": "strict",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 136,
+          "b": 78,
+          "c": 58,
+          "statistic": 2.6544117647058822,
+          "p_value": 0.10326295042870086,
+          "method": "chi2"
+        }
+      },
+      {
+        "generator": "grok-build-0.1",
+        "success_definition": "strict",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 114,
+          "b": 36,
+          "c": 78,
+          "statistic": 14.74561403508772,
+          "p_value": 0.00012303339451305285,
+          "method": "chi2"
+        }
+      }
+    ],
+    "lenient": [
+      {
+        "generator": "claude-sonnet-4-6",
+        "success_definition": "lenient",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 93,
+          "b": 70,
+          "c": 23,
+          "statistic": 22.752688172043012,
+          "p_value": 1.842462273438297e-06,
+          "method": "chi2"
+        }
+      },
+      {
+        "generator": "gpt-5.5",
+        "success_definition": "lenient",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 28,
+          "b": 28,
+          "c": 0,
+          "statistic": 26.035714285714285,
+          "p_value": 3.3515963066077387e-07,
+          "method": "chi2"
+        }
+      },
+      {
+        "generator": "grok-build-0.1",
+        "success_definition": "lenient",
+        "approach_a": "unstructured",
+        "approach_b": "structured",
+        "n_pairs": 360,
+        "mcnemar": {
+          "n_discordant": 41,
+          "b": 23,
+          "c": 18,
+          "statistic": 0.3902439024390244,
+          "p_value": 0.5321712241488489,
+          "method": "chi2"
+        }
+      }
+    ]
+  }
+}
